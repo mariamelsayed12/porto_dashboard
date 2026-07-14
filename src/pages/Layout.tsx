@@ -1,9 +1,5 @@
-import { Outlet } from "react-router-dom"
+import DashboardLayout from "../components/Layout/DashboardLayout";
 
 export const RootLayout = () => {
-    return (
-    <div>
-        <Outlet/>
-    </div>
-    )
-}
+  return <DashboardLayout />;
+};
