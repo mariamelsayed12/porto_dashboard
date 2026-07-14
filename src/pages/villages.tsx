@@ -1,67 +1,23 @@
 import { useState, useMemo } from "react";
+import { useOutletContext } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import VillageCard from "../components/Ui/VillageCard";
 import EmptyState from "../components/Ui/EmptyState";
-import type { Village } from "../interface/village";
+import CreateModal from "../components/Ui/CreateModal";
+import { villageFormFields, mockVillages } from "../data";
 
-import portoGolfImg from "../assets/porto_golf.png";
-import portoMarinaImg from "../assets/porto_marina.png";
-import portoMountainImg from "../assets/porto_mountain.png";
+// import portoMarinaImg from "../assets/porto_marina.png";
+// import portoMountainImg from "../assets/porto_mountain.png";
 
 // Mock villages data – replace with API response later
-const mockVillages: Village[] = [
-  {
-    id: 1,
-    name: "Porto Golf",
-    developer: "Amer group",
-    startingPrice: "2M",
-    availableProperties: 24,
-    image: portoGolfImg,
-  },
-  {
-    id: 2,
-    name: "Porto Marina",
-    developer: "Amer group",
-    startingPrice: "3.5M",
-    availableProperties: 18,
-    image: portoMarinaImg,
-  },
-  {
-    id: 3,
-    name: "Porto Heliopolis",
-    developer: "Amer group",
-    startingPrice: "1.8M",
-    availableProperties: 31,
-    image: portoMountainImg,
-  },
-  {
-    id: 4,
-    name: "Porto New Cairo",
-    developer: "Amer group",
-    startingPrice: "2.7M",
-    availableProperties: 12,
-    image: portoGolfImg,
-  },
-  {
-    id: 5,
-    name: "Porto October",
-    developer: "Amer group",
-    startingPrice: "1.5M",
-    availableProperties: 40,
-    image: portoMarinaImg,
-  },
-  {
-    id: 6,
-    name: "Porto South",
-    developer: "Amer group",
-    startingPrice: "2.2M",
-    availableProperties: 9,
-    image: portoMountainImg,
-  },
-];
+
 
 const VillagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { isCreateOpen, setIsCreateOpen } = useOutletContext<{
+    isCreateOpen: boolean;
+    setIsCreateOpen: (open: boolean) => void;
+  }>();
 
   // Filter villages by name (ready for API integration)
   const filteredVillages = useMemo(
@@ -82,6 +38,12 @@ const VillagesPage = () => {
 
   const handleViewDetails = (id: string | number) => {
     console.log("View details for village:", id);
+  };
+
+  const handleCreateSubmit = (data: Record<string, any>) => {
+    console.log("Created Village Form Data Submitted:", data);
+    alert(`Success! Check console for submitted Village Form Data.`);
+    setIsCreateOpen(false);
   };
 
   return (
@@ -127,6 +89,17 @@ const VillagesPage = () => {
           />
         </div>
       )}
+
+      {/* Reusable Create Village Modal / Slider Drawer */}
+      <CreateModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="Create Village"
+        fields={villageFormFields}
+        onSubmit={handleCreateSubmit}
+        submitText="Create"
+        cancelText="Cancel"
+      />
     </div>
   );
 };

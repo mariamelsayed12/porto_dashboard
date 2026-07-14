@@ -5,9 +5,10 @@ import Button from "../Ui/Button";
 
 interface HeaderProps {
   onMenuToggle: () => void;
+  onCreateClick?: () => void;
 }
 
-export default function Header({ onMenuToggle }: HeaderProps) {
+export default function Header({ onMenuToggle, onCreateClick }: HeaderProps) {
   const location = useLocation();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
@@ -51,7 +52,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
         {getPageTitle(location.pathname) === "Villages" && (
           <Button
             variant="create"
-            onClick={() => console.log("Create Property clicked")}
+            onClick={onCreateClick}
             leftIcon={<FiPlus size={20} />}
             className="px-3 md:px-4"
         >
@@ -62,7 +63,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
            {getPageTitle(location.pathname) === "Overview" && (
           <Button
             variant="create"
-            onClick={() => console.log("Create Property clicked")}
+            onClick={onCreateClick}
             leftIcon={<FiPlus size={20} />}
             className="px-3 md:px-4"
         >

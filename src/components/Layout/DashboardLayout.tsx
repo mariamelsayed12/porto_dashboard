@@ -8,6 +8,7 @@ import { FiX } from "react-icons/fi";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-text-secondary">
@@ -55,11 +56,14 @@ export default function DashboardLayout() {
       {/* Main Viewport Container */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header/Topbar */}
-        <Header onMenuToggle={() => setSidebarOpen(true)} />
+        <Header
+          onMenuToggle={() => setSidebarOpen(true)}
+          onCreateClick={() => setIsCreateOpen(true)}
+        />
 
         {/* Scrollable Page Body */}
         <PageContainer>
-          <Outlet />
+          <Outlet context={{ isCreateOpen, setIsCreateOpen }} />
         </PageContainer>
       </div>
     </div>
