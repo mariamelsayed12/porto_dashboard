@@ -48,15 +48,27 @@ export default function Header({ onMenuToggle }: HeaderProps) {
       {/* Right side: Action Button + Divider + User Profile */}
       <div className="flex items-center gap-4 md:gap-5">
         {/* Create Property CTA */}
-        <Button
-          variant="create"
-          onClick={() => console.log("Create Property clicked")}
-          leftIcon={<FiPlus size={20} />}
-          className="px-3 md:px-4"
+        {getPageTitle(location.pathname) === "Villages" && (
+          <Button
+            variant="create"
+            onClick={() => console.log("Create Property clicked")}
+            leftIcon={<FiPlus size={20} />}
+            className="px-3 md:px-4"
+        >
+          <span className="">Create Village</span>
+        </Button>
+        )}
+
+           {getPageTitle(location.pathname) === "Overview" && (
+          <Button
+            variant="create"
+            onClick={() => console.log("Create Property clicked")}
+            leftIcon={<FiPlus size={20} />}
+            className="px-3 md:px-4"
         >
           <span className="">Create Property</span>
         </Button>
-
+        )}
         {/* Vertical Divider (Hidden on small mobile) */}
         <div className="hidden xs:block w-px h-8 bg-border" />
 

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
-import { FiSearch, FiPlus } from "react-icons/fi";
+import { FiSearch } from "react-icons/fi";
 import VillageCard from "../components/Ui/VillageCard";
-import Button from "../components/Ui/Button";
+import EmptyState from "../components/Ui/EmptyState";
 import type { Village } from "../interface/village";
 
 import portoGolfImg from "../assets/porto_golf.png";
@@ -100,15 +100,7 @@ const VillagesPage = () => {
           />
         </div>
 
-        {/* Add Village Button */}
-        <Button
-          variant="create"
-          leftIcon={<FiPlus className="w-4 h-4" />}
-          onClick={() => console.log("Add Village clicked")}
-          className="shrink-0 w-full sm:w-auto"
-        >
-          Add Village
-        </Button>
+       
       </div>
 
       {/* Villages Grid */}
@@ -125,12 +117,14 @@ const VillagesPage = () => {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <FiSearch className="w-10 h-10 text-text-naturalGray mb-4 opacity-40" />
-          <p className="text-text-darker font-medium text-base">No villages found</p>
-          <p className="text-text-naturalGray text-sm mt-1">
-            Try adjusting your search term.
-          </p>
+        <div className="flex items-center justify-center py-16">
+          <EmptyState
+            message={
+              searchQuery
+                ? `No villages found for "${searchQuery}".`
+                : "No added Villages yet."
+            }
+          />
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { FiTrash2, FiEdit2, FiArrowUpRight } from "react-icons/fi";
 import type { Village } from "../../interface/village";
 import Button from "./Button";
+import PenIcon from "../../icons/pen";
 
 interface VillageCardProps {
   village: Village;
@@ -83,7 +84,7 @@ export default function VillageCard({
           title="Delete Village"
           aria-label="Delete village"
         >
-          <FiTrash2 className="w-[20px] h-[20px]" />
+          <FiTrash2 className="w-[24px] h-[24px]" />
         </Button>
 
         {/* Edit button */}
@@ -94,7 +95,7 @@ export default function VillageCard({
           title="Edit Village"
           aria-label="Edit village"
         >
-          <FiEdit2 className="w-[20px] h-[20px]" />
+          <PenIcon className="w-[30px] h-[30px]" />
         </Button>
 
         {/* View Details button */}
