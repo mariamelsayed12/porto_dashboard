@@ -4,7 +4,9 @@ import { FiSearch } from "react-icons/fi";
 import VillageCard from "../components/Ui/VillageCard";
 import EmptyState from "../components/Ui/EmptyState";
 import CreateModal from "../components/Ui/CreateModal";
+import DeleteModal from "../components/Ui/DeleteModal";
 import { villageFormFields, mockVillages } from "../data";
+import type { Village } from "../interface/village";
 
 // import portoMarinaImg from "../assets/porto_marina.png";
 // import portoMountainImg from "../assets/porto_mountain.png";
@@ -14,6 +16,10 @@ import { villageFormFields, mockVillages } from "../data";
 
 const VillagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [villagesList, setVillagesList] = useState<Village[]>(mockVillages);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [villageToDelete, setVillageToDelete] = useState<Village | null>(null);
+
   const { isCreateOpen, setIsCreateOpen } = useOutletContext<{
     isCreateOpen: boolean;
     setIsCreateOpen: (open: boolean) => void;
@@ -22,10 +28,10 @@ const VillagesPage = () => {
   // Filter villages by name (ready for API integration)
   const filteredVillages = useMemo(
     () =>
-      mockVillages.filter((v) =>
+      villagesList.filter((v) =>
         v.name.toLowerCase().includes(searchQuery.toLowerCase())
       ),
-    [searchQuery]
+    [searchQuery, villagesList]
   );
 
   const handleEdit = (id: string | number) => {
@@ -33,7 +39,17 @@ const VillagesPage = () => {
   };
 
   const handleDelete = (id: string | number) => {
-    console.log("Delete village:", id);
+    const village = villagesList.find((v) => v.id === id) || null;
+    setVillageToDelete(village);
+    setIsDeleteOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (villageToDelete) {
+      setVillagesList((prev) => prev.filter((v) => v.id !== villageToDelete.id));
+      setIsDeleteOpen(false);
+      setVillageToDelete(null);
+    }
   };
 
   const handleViewDetails = (id: string | number) => {
@@ -98,6 +114,22 @@ const VillagesPage = () => {
         fields={villageFormFields}
         onSubmit={handleCreateSubmit}
         submitText="Create"
+        cancelText="Cancel"
+      />
+
+      {/* Reusable Delete Village Modal */}
+      <DeleteModal
+        isOpen={isDeleteOpen}
+        onClose={() => {
+          setIsDeleteOpen(false);
+          setVillageToDelete(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Are you sure you want to delete this village ?"
+        entityName={villageToDelete?.name}
+        entitySubText={villageToDelete?.developer}
+        entityImage={villageToDelete?.image}
+        confirmText="Yes, delete"
         cancelText="Cancel"
       />
     </div>
