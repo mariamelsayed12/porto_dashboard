@@ -1,8 +1,11 @@
-import { FiSearch, FiFileText, FiMap, FiHome, FiCheckSquare, FiXSquare, FiMapPin } from "react-icons/fi";
+import { FiSearch, FiFileText, FiMap, FiMapPin } from "react-icons/fi";
 import QuickAction from "../components/Ui/QuickAction";
 import KpiCard from "../components/Ui/KpiCard";
 import LatestPropertiesTable from "../components/Ui/LatestPropertiesTable";
 import PropertyDistributionChart from "../components/Ui/PropertyDistributionChart";
+import HomeIcon from "../icons/homeicon";
+import TrueHomeIcon from "../icons/TrueHomeIcon";
+import XHomeIcon from "../icons/XHomeIcon";
 
 // Mock Data for Table
 const latestProperties = [
@@ -91,19 +94,19 @@ export default function HomePage() {
         <KpiCard
           title="Total Properties"
           value={100}
-          Icon={FiHome}
+          Icon={HomeIcon}
         />
         <KpiCard
           title="Active Listing"
           value={100}
           subtext="Available & available soon"
-          Icon={FiCheckSquare}
+          Icon={TrueHomeIcon}
         />
         <KpiCard
           title="Inactive Listing"
           value={100}
           subtext="Sold out & rented"
-          Icon={FiXSquare}
+          Icon={XHomeIcon}
         />
         <KpiCard
           title="Total Villages"

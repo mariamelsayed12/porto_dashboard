@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { FiMenu, FiPlus, FiChevronDown } from "react-icons/fi";
 import { useState } from "react";
+import Button from "../Ui/Button";
 
 interface HeaderProps {
   onMenuToggle: () => void;
@@ -47,13 +48,14 @@ export default function Header({ onMenuToggle }: HeaderProps) {
       {/* Right side: Action Button + Divider + User Profile */}
       <div className="flex items-center gap-4 md:gap-5">
         {/* Create Property CTA */}
-        <button
+        <Button
+          variant="create"
           onClick={() => console.log("Create Property clicked")}
-          className="bg-primary hover:bg-[#156d85] active:scale-95 text-white h-[36px] flex items-center justify-center gap-1.5 px-3 md:px-4 rounded-md transition-all font-medium text-[16px] shadow-xs"
+          leftIcon={<FiPlus size={20} />}
+          className="px-3 md:px-4"
         >
-          <FiPlus size={20} className="shrink-0" />
-          <span className="hidden xs:inline">Create Property</span>
-        </button>
+          <span className="">Create Property</span>
+        </Button>
 
         {/* Vertical Divider (Hidden on small mobile) */}
         <div className="hidden xs:block w-px h-8 bg-border" />
