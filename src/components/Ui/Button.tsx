@@ -10,6 +10,7 @@ const buttonVariants = cva(
         login: "flex h-[48px] px-6 py-2 w-full bg-primary text-white hover:bg-[#156d85]",
         create: "inline-flex h-[36px] px-4 py-2 bg-primary text-white hover:bg-[#156d85]",
         viewDetails: "flex h-[36px] px-4 py-2 flex-1 border border-text-naturalGray text-text-naturalGray hover:bg-slate-50 hover:text-text-secondary",
+        outlinePrimary: "flex h-[36px] px-[16px] py-[8px] gap-[8px] border border-[#747474] text-[#1e8cab] text-[16px] font-medium rounded-[12px] hover:bg-slate-50 flex-1 justify-center",
         modalPrimary: "flex h-[48px] px-6 py-2 bg-primary text-white hover:bg-[#156d85]",
         icon: "flex h-[48px] w-[48px] p-2 hover:bg-light-gray text-text-darker hover:text-text-secondary active:scale-95",
       },

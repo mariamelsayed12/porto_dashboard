@@ -1,4 +1,4 @@
-import { FiMap, FiMapPin } from "react-icons/fi";
+import { FiMapPin } from "react-icons/fi";
 import QuickAction from "../components/Ui/QuickAction";
 import KpiCard from "../components/Ui/KpiCard";
 import LatestPropertiesTable from "../components/Ui/LatestPropertiesTable";

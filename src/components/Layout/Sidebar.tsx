@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
-import logoUrl from "../../assets/Logo.svg";
+import logoUrl from "../../assets/LogoDashboard2.svg";
+
 
 // Inline SVGs for dynamic styling with tailwind
 const PerspectiveIcon = ({ className }: { className?: string }) => (
@@ -43,12 +44,12 @@ export default function Sidebar({ onClose }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-[94px] h-full bg-background border-r border-border flex flex-col justify-between">
+    <aside className="w-[94px] h-full bg-white border-r border-border flex flex-col justify-between">
       {/* Sidebar Header: Logo Area */}
       <div className="h-[72px] shrink-0 border-b border-border flex items-center justify-center">
         <img
           src={logoUrl}
-          className="h-10 w-10 object-contain hover:opacity-85 transition-opacity"
+          className="h-10 w-[64px] object-contain hover:opacity-85 transition-opacity"
           alt="Porto"
         />
       </div>
