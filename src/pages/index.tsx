@@ -1,4 +1,4 @@
-import { FiSearch, FiFileText, FiMap, FiMapPin } from "react-icons/fi";
+import { FiMap, FiMapPin } from "react-icons/fi";
 import QuickAction from "../components/Ui/QuickAction";
 import KpiCard from "../components/Ui/KpiCard";
 import LatestPropertiesTable from "../components/Ui/LatestPropertiesTable";
@@ -6,6 +6,9 @@ import PropertyDistributionChart from "../components/Ui/PropertyDistributionChar
 import HomeIcon from "../icons/homeicon";
 import TrueHomeIcon from "../icons/TrueHomeIcon";
 import XHomeIcon from "../icons/XHomeIcon";
+import SearchIcon from "../icons/SearchIcon";
+import AddPropertyIcon from "../icons/AddPropertyIcon";
+import BeachIcon from "../icons/BeachIcon";
 
 // Mock Data for Table
 const latestProperties = [
@@ -69,21 +72,21 @@ export default function HomePage() {
         <QuickAction
           title="Find Property"
           description="Search and manage existing listings."
-          Icon={FiSearch}
+          Icon={SearchIcon}
           iconColor="text-[#1E8CAB]"
           onClick={() => console.log("Find Property clicked")}
         />
         <QuickAction
           title="Add Property"
           description="Create a new listing and publish it."
-          Icon={FiFileText}
+          Icon={AddPropertyIcon}
           iconColor="text-[#E07A5F]"
           onClick={() => console.log("Add Property clicked")}
         />
         <QuickAction
           title="Add Village"
           description="Manage compounds and destinations."
-          Icon={FiMap}
+          Icon={BeachIcon}
           iconColor="text-[#F2CC8F]"
           onClick={() => console.log("Add Village clicked")}
         />
