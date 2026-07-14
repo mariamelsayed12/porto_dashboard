@@ -4,6 +4,7 @@ import { RootLayout } from "../pages/Layout";
 import VillagesPage from "../pages/villages";
 import PropertiesPage from "../pages/properties";
 import SettingsPage from "../pages/settings";
+import LoginPage from "../pages/login";
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -15,6 +16,9 @@ const router = createBrowserRouter(
         <Route path="properties" element={<PropertiesPage/>} />
         <Route path="settings" element={<SettingsPage/>} />
     </Route>
+    
+    {/* login route */}
+    <Route path="/login" element={<LoginPage />} />
     </>
 ))
 

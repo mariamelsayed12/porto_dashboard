@@ -24,6 +24,7 @@ export default {
       },
     },
     borderRadius: {
+      'sm': '8px',
       'md': '12px',
     }
     },
