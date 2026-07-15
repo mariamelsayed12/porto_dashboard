@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
-import { FiSearch } from "react-icons/fi";
+import { useOutletContext, useNavigate, useSearchParams } from "react-router-dom";
 import VillageCard from "../components/Ui/VillageCard";
 import EmptyState from "../components/Ui/EmptyState";
 import FormDrawer from "../components/Ui/FormDrawer";
@@ -8,10 +7,12 @@ import DeleteModal from "../components/Ui/DeleteModal";
 import { villageFormFields, mockVillages } from "../data";
 import type { Village } from "../interface/index";
 import defualtImage from "../assets/default.png";
+import FilterSortSection, { type FilterConfig } from "../components/Ui/FilterSortSection";
 
 const VillagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [villagesList, setVillagesList] = useState<Village[]>(() => {
     const saved = localStorage.getItem("porto_villages");
@@ -29,14 +30,80 @@ const VillagesPage = () => {
     setIsCreateOpen: (open: boolean) => void;
   }>();
 
-  // Filter villages by name
-  const filteredVillages = useMemo(
-    () =>
-      villagesList.filter((v) =>
-        v.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
-    [searchQuery, villagesList]
-  );
+  // ── Filter values from URL ─────────────────────────────────────────────────
+  const selectedDevelopers = useMemo(() => {
+    const val = searchParams.get("developer");
+    return val ? val.split(",") : [];
+  }, [searchParams]);
+
+  const activeSort = useMemo(() => {
+    return searchParams.get("sort") || "";
+  }, [searchParams]);
+
+  const handleFilterChange = (key: string, values: string[]) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (values.length > 0) {
+      newParams.set(key, values.join(","));
+    } else {
+      newParams.delete(key);
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
+  const handleSortChange = (sortVal: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (sortVal) {
+      newParams.set("sort", sortVal);
+    } else {
+      newParams.delete("sort");
+    }
+    setSearchParams(newParams, { replace: true });
+  };
+
+  // Filter villages by name and developer
+  const filteredVillages = useMemo(() => {
+    return villagesList.filter((v) => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!v.name.toLowerCase().includes(q) && !v.developer.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+      if (selectedDevelopers.length > 0) {
+        if (!selectedDevelopers.includes(v.developer)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [searchQuery, villagesList, selectedDevelopers]);
+
+  const sortedVillages = useMemo(() => {
+    const list = [...filteredVillages];
+    if (!activeSort) return list;
+
+    const parsePrice = (priceStr: string): number => {
+      const val = parseFloat(priceStr.replace(/[^0-9.]/g, ""));
+      return isNaN(val) ? 0 : val;
+    };
+
+    list.sort((a, b) => {
+      if (activeSort === "name-asc") {
+        return a.name.localeCompare(b.name);
+      }
+      if (activeSort === "name-desc") {
+        return b.name.localeCompare(a.name);
+      }
+      if (activeSort === "price-asc") {
+        return parsePrice(a.startingPrice) - parsePrice(b.startingPrice);
+      }
+      if (activeSort === "price-desc") {
+        return parsePrice(b.startingPrice) - parsePrice(a.startingPrice);
+      }
+      return 0;
+    });
+    return list;
+  }, [filteredVillages, activeSort]);
 
   const editFormFields = useMemo(() => {
     if (!villageToEdit) return [];
@@ -195,27 +262,45 @@ const VillagesPage = () => {
     setIsCreateOpen(false);
   };
 
+  const developerOptions = useMemo(() => {
+    const developers = Array.from(new Set(villagesList.map((v) => v.developer)));
+    return developers.map((dev) => ({ label: dev, value: dev }));
+  }, [villagesList]);
+
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "developer",
+      label: "Developer",
+      options: developerOptions,
+      value: selectedDevelopers,
+      onChange: (vals) => handleFilterChange("developer", vals),
+    },
+  ];
+
+  const sortOptions = [
+    { label: "Name (A-Z)", value: "name-asc" },
+    { label: "Name (Z-A)", value: "name-desc" },
+    { label: "Price (Low to High)", value: "price-asc" },
+    { label: "Price (High to Low)", value: "price-desc" },
+  ];
+
   return (
     <div className="w-full flex flex-col gap-6">
       {/* Page Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Search Field */}
-        <div className="relative flex items-center w-full sm:max-w-xs">
-          <FiSearch className="absolute left-3 w-[18px] h-[18px] text-text-naturalGray pointer-events-none" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search villages..."
-            className="w-full h-10 pl-9 pr-4 rounded-md border border-border bg-white text-text-secondary placeholder:text-text-naturalGray focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm"
-          />
-        </div>
-      </div>
+      <FilterSortSection
+        searchPlaceholder="Search villages..."
+        searchValue={searchQuery}
+        onSearchChange={setSearchQuery}
+        filters={filterConfigs}
+        sortOptions={sortOptions}
+        activeSortValue={activeSort}
+        onSortChange={handleSortChange}
+      />
 
       {/* Villages Grid */}
-      {filteredVillages.length > 0 ? (
+      {sortedVillages.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredVillages.map((village) => (
+          {sortedVillages.map((village) => (
             <VillageCard
               key={village.id}
               village={village}

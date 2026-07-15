@@ -97,7 +97,7 @@ export const mockVillages: Village[] = [
     image: portoGolfImg,
   },
   {
-    id: 3,
+    id: "3",
     name: "Porto Heliopolis",
     developer: "Amer group",
     startingPrice: "1.8M",
@@ -105,7 +105,7 @@ export const mockVillages: Village[] = [
     image: portoGolfImg,
   },
   {
-    id: 4,
+    id: "4",
     name: "Porto New Cairo",
     developer: "Amer group",
     startingPrice: "2.7M",
@@ -113,7 +113,7 @@ export const mockVillages: Village[] = [
     image: portoGolfImg,
   },
   {
-    id: 5,
+    id:"5",
     name: "Porto October",
     developer: "Amer group",
     startingPrice: "1.5M",
@@ -121,7 +121,7 @@ export const mockVillages: Village[] = [
     image: portoGolfImg,
   },
   {
-    id: 6,
+    id:"6",
     name: "Porto South",
     developer: "Amer group",
     startingPrice: "2.2M",
@@ -132,7 +132,7 @@ export const mockVillages: Village[] = [
 
 export const mockProperties: Property[] = [
   {
-    id: 1,
+    id: "1",
     creationDate: "04/11/2026",
     name: "Chalet in golden bay",
     village: "Porto Golf",
@@ -145,9 +145,15 @@ export const mockProperties: Property[] = [
     propertyType: "Chalet",
     finishingStatus: "Finished",
     deliveryDate: "2027",
-    area: "122",
-    bedrooms: 3,
-    bathrooms: 1,
+    // area: "122",
+    // bedrooms: 3,
+    // bathrooms: 1,
+
+    stats: [
+      { icon: "area", value: "125 sqm" },
+      { icon: "bed", value: "3" },
+      { icon: "bath", value: "1" },
+    ],
     orientation: "Sea view",
     lastUpdated: "Last updated 2 days ago",
     description:

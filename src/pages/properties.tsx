@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { FiSearch, FiEye, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { FiEye, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
 import { mockProperties, propertyFormFields } from "../data";
 import DataTable, { type ColumnDef, type ActionDef } from "../components/Ui/DataTable";
 import Pagination from "../components/Ui/Pagination";
@@ -10,6 +10,9 @@ import Button from "../components/Ui/Button";
 import defaultImage from "../assets/default.png";
 import type { Property } from "../interface";
 import { truncateText } from "../utils";
+import FilterSortSection, { type FilterConfig } from "../components/Ui/FilterSortSection";
+import FilterDrawer from "../components/Ui/filterCcomponents/FilterDrawer";
+import { useUnitsFilter, matchUnit } from "../hooks/useUnitsFilter";
 
 // ─── Status badge helper ──────────────────────────────────────────────────────
 
@@ -109,6 +112,7 @@ const propertiesColumns: ColumnDef<Property>[] = [
 
 export default function PropertiesPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [propertiesList, setPropertiesList] = useState<Property[]>(() => {
@@ -126,30 +130,170 @@ export default function PropertiesPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
 
-  // ── Derived data ───────────────────────────────────────────────────────────
-  const filteredProperties = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-    return propertiesList.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.village.toLowerCase().includes(q) ||
-        p.status.toLowerCase().includes(q) ||
-        p.listingType.toLowerCase().includes(q)
-    );
-  }, [searchQuery, propertiesList]);
+  // More Filters drawer
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
-  const totalPages = Math.ceil(filteredProperties.length / PAGE_SIZE);
+  // ── Extended Drawer Filters Hook ───────────────────────────────────────────
+  const {
+    filters,
+    tempFilters,
+    setTempFilters,
+    applyFilters,
+    resetFilters,
+    tempFilteredCount,
+  } = useUnitsFilter(propertiesList);
 
-  const pagedProperties = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return filteredProperties.slice(start, start + PAGE_SIZE);
-  }, [filteredProperties, currentPage]);
+  // ── Filter values from URL ─────────────────────────────────────────────────
+  const selectedListing = useMemo(() => {
+    const val = searchParams.get("listingType");
+    return val ? val.split(",") : [];
+  }, [searchParams]);
 
-  // Reset to page 1 when search changes
+  const selectedPropertyType = useMemo(() => {
+    const val = searchParams.get("propertyType");
+    return val ? val.split(",") : [];
+  }, [searchParams]);
+
+  const selectedStatus = useMemo(() => {
+    const val = searchParams.get("status");
+    return val ? val.split(",") : [];
+  }, [searchParams]);
+
+  const activeSort = useMemo(() => {
+    return searchParams.get("sort") || "";
+  }, [searchParams]);
+
+  // Reset to page 1 when search query changes
   const handleSearch = useCallback((q: string) => {
     setSearchQuery(q);
     setCurrentPage(1);
   }, []);
+
+  // Update URL filter parameters
+  const handleFilterChange = (key: string, values: string[]) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (values.length > 0) {
+      newParams.set(key, values.join(","));
+    } else {
+      newParams.delete(key);
+    }
+    setSearchParams(newParams, { replace: true });
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (sortVal: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (sortVal) {
+      newParams.set("sort", sortVal);
+    } else {
+      newParams.delete("sort");
+    }
+    setSearchParams(newParams, { replace: true });
+    setCurrentPage(1);
+  };
+
+  // ── Derived data (Filtering + Sorting) ─────────────────────────────────────
+  const filteredProperties = useMemo(() => {
+    return propertiesList.filter((p) => {
+      // 1. Text Search Query (filters by name, village, status, listingType)
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchesQuery =
+          p.name.toLowerCase().includes(q) ||
+          p.village.toLowerCase().includes(q) ||
+          p.status.toLowerCase().includes(q) ||
+          p.listingType.toLowerCase().includes(q);
+        if (!matchesQuery) return false;
+      }
+
+      // 2. Listing Type Filter
+      if (selectedListing.length > 0) {
+        const matchesListing = selectedListing.some(
+          (type) => p.listingType.toLowerCase() === type.toLowerCase()
+        );
+        if (!matchesListing) return false;
+      }
+
+      // 3. Property Type Filter
+      if (selectedPropertyType.length > 0) {
+        const matchesPropType = selectedPropertyType.some(
+          (type) => (p.propertyType || "").toLowerCase() === type.toLowerCase()
+        );
+        if (!matchesPropType) return false;
+      }
+
+      // 4. Property Status Filter
+      if (selectedStatus.length > 0) {
+        const matchesStatus = selectedStatus.some(
+          (stat) => p.status.toLowerCase() === stat.toLowerCase()
+        );
+        if (!matchesStatus) return false;
+      }
+
+      // 5. Extended/Drawer filters using useUnitsFilter matchUnit logic
+      if (!matchUnit(p, filters)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [propertiesList, searchQuery, selectedListing, selectedPropertyType, selectedStatus, filters]);
+
+  const sortedProperties = useMemo(() => {
+    const list = [...filteredProperties];
+    if (!activeSort) return list;
+
+    const parsePrice = (priceStr: string | undefined): number => {
+      if (!priceStr) return 0;
+      return parseFloat(priceStr.replace(/[^0-9.]/g, "")) || 0;
+    };
+
+    const parseDate = (dateStr: string): number => {
+      const parts = dateStr.split("/");
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        return new Date(year, month, day).getTime();
+      }
+      return new Date(dateStr).getTime() || 0;
+    };
+
+    list.sort((a, b) => {
+      if (activeSort === "newest") {
+        return parseDate(b.creationDate) - parseDate(a.creationDate);
+      }
+      if (activeSort === "oldest") {
+        return parseDate(a.creationDate) - parseDate(b.creationDate);
+      }
+      if (activeSort === "min-price") {
+        return parsePrice(a.price) - parsePrice(b.price);
+      }
+      if (activeSort === "max-price") {
+        return parsePrice(b.price) - parsePrice(a.price);
+      }
+      if (activeSort === "sooner-delivery") {
+        const da = a.deliveryDate ? parseInt(a.deliveryDate, 10) || 9999 : 9999;
+        const db = b.deliveryDate ? parseInt(b.deliveryDate, 10) || 9999 : 9999;
+        return da - db;
+      }
+      if (activeSort === "late-delivery") {
+        const da = a.deliveryDate ? parseInt(a.deliveryDate, 10) || 0 : 0;
+        const db = b.deliveryDate ? parseInt(b.deliveryDate, 10) || 0 : 0;
+        return db - da;
+      }
+      return 0;
+    });
+
+    return list;
+  }, [filteredProperties, activeSort]);
+
+  const totalPages = Math.ceil(sortedProperties.length / PAGE_SIZE);
+
+  const pagedProperties = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return sortedProperties.slice(start, start + PAGE_SIZE);
+  }, [sortedProperties, currentPage]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleViewDetails = useCallback(
@@ -169,18 +313,11 @@ export default function PropertiesPage() {
     localStorage.setItem("porto_properties", JSON.stringify(updated));
     setIsDeleteOpen(false);
     setPropertyToDelete(null);
-    // If current page is now out of range, go back one
     setCurrentPage((prev) => {
-      const newTotal = Math.ceil(updated.filter((p) => {
-        const q = searchQuery.toLowerCase();
-        return (
-          p.name.toLowerCase().includes(q) ||
-          p.village.toLowerCase().includes(q)
-        );
-      }).length / PAGE_SIZE);
+      const newTotal = Math.ceil(updated.length / PAGE_SIZE);
       return Math.min(prev, Math.max(1, newTotal));
     });
-  }, [propertyToDelete, propertiesList, searchQuery]);
+  }, [propertyToDelete, propertiesList]);
 
   const handleCreateSubmit = useCallback(
     (data: Record<string, unknown>) => {
@@ -240,37 +377,97 @@ export default function PropertiesPage() {
     [handleViewDetails, handleOpenDelete, navigate]
   );
 
-  
+  // Filter config object for the filter bar dropdowns
+  const filterConfigs: FilterConfig[] = [
+    {
+      id: "listingType",
+      label: "Listing",
+      options: [
+        { label: "Developer", value: "Developer" },
+        { label: "Resale", value: "Resale" },
+        { label: "Rent", value: "Rent" },
+      ],
+      value: selectedListing,
+      onChange: (vals) => handleFilterChange("listingType", vals),
+    },
+    {
+      id: "propertyType",
+      label: "Property type",
+      options: [
+        { label: "Chalet", value: "Chalet" },
+        { label: "Villa", value: "Villa" },
+        { label: "Apartment", value: "Apartment" },
+        { label: "Twin house", value: "Twin house" },
+      ],
+      value: selectedPropertyType,
+      onChange: (vals) => handleFilterChange("propertyType", vals),
+    },
+    {
+      id: "status",
+      label: "Property Status",
+      options: [
+        { label: "Available", value: "Available" },
+        { label: "Available soon", value: "Available soon" },
+        { label: "Pending", value: "Pending" },
+        { label: "Sold out", value: "Sold out" },
+        { label: "Rented", value: "Rented" },
+        { label: "Not available", value: "Not available" },
+      ],
+      value: selectedStatus,
+      onChange: (vals) => handleFilterChange("status", vals),
+    },
+  ];
+
+  const sortOptions = [
+    { label: "Newest", value: "newest" },
+    { label: "Oldest", value: "oldest" },
+    { label: "Minimum price", value: "min-price" },
+    { label: "Maximum price", value: "max-price" },
+    { label: "Sooner delivery date", value: "sooner-delivery" },
+    { label: "Late delivery date", value: "late-delivery" },
+  ];
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="w-full flex flex-col gap-6">
 
-      {/* ── Toolbar ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        {/* Search */}
-        <div className="relative flex items-center w-full sm:max-w-xs">
-          <FiSearch className="absolute left-3 w-[18px] h-[18px] text-text-naturalGray pointer-events-none" />
-          <input
-            type="text"
-            id="properties-search"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search by name, village or status..."
-            className="w-full h-10 pl-9 pr-4 rounded-md border border-border bg-white text-text-secondary placeholder:text-text-naturalGray focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-[14px] font-poppins"
+      {/* ── Filter & Sort Bar ────────────────────────────────────────────── */}
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 w-full">
+        <div className="flex-1 w-full">
+          <FilterSortSection
+            searchPlaceholder="Search properties..."
+            searchValue={searchQuery}
+            onSearchChange={handleSearch}
+            filters={filterConfigs}
+            sortOptions={sortOptions}
+            activeSortValue={activeSort}
+            onSortChange={handleSortChange}
+            onMoreFiltersClick={() => setIsFilterDrawerOpen(true)}
           />
         </div>
 
-        {/* Create button */}
         <Button
           variant="create"
           leftIcon={<FiPlus size={16} />}
           onClick={() => setIsCreateOpen(true)}
           id="create-property-btn"
+          className="self-end xl:self-auto h-10 px-6 rounded-[12px]"
         >
           Add Property
         </Button>
       </div>
+
+      {/* More Filters Drawer */}
+      <FilterDrawer
+        isOpen={isFilterDrawerOpen}
+        onClose={() => setIsFilterDrawerOpen(false)}
+        tempFilters={tempFilters}
+        setTempFilters={setTempFilters}
+        applyFilters={applyFilters}
+        resetFilters={resetFilters}
+        tempFilteredCount={tempFilteredCount}
+      />
+
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
       <DataTable<Property>

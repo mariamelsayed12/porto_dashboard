@@ -10,7 +10,7 @@ export interface Village {
 }
 
 export interface Property {
-  id: string | number;
+  id: string  |number ;
   name: string;
   village: string;
   listingType: string;
@@ -22,8 +22,13 @@ export interface Property {
   location?: string;
   propertyType?: string;
   area?: string;
-  bedrooms?: number;
-  bathrooms?: number;
+  bedrooms?: number | string;
+  bathrooms?: number | string;
+
+    stats?: {
+    icon: string;
+    value: string;
+  }[];
   finishingStatus?: string;
   deliveryDate?: string;
   amenities?: string[];
