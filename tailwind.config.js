@@ -12,6 +12,10 @@ export default {
       border: "var(--border)",
       "light-primary": "var(--light-primary)",
       "light-gray": "var(--light-gray)",
+      warning: "var(--warning)",
+      errorRed: "var(--error-red)",
+      successGreen: "var(--success-green)",
+      brandBlue: "var(--brand-blue)",
 
       background: "var(--background)",
       "surface-overlay": "var(--surface-overlay)",

@@ -24,7 +24,18 @@ export interface Property {
   area?: string;
   bedrooms?: number;
   bathrooms?: number;
-  finishingStatus?:string;
-  deliveryDate?:string;
+  finishingStatus?: string;
+  deliveryDate?: string;
   amenities?: string[];
+  // Details page fields
+  description?: string;
+  orientation?: string;
+  lastUpdated?: string;
+  gallery?: string[];
+  totalPrice?: string;
+  downPayment?: string;
+  monthlyInstallment?: string;
+  installmentPeriod?: string;
+  rentalYield?: string;
 }
+

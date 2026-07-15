@@ -143,9 +143,23 @@ export const mockProperties: Property[] = [
     image: portoGolfImg,
     location: "North Coast, Egypt",
     propertyType: "Chalet",
-    finishingStatus:"Finished",
-    deliveryDate:"2027"
+    finishingStatus: "Finished",
+    deliveryDate: "2027",
+    area: "122",
+    bedrooms: 3,
+    bathrooms: 1,
+    orientation: "Sea view",
+    lastUpdated: "Last updated 2 days ago",
+    description:
+      "Lorem ipsum dolor sit amet consectetur. Nibh convallis donec fermentum a eget non adipiscing. Ultricies nisi ut auctor id nisl nunc enim. Mi erat est velit egestas massa. Tincidunt tristique lectus vivamus risus cursus lorem. Nibh tempor id ut ultrices luctus. Ultrices mauris sodales nibh laoreet. Tempus venenatis lectus blandit rhoncus. Felis dis amet et tristique dolor integer. Id fermentum varius amet praesent et suspendisse sit leo nunc. Mollis ipsum ultricies at etiam venenatis nunc vulputate tincidunt.\n\nSit venenatis mauris vitae id quis lectus dui vestibulum. Amet laoreet nullam ultricies nec eget in et curabitur. Faucibus eget pretium sit blandit. Convallis diam egestas fusce.",
+    amenities: ["Pool", "Gym", "Beach", "Security", "Parking", "Restaurant", "Kids Area", "Tennis Court"],
+    totalPrice: "4,000,000 EGP",
+    downPayment: "250,000 EGP",
+    monthlyInstallment: "50,000 EGP",
+    installmentPeriod: "5 years",
+    rentalYield: "7%",
   },
+
   {
     id: 2,
     creationDate: "05/11/2026",

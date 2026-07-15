@@ -17,6 +17,12 @@ body {
   --secondary:#B9DBE5; 
   --light-primary:#E9F4F7;
   --light-gray:#EDEFF2;
+  --warning:#FFF5E6;
+  --error-red:#FDE7E7;
+  --success-green:#EDF6EB;
+  --brand-blue:#E9F4F7;
+
+
  
   /* Background */
  --background: #F5F9FA;
