@@ -3,8 +3,10 @@ import { useState, useEffect, useMemo } from "react";
 import { mockVillages } from "../data";
 import FormDrawer from "../components/Ui/FormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
-import type { Village } from "../interface/village";
+import type { Village } from "../interface/index";
 import type { BreadcrumbItem } from "../components/Ui/BreadCrumb";
+
+import defaultImg from "../assets/default.png";
 
 interface HeaderActionConfig {
   showActions: boolean;
@@ -124,7 +126,7 @@ export default function VillageDetailsPage() {
           { label: "Restaurant", value: "restaurant" },
           { label: "Kids Area", value: "kids" },
         ],
-        defaultValue: ["pool", "gym", "beach", "security", "parking"],
+        defaultValue: village.amenities || ["pool", "gym", "beach", "security", "parking"],
       },
       {
         type: "divider" as const,
@@ -149,7 +151,7 @@ export default function VillageDetailsPage() {
         label: "Location",
         type: "location" as const,
         required: true,
-        defaultValue: "760 Market Street, San Francisco, CA 94107",
+        defaultValue: village.location || "760 Market Street, San Francisco, CA 94107",
       },
     ];
   }, [village]);
@@ -166,6 +168,8 @@ export default function VillageDetailsPage() {
             developer: data.developer,
             startingPrice: data.price || v.startingPrice,
             image: coverImage,
+            location: data.location,
+            amenities: data.amenities,
           }
         : v
     );
@@ -186,11 +190,11 @@ export default function VillageDetailsPage() {
 
   if (!village) {
     return (
-      <div className="w-full text-center py-20">
-        <h2 className="text-2xl font-bold">Village Not Found</h2>
+      <div className="w-full text-center py-20 bg-[#f5f9fa]">
+        <h2 className="text-2xl font-bold font-poppins text-[#141414]">Village Not Found</h2>
         <button
           onClick={() => navigate("/villages")}
-          className="mt-4 px-6 py-2 bg-primary text-white rounded-lg"
+          className="mt-4 px-6 py-2 bg-primary text-white rounded-lg font-poppins font-medium hover:bg-[#156D85] transition-colors"
         >
           Back to Villages
         </button>
@@ -198,107 +202,154 @@ export default function VillageDetailsPage() {
     );
   }
 
+
+  const startingPriceFormatted = village.startingPrice.toLowerCase().includes("egp") 
+    ? village.startingPrice 
+    : `${village.startingPrice} EGP`;
+
   return (
-    <div className="w-full flex flex-col gap-8 bg-white p-6 sm:p-8 rounded-[20px] shadow-sm">
-      {/* Cover Image Banner */}
-      <div className="relative h-[250px] sm:h-[380px] w-full rounded-2xl overflow-hidden shrink-0">
-        <img
-          src={village.image}
-          alt={village.name}
-          className="w-full h-full object-cover"
-        />
-        {/* Cover gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-        
-        <div className="absolute bottom-6 left-6 text-white flex flex-col gap-1">
-          <h2 className="text-2xl sm:text-4xl font-bold font-poppins">
-            {village.name}
-          </h2>
-          <p className="text-sm sm:text-base opacity-90 font-medium">
-            by {village.developer}
-          </p>
-        </div>
-      </div>
-
-      {/* Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Details column */}
-        <div className="md:col-span-2 flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <h3 className="text-lg font-semibold text-[#141414]">About the Village</h3>
-            <p className="text-[#464646] leading-relaxed">
-              Enjoy a premium lifestyle in {village.name}, developed by the prestigious {village.developer}. This high-end development features world-class amenities, stunning modern architectural designs, and scenic landscaped views. Conveniently located and offering outstanding investment returns, it represents a remarkable choice for homeowners and investors alike.
-            </p>
+    <div className="w-full min-h-screen bg-[#f5f9fa] flex flex-col lg:flex-row gap-[24px] p-0 md:px-[32px] ">
+      {/* Left content panel */}
+      <div className="flex-1 flex flex-col gap-[24px] max-w-full lg:max-w-[845px]">
+        {/* Header banner card */}
+        <div className="bg-white border border-border border-solid rounded-md flex flex-col md:flex-row p-[24px] gap-[24px] w-full items-stretch">
+          {/* Cover image banner container */}
+          <div className="w-full md:w-[378px] h-[250px] md:h-auto rounded-md overflow-hidden shrink-0 relative">
+            <img
+              src={village.image}
+              alt={village.name}
+              className="w-full h-full object-cover absolute inset-0"
+            />
           </div>
 
-          <div className="h-px bg-[#EDEFF2]" />
-
-          <div className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold text-[#141414]">Amenities</h3>
-            <div className="flex flex-wrap gap-2">
-              {["Pool", "Gym", "Beach Access", "24/7 Security", "Private Parking", "Restaurants", "Kids Play Area"].map((amenity) => (
-                <span
-                  key={amenity}
-                  className="px-3.5 py-1.5 rounded-full bg-light-primary text-primary font-medium text-sm"
-                >
-                  {amenity}
+          {/* Details stack on right */}
+          <div className="flex-1 flex flex-col gap-[24px] justify-between">
+            {/* Header metadata */}
+            <div className="flex flex-col gap-[8px] items-start w-full">
+              <div className="flex items-center justify-between w-full gap-4 flex-wrap">
+                <h2 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
+                  {village.name}
+                </h2>
+                <span className="font-poppins font-normal text-[14px] text-[#464646]">
+                  Last updated 2 days ago
                 </span>
-              ))}
+              </div>
+              <p className="font-poppins font-medium text-[16px] text-[#464646] w-full">
+                {village.developer}
+              </p>
             </div>
-          </div>
 
-          <div className="h-px bg-[#EDEFF2]" />
+            {/* Stats boxes grid (2x2 layout) */}
+            <div className="grid grid-cols-2 gap-[16px] md:gap-[24px] w-full">
+              {/* Box 1: Starting Price */}
+              <div className="bg-[#edeff2] border border-border border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
+                <span className="font-poppins font-normal text-[16px] text-[#464646]">
+                  Starting price
+                </span>
+                <span className="font-poppins font-medium text-[19px] text-[#141414] truncate max-w-full">
+                  {startingPriceFormatted}
+                </span>
+              </div>
 
-          <div className="flex flex-col gap-4">
-            <h3 className="text-lg font-semibold text-[#141414]">Location & Neighbors</h3>
-            <p className="text-[#464646] text-sm">
-              Address: 760 Market Street, San Francisco, CA 94107
-            </p>
-            <div className="h-[200px] w-full rounded-xl overflow-hidden border border-border relative">
-              <img
-                src="http://localhost:3845/assets/fd881645eb39bb214d3b2d6fab51d737327727a9.png"
-                alt="Map Location"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-[40%] left-[45%] bg-[#0f0f14]/90 text-white text-xs px-3 py-1.5 rounded-lg border border-border shadow-lg">
-                📍 760 Market Street
+              {/* Box 2: Properties */}
+              <div className="bg-[#edeff2] border border-[#d4d5d8] border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
+                <span className="font-poppins font-normal text-[16px] text-[#464646]">
+                  Properties
+                </span>
+                <span className="font-poppins font-medium text-[19px] text-[#141414]">
+                  {village.availableProperties || 24}
+                </span>
+              </div>
+
+              {/* Box 3: Amenities Count */}
+              <div className="bg-[#edeff2] border border-[#d4d5d8] border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
+                <span className="font-poppins font-normal text-[16px] text-[#464646]">
+                  Amenities
+                </span>
+                <span className="font-poppins font-medium text-[19px] text-[#141414]">
+                  {village.amenities ? village.amenities.length : 8}
+                </span>
+              </div>
+
+              {/* Box 4: Rental Yield */}
+              <div className="bg-[#edeff2] border border-[#d4d5d8] border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
+                <span className="font-poppins font-normal text-[16px] text-[#464646]">
+                  Rental yield
+                </span>
+                <span className="font-poppins font-medium text-[19px] text-[#141414]">
+                  7%
+                </span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Stats sidebar card */}
-        <div className="bg-[#f5f9fa] border border-border rounded-2xl p-6 flex flex-col gap-6 h-fit">
-          <h3 className="text-lg font-semibold text-[#141414]">Key Information</h3>
-
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-[#747474] font-medium uppercase tracking-wider">Starting Price</span>
-            <span className="text-2xl font-bold text-[#141414]">{village.startingPrice}</span>
+        {/* Amenities section card */}
+        <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] p-[24px] flex flex-col gap-[24px] w-full">
+          <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
+            Amenities
+          </h3>
+          <div className="flex flex-wrap gap-[16px] items-center w-full">
+            {(village.amenities && village.amenities.length > 0 
+              ? village.amenities.map(a => a.charAt(0).toUpperCase() + a.slice(1))
+              : ["Pool", "Gym", "Beach Access", "24/7 Security", "Private Parking", "Restaurants", "Kids Play Area"]
+            ).map((label, idx) => (
+              <div
+                key={idx}
+                className="bg-white border border-[#d4d5d8] border-solid px-[24px] py-[12px] rounded-[44px] select-none hover:bg-[#edeff2] transition-colors duration-150 cursor-default"
+              >
+                <p className="font-poppins font-medium text-[16px] text-[#464646] text-center leading-[normal]">
+                  {label}
+                </p>
+              </div>
+            ))}
           </div>
+        </div>
 
-          <div className="h-px bg-[#EDEFF2]" />
-
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-[#747474] font-medium uppercase tracking-wider">Rental Yield</span>
-            <span className="text-xl font-semibold text-primary">7.5%</span>
+        {/* Location Section Card */}
+        <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] overflow-hidden w-full flex flex-col">
+          <div className="h-[244px] w-full relative overflow-hidden shrink-0">
+            <img
+              src={defaultImg}
+              alt="Location map coordinates"
+              className="w-full h-full object-cover"
+            />
           </div>
-
-          <div className="h-px bg-[#EDEFF2]" />
-
-          <div className="flex flex-col gap-1">
-            <span className="text-xs text-[#747474] font-medium uppercase tracking-wider">Available Properties</span>
-            <span className="text-xl font-semibold text-[#141414]">{village.availableProperties} units</span>
+          <div className="p-[24px] flex flex-col items-start w-full">
+            <div className="flex flex-col gap-[8px] items-start leading-[normal] w-full">
+              <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
+                Location
+              </h3>
+              <p className="font-poppins font-normal text-[16px] text-[#464646]">
+                {village.location || "North coast, Egypt"}
+              </p>
+            </div>
           </div>
-
-          <button
-            onClick={() => navigate("/villages")}
-            className="mt-2 w-full py-3 rounded-xl border border-[#747474] text-[#1e8cab] font-medium hover:bg-slate-100 transition-colors text-center text-sm"
-          >
-            Back to Villages
-          </button>
         </div>
       </div>
 
+      {/* Right gallery sidebar column */}
+      <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] p-[24px] flex flex-col gap-[24px] w-full lg:w-[411px] shrink-0">
+        <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
+          Village Gallery
+        </h3>
+        <div className="flex flex-col gap-[24px] w-full">
+          {[1, 2, 3, 4, 5].map((item) => (
+            <div
+              key={item}
+              className="h-[153px] rounded-[12px] overflow-hidden relative w-full shrink-0 shadow-xs border border-border"
+            >
+              <img
+                src={defaultImg}
+                alt={`Gallery photo ${item}`}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Form Drawer (Edit Flow) */}
       <FormDrawer
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
@@ -309,6 +360,7 @@ export default function VillageDetailsPage() {
         cancelText="Cancel"
       />
 
+      {/* Delete Modal Confirmation overlay */}
       <DeleteModal
         isOpen={isDeleteOpen}
         onClose={() => setIsDeleteOpen(false)}

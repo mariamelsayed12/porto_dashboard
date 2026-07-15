@@ -14,7 +14,7 @@ interface BreadcrumbProps {
 const Breadcrumb = ({ items, className = "" }: BreadcrumbProps) => {
   return (
     <nav
-      className={`flex items-center flex-wrap gap-x-1.5 sm:gap-x-2.5 font-poppins text-[18px] sm:text-[23px] leading-none ${className}`}
+      className={`flex items-center flex-wrap gap-x-1.5 md:gap-x-2.5 font-poppins text-[15px] md:text-[23px] leading-none ${className}`}
       aria-label="Breadcrumb"
     >
       {items.map((item, index) => {
@@ -24,7 +24,7 @@ const Breadcrumb = ({ items, className = "" }: BreadcrumbProps) => {
           <div key={item.label} className="flex items-center">
             {/* Separator / */}
             {index > 0 && (
-              <span className="text-text-naturalGray font-medium mr-1.5 sm:mr-2.5 select-none">
+              <span className="text-text-naturalGray font-medium mr-1.5 md:mr-2.5 select-none">
                 /
               </span>
             )}

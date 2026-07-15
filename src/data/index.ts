@@ -1,6 +1,6 @@
 import type { FieldConfig } from "../components/Ui/FormDrawer";
-import type { Village } from "../interface/village";
-import type { Property } from "../interface/property";
+import type { Village } from "../interface/index";
+import type { Property } from "../interface/index";
 import portoGolfImg from "../assets/default.png";
 
 
@@ -141,6 +141,10 @@ export const mockProperties: Property[] = [
     price: "1.2M",
     developer: "Amer group",
     image: portoGolfImg,
+    location: "North Coast, Egypt",
+    propertyType: "Chalet",
+    finishingStatus:"Finished",
+    deliveryDate:"2027"
   },
   {
     id: 2,
@@ -152,6 +156,10 @@ export const mockProperties: Property[] = [
     price: "2.8M",
     developer: "Amer group",
     image: portoGolfImg,
+    location: "Alexandria, Egypt",
+    propertyType: "Apartment",
+    finishingStatus:"Semi Finished",
+    deliveryDate:"2028"
   },
   {
     id: 3,
@@ -163,6 +171,11 @@ export const mockProperties: Property[] = [
     price: "4.5M",
     developer: "Amer group",
     image: portoGolfImg,
+    location: "Ain Sokhna, Egypt",
+    propertyType: "Villa",
+    finishingStatus:"Not finished",
+    deliveryDate:"none"
+
   },
   {
     id: 4,
@@ -174,6 +187,10 @@ export const mockProperties: Property[] = [
     price: "1.6M",
     developer: "Amer group",
     image: portoGolfImg,
+    location: "6th of October, Egypt",
+    propertyType: "Chalet",
+    finishingStatus:"Fully furnished",
+    deliveryDate:"none"
   },
   {
     id: 5,
@@ -185,6 +202,146 @@ export const mockProperties: Property[] = [
     price: "3.2M",
     developer: "Amer group",
     image: portoGolfImg,
+    location: "New Cairo, Egypt",
+    propertyType: "Penthouse",
+    finishingStatus:"Semi Finished",
+    deliveryDate:"2029"
+  },
+  {
+    id: 6,
+    creationDate: "09/11/2026",
+    name: "Twin House in Porto Heliopolis",
+    village: "Porto Heliopolis",
+    listingType: "Resale",
+    status: "Available",
+    price: "5.1M",
+    developer: "Amer group",
+    image: portoGolfImg,
+    location: "Heliopolis, Egypt",
+    propertyType: "Twin House",
+      finishingStatus:"Semi Finished",
+    deliveryDate:"2029"
+
+    },
+  {
+    id: 7,
+    creationDate: "10/11/2026",
+    name: "Studio in Porto Marina",
+    village: "Porto Marina",
+    listingType: "Developer",
+    status: "Available Soon",
+    price: "0.9M",
+    developer: "Amer group",
+    image: portoGolfImg,
+    location: "Alexandria, Egypt",
+    propertyType: "Studio",
+    finishingStatus:"Semi Finished",
+    deliveryDate:"2029"
+  },
+  {
+    id: 8,
+    creationDate: "11/11/2026",
+    name: "Duplex in Porto Golf",
+    village: "Porto Golf",
+    listingType: "Developer",
+    status: "Rented",
+    price: "2.3M",
+    developer: "Amer group",
+    image: portoGolfImg,
+    location: "North Coast, Egypt",
+    propertyType: "Duplex",
+    finishingStatus:"Semi Finished",
+    deliveryDate:"2029"
   },
 ];
+
+export const propertyFormFields: FieldConfig[] = [
+  {
+    name: "name",
+    label: "Property name",
+    type: "text",
+    placeholder: "Input text",
+    required: true,
+  },
+  {
+    name: "village",
+    label: "Village",
+    type: "text",
+    placeholder: "e.g. Porto Golf",
+    required: true,
+  },
+  {
+    name: "developer",
+    label: "Developer name",
+    type: "text",
+    placeholder: "Input text",
+    required: true,
+  },
+  {
+    type: "divider",
+    name: "div-1",
+  },
+  {
+    name: "price",
+    label: "Price",
+    type: "text",
+    placeholder: "e.g. 1.5M EGP",
+    required: true,
+  },
+  {
+    name: "listingType",
+    label: "Listing type",
+    type: "text",
+    placeholder: "Developer or Resale",
+    required: true,
+  },
+  {
+    name: "propertyType",
+    label: "Property type",
+    type: "text",
+    placeholder: "e.g. Chalet, Villa, Apartment",
+    required: false,
+  },
+  {
+    type: "divider",
+    name: "div-2",
+  },
+  {
+    name: "amenities",
+    label: "Amenities",
+    type: "multiselect",
+    placeholder: "Select amenities",
+    required: false,
+    options: [
+      { label: "Pool", value: "pool" },
+      { label: "Gym", value: "gym" },
+      { label: "Beach", value: "beach" },
+      { label: "Security", value: "security" },
+      { label: "Parking", value: "parking" },
+      { label: "Restaurant", value: "restaurant" },
+      { label: "Kids Area", value: "kids" },
+    ],
+  },
+  {
+    type: "divider",
+    name: "div-3",
+  },
+  {
+    name: "media",
+    label: "Media",
+    type: "image-upload",
+    required: false,
+  },
+  {
+    type: "divider",
+    name: "div-4",
+  },
+  {
+    name: "location",
+    label: "Location",
+    type: "location",
+    required: false,
+  },
+];
+
 

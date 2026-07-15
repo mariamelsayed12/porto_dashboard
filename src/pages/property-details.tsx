@@ -3,8 +3,8 @@ import { useState, useEffect, useMemo } from "react";
 import { mockProperties } from "../data";
 import FormDrawer from "../components/Ui/FormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
-import type { Property } from "../interface/property";
 import type { BreadcrumbItem } from "../components/Ui/BreadCrumb";
+import type { Property } from "../interface";
 
 interface HeaderActionConfig {
   showActions: boolean;

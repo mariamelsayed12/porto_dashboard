@@ -1,5 +1,5 @@
 import { FiTrash2,  FiArrowUpRight } from "react-icons/fi";
-import type { Village } from "../../interface/village";
+import type { Village } from "../../interface/index";
 import Button from "./Button";
 import PenIcon from "../../icons/pen";
 

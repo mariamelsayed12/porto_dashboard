@@ -6,7 +6,8 @@ import EmptyState from "../components/Ui/EmptyState";
 import FormDrawer from "../components/Ui/FormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
 import { villageFormFields, mockVillages } from "../data";
-import type { Village } from "../interface/village";
+import type { Village } from "../interface/index";
+import defualtImage from "../assets/default.png";
 
 const VillagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,7 +176,7 @@ const VillagesPage = () => {
 
   const handleCreateSubmit = (data: Record<string, any>) => {
     const newId = Date.now();
-    const coverImage = data.media?.cover || "http://localhost:3845/assets/4274e9f7980d4c5c804c931250ac5d0b40b1c7fa.png";
+    const coverImage = data.media?.cover || defualtImage;
 
     const newVillage: Village = {
       id: newId,
@@ -184,6 +185,8 @@ const VillagesPage = () => {
       startingPrice: data.price || "1M",
       availableProperties: 10,
       image: coverImage,
+      location: data.location,
+      amenities: data.amenities,
     };
 
     const updated = [newVillage, ...villagesList];
