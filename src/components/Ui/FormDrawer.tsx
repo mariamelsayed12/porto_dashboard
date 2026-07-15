@@ -28,7 +28,7 @@ export interface FieldConfig {
   helperText?: string;
 }
 
-interface CreateModalProps {
+interface FormDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
@@ -40,7 +40,7 @@ interface CreateModalProps {
   globalError?: string;
 }
 
-export default function CreateModal({
+export default function FormDrawer({
   isOpen,
   onClose,
   title,
@@ -50,7 +50,7 @@ export default function CreateModal({
   cancelText = "Cancel",
   isLoading = false,
   globalError,
-}: CreateModalProps) {
+}: FormDrawerProps) {
   const [values, setValues] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 

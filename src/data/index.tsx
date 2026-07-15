@@ -1,4 +1,4 @@
-import type { FieldConfig } from "../components/Ui/CreateModal";
+import type { FieldConfig } from "../components/Ui/FormDrawer";
 import type { Village } from "../interface/village";
 import portoGolfImg from "../assets/default.png";
 

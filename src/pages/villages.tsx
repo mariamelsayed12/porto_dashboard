@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import VillageCard from "../components/Ui/VillageCard";
 import EmptyState from "../components/Ui/EmptyState";
-import CreateModal from "../components/Ui/CreateModal";
+import FormDrawer from "../components/Ui/FormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
 import { villageFormFields, mockVillages } from "../data";
 import type { Village } from "../interface/village";
@@ -20,6 +20,10 @@ const VillagesPage = () => {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [villageToDelete, setVillageToDelete] = useState<Village | null>(null);
 
+  // Edit form states
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [villageToEdit, setVillageToEdit] = useState<Village | null>(null);
+
   const { isCreateOpen, setIsCreateOpen } = useOutletContext<{
     isCreateOpen: boolean;
     setIsCreateOpen: (open: boolean) => void;
@@ -34,8 +38,126 @@ const VillagesPage = () => {
     [searchQuery, villagesList]
   );
 
+  // Generate edit form fields config pre-populated with active village data
+  const editFormFields = useMemo(() => {
+    if (!villageToEdit) return [];
+    return [
+      {
+        name: "name",
+        label: "Village name",
+        type: "text" as const,
+        placeholder: "Input text",
+        required: true,
+        defaultValue: villageToEdit.name,
+      },
+      {
+        name: "developer",
+        label: "Developer name",
+        type: "text" as const,
+        placeholder: "Input text",
+        required: true,
+        defaultValue: villageToEdit.developer,
+      },
+      {
+        type: "divider" as const,
+        name: "div-1",
+      },
+      {
+        name: "price",
+        label: "Starting price",
+        type: "text" as const,
+        placeholder: "Input text",
+        required: true,
+        defaultValue: villageToEdit.startingPrice,
+      },
+      {
+        name: "rentalYield",
+        label: "Rental yield",
+        type: "text" as const,
+        placeholder: "Input text",
+        required: true,
+        defaultValue: "7.5%",
+      },
+      {
+        type: "divider" as const,
+        name: "div-2",
+      },
+      {
+        name: "amenities",
+        label: "Amenities",
+        type: "multiselect" as const,
+        placeholder: "Select amenities",
+        required: true,
+        options: [
+          { label: "Pool", value: "pool" },
+          { label: "Gym", value: "gym" },
+          { label: "Beach", value: "beach" },
+          { label: "Security", value: "security" },
+          { label: "Parking", value: "parking" },
+          { label: "Restaurant", value: "restaurant" },
+          { label: "Kids Area", value: "kids" },
+        ],
+        defaultValue: ["pool", "gym", "beach", "security", "parking"],
+      },
+      {
+        type: "divider" as const,
+        name: "div-3",
+      },
+      {
+        name: "media",
+        label: "Media",
+        type: "image-upload" as const,
+        required: true,
+        defaultValue: {
+          cover: villageToEdit.image || null,
+          images: [null, null, null, null],
+        },
+      },
+      {
+        type: "divider" as const,
+        name: "div-4",
+      },
+      {
+        name: "location",
+        label: "Location",
+        type: "location" as const,
+        required: true,
+        defaultValue: "760 Market Street, San Francisco, CA 94107",
+      },
+    ];
+  }, [villageToEdit]);
+
   const handleEdit = (id: string | number) => {
-    console.log("Edit village:", id);
+    const village = villagesList.find((v) => v.id === id) || null;
+    setVillageToEdit(village);
+    setIsEditOpen(true);
+  };
+
+  const handleEditSubmit = (data: Record<string, any>) => {
+    if (!villageToEdit) return;
+    
+    // Extract cover image if customized
+    const coverImage = data.media?.cover || villageToEdit.image;
+
+    // Update village in state list
+    setVillagesList((prev) =>
+      prev.map((v) =>
+        v.id === villageToEdit.id
+          ? {
+              ...v,
+              name: data.name,
+              developer: data.developer,
+              startingPrice: data.price || v.startingPrice,
+              image: coverImage,
+            }
+          : v
+      )
+    );
+
+    console.log("Updated Village Form Data Submitted:", data);
+    alert(`Success! Village updated.`);
+    setIsEditOpen(false);
+    setVillageToEdit(null);
   };
 
   const handleDelete = (id: string | number) => {
@@ -58,7 +180,22 @@ const VillagesPage = () => {
 
   const handleCreateSubmit = (data: Record<string, any>) => {
     console.log("Created Village Form Data Submitted:", data);
-    alert(`Success! Check console for submitted Village Form Data.`);
+    
+    // Add to list locally with fake properties count and cover image
+    const newId = Date.now();
+    const coverImage = data.media?.cover || "http://localhost:3845/assets/4274e9f7980d4c5c804c931250ac5d0b40b1c7fa.png";
+    
+    const newVillage: Village = {
+      id: newId,
+      name: data.name,
+      developer: data.developer,
+      startingPrice: data.price || "1M",
+      availableProperties: 10,
+      image: coverImage,
+    };
+    
+    setVillagesList((prev) => [newVillage, ...prev]);
+    alert(`Success! Village created.`);
     setIsCreateOpen(false);
   };
 
@@ -106,14 +243,28 @@ const VillagesPage = () => {
         </div>
       )}
 
-      {/* Reusable Create Village Modal / Slider Drawer */}
-      <CreateModal
+      {/* Reusable Create Village Drawer */}
+      <FormDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         title="Create Village"
         fields={villageFormFields}
         onSubmit={handleCreateSubmit}
         submitText="Create"
+        cancelText="Cancel"
+      />
+
+      {/* Reusable Edit Village Drawer */}
+      <FormDrawer
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setVillageToEdit(null);
+        }}
+        title="Edit Village"
+        fields={editFormFields}
+        onSubmit={handleEditSubmit}
+        submitText="Save Changes"
         cancelText="Cancel"
       />
 
