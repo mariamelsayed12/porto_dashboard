@@ -88,6 +88,19 @@ const propertiesColumns: ColumnDef<Property>[] = [
     width: "w-[16%]",
     render: (v) => <StatusBadge status={v as string} />,
   },
+  {
+    key: "finishingStatus",
+    label: "Finishing status",
+    width: "w-[16%]",
+    render: (v) => <span className="whitespace-nowrap">{v as string ?? "—"}</span>
+  },
+  {
+    key:"deliveryDate",
+    label:"Delivery date",
+    width:"w-[16%]",
+    render:(v)=> <span className="whitespace-nowrap">{v as string}</span>
+  }
+
 ];
 
 // ─── PropertiesPage ───────────────────────────────────────────────────────────
@@ -186,6 +199,8 @@ export default function PropertiesPage() {
         location: data.location as string | undefined,
         propertyType: data.propertyType as string | undefined,
         amenities: data.amenities as string[] | undefined,
+        finishingStatus: data.finishingStatus as string | undefined,
+        deliveryDate: data.deliveryDate as string | undefined,
       };
 
       const updated = [newProperty, ...propertiesList];
