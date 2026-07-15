@@ -39,3 +39,19 @@ export interface Property {
   rentalYield?: string;
 }
 
+
+export interface ActionDef<T> {
+  key: string;
+  label: string;
+  icon?: React.ReactNode;
+  onClick: (row: T) => void;
+  className?: string;
+  disabled?: boolean;
+}
+
+export interface ActionDropdownProps<T> {
+  row: T;
+  actions: ActionDef<T>[];
+}
+
+

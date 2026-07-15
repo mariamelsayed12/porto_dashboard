@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import EmptyState from "./EmptyState";
+import ActionDropdown from "./ActionDropdown";
 
 // ─── Column Definition ──────────────────────────────────────────────────────
 
@@ -111,17 +112,17 @@ export default function DataTable<TRow extends { id: string | number }>({
         >
           {/* ── Head ─────────────────────────────────────────────────── */}
           <thead>
-            <tr className="bg-light-primary border-b border-border">
+            <tr className="bg-light-primary border-b text-center border-border">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`py-[14px] px-4 font-poppins font-medium text-[14px] text-text-darker ${alignClass(col.align)} ${col.width ?? ""}`}
+                  className={`py-[14px] px-4 font-poppins text-center font-medium text-[14px] text-text-darker ${alignClass(col.align)} ${col.width ?? ""}`}
                 >
                   {col.label}
                 </th>
               ))}
               {hasActions && (
-                <th className="py-[14px] px-4 text-right font-poppins font-medium text-[14px] text-text-darker w-[120px]">
+                <th className="py-[14px] px-4 text-center font-poppins font-medium text-[14px] text-text-darker w-[120px]">
                   Actions
                 </th>
               )}
@@ -141,15 +142,15 @@ export default function DataTable<TRow extends { id: string | number }>({
               data.map((row) => (
                 <tr
                   key={row.id}
-                  onClick={() => onRowClick?.(row)}
-                  className={`group transition-colors duration-150 hover:bg-[#F5F9FA] ${onRowClick ? "cursor-pointer" : ""}`}
+                  // onClick={() => onRowClick?.(row)}
+                  className={`group transition-colors text-center duration-150 hover:bg-[#F5F9FA] ${onRowClick ? "cursor-pointer" : ""}`}
                 >
                   {columns.map((col) => {
                     const value = (row as Record<string, unknown>)[col.key];
                     return (
                       <td
                         key={col.key}
-                        className={`py-4 px-4 font-poppins font-normal text-[14px] text-text-secondary ${alignClass(col.align)}`}
+                        className={`py-4 px-4 font-poppins text-center font-normal text-[14px] text-text-secondary ${alignClass(col.align)}`}
                       >
                         {col.render ? col.render(value, row) : (value as ReactNode)}
                       </td>
@@ -160,7 +161,7 @@ export default function DataTable<TRow extends { id: string | number }>({
                   {hasActions && (
                     <td className="py-4 px-4 text-right">
                       <div className="flex items-center justify-end gap-1">
-                        {actions!.map((action) => {
+                        {/* {actions!.map((action) => {
                           if (action.hidden?.(row)) return null;
                           return (
                             <button
@@ -176,7 +177,15 @@ export default function DataTable<TRow extends { id: string | number }>({
                               {action.icon}
                             </button>
                           );
-                        })}
+                        })} */}
+                        {actions && (
+                           <td className="px-4 py-3">
+                            <ActionDropdown
+                             row={row}
+                                   actions={actions}
+                            />
+                           </td>
+                        )}
                       </div>
                     </td>
                   )}

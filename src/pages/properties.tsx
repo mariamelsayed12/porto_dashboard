@@ -9,17 +9,19 @@ import FormDrawer from "../components/Ui/FormDrawer";
 import Button from "../components/Ui/Button";
 import defaultImage from "../assets/default.png";
 import type { Property } from "../interface";
+import { truncateText } from "../utils";
 
 // ─── Status badge helper ──────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    available: "bg-[#edf6eb] text-[#1a7a14]",
-    "available soon": "bg-[#fcf8eb] text-[#9a7500]",
-    pending: "bg-[#fcf8eb] text-[#9a7500]",
-    "sold out": "bg-[#fcedeb] text-[#c0280f]",
-    sold: "bg-[#fcedeb] text-[#c0280f]",
-    rented: "bg-[#ebf0fc] text-[#1a3faa]",
+    available: "bg-successGreen text-text-secondary",
+    "available soon": "bg-warning text-text-secondary",
+    pending: "bg-[#fcf8eb] text-text-secondary",
+    "sold out": "bg-brandBlue text-text-secondary",
+    rented: "bg-brandBlue text-text-secondary",
+    "not available": "bg-errorRed text-text-secondary",
+
   };
   const cls = styles[status.toLowerCase()] ?? "bg-light-gray text-text-darker";
   return (
@@ -52,7 +54,7 @@ const propertiesColumns: ColumnDef<Property>[] = [
     width: "w-[26%]",
     render: (v) => (
       <span className="block max-w-[220px] truncate font-medium text-text-secondary" title={v as string}>
-        {v as string}
+        {truncateText(v as string, 20)}
       </span>
     ),
   },
@@ -217,26 +219,28 @@ export default function PropertiesPage() {
     () => [
       {
         key: "view",
-        label: "View details",
+        label: "View ",
         icon: <FiEye size={16} />,
         onClick: handleViewDetails,
       },
       {
         key: "edit",
-        label: "Edit property",
+        label: "Edit",
         icon: <FiEdit2 size={16} />,
         onClick: (row) => navigate(`/properties/${row.id}`),
       },
       {
         key: "delete",
-        label: "Delete property",
+        label: "Delete ",
         icon: <FiTrash2 size={16} />,
         onClick: handleOpenDelete,
-        className: "hover:text-red-600 hover:bg-red-50",
+        className: "text-red-600  ",
       },
     ],
     [handleViewDetails, handleOpenDelete, navigate]
   );
+
+  
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
