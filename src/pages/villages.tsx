@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useNavigate } from "react-router-dom";
 import { FiSearch } from "react-icons/fi";
 import VillageCard from "../components/Ui/VillageCard";
 import EmptyState from "../components/Ui/EmptyState";
@@ -8,19 +8,18 @@ import DeleteModal from "../components/Ui/DeleteModal";
 import { villageFormFields, mockVillages } from "../data";
 import type { Village } from "../interface/village";
 
-// import portoMarinaImg from "../assets/porto_marina.png";
-// import portoMountainImg from "../assets/porto_mountain.png";
-
-// Mock villages data – replace with API response later
-
-
 const VillagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [villagesList, setVillagesList] = useState<Village[]>(mockVillages);
+  const navigate = useNavigate();
+
+  const [villagesList, setVillagesList] = useState<Village[]>(() => {
+    const saved = localStorage.getItem("porto_villages");
+    return saved ? JSON.parse(saved) : mockVillages;
+  });
+
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [villageToDelete, setVillageToDelete] = useState<Village | null>(null);
 
-  // Edit form states
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [villageToEdit, setVillageToEdit] = useState<Village | null>(null);
 
@@ -29,7 +28,7 @@ const VillagesPage = () => {
     setIsCreateOpen: (open: boolean) => void;
   }>();
 
-  // Filter villages by name (ready for API integration)
+  // Filter villages by name
   const filteredVillages = useMemo(
     () =>
       villagesList.filter((v) =>
@@ -38,7 +37,6 @@ const VillagesPage = () => {
     [searchQuery, villagesList]
   );
 
-  // Generate edit form fields config pre-populated with active village data
   const editFormFields = useMemo(() => {
     if (!villageToEdit) return [];
     return [
@@ -135,27 +133,22 @@ const VillagesPage = () => {
 
   const handleEditSubmit = (data: Record<string, any>) => {
     if (!villageToEdit) return;
-    
-    // Extract cover image if customized
     const coverImage = data.media?.cover || villageToEdit.image;
 
-    // Update village in state list
-    setVillagesList((prev) =>
-      prev.map((v) =>
-        v.id === villageToEdit.id
-          ? {
-              ...v,
-              name: data.name,
-              developer: data.developer,
-              startingPrice: data.price || v.startingPrice,
-              image: coverImage,
-            }
-          : v
-      )
+    const updated = villagesList.map((v) =>
+      v.id === villageToEdit.id
+        ? {
+            ...v,
+            name: data.name,
+            developer: data.developer,
+            startingPrice: data.price || v.startingPrice,
+            image: coverImage,
+          }
+        : v
     );
 
-    console.log("Updated Village Form Data Submitted:", data);
-    alert(`Success! Village updated.`);
+    setVillagesList(updated);
+    localStorage.setItem("porto_villages", JSON.stringify(updated));
     setIsEditOpen(false);
     setVillageToEdit(null);
   };
@@ -168,23 +161,22 @@ const VillagesPage = () => {
 
   const handleConfirmDelete = () => {
     if (villageToDelete) {
-      setVillagesList((prev) => prev.filter((v) => v.id !== villageToDelete.id));
+      const updated = villagesList.filter((v) => v.id !== villageToDelete.id);
+      setVillagesList(updated);
+      localStorage.setItem("porto_villages", JSON.stringify(updated));
       setIsDeleteOpen(false);
       setVillageToDelete(null);
     }
   };
 
   const handleViewDetails = (id: string | number) => {
-    console.log("View details for village:", id);
+    navigate(`/villages/${id}`);
   };
 
   const handleCreateSubmit = (data: Record<string, any>) => {
-    console.log("Created Village Form Data Submitted:", data);
-    
-    // Add to list locally with fake properties count and cover image
     const newId = Date.now();
     const coverImage = data.media?.cover || "http://localhost:3845/assets/4274e9f7980d4c5c804c931250ac5d0b40b1c7fa.png";
-    
+
     const newVillage: Village = {
       id: newId,
       name: data.name,
@@ -193,9 +185,10 @@ const VillagesPage = () => {
       availableProperties: 10,
       image: coverImage,
     };
-    
-    setVillagesList((prev) => [newVillage, ...prev]);
-    alert(`Success! Village created.`);
+
+    const updated = [newVillage, ...villagesList];
+    setVillagesList(updated);
+    localStorage.setItem("porto_villages", JSON.stringify(updated));
     setIsCreateOpen(false);
   };
 
@@ -214,8 +207,6 @@ const VillagesPage = () => {
             className="w-full h-10 pl-9 pr-4 rounded-md border border-border bg-white text-text-secondary placeholder:text-text-naturalGray focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm"
           />
         </div>
-
-       
       </div>
 
       {/* Villages Grid */}

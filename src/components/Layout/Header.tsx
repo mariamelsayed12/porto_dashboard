@@ -1,14 +1,30 @@
 import { useLocation } from "react-router-dom";
-import { FiMenu, FiPlus, FiChevronDown } from "react-icons/fi";
+import { FiMenu, FiPlus, FiChevronDown, FiTrash2, FiEdit3 } from "react-icons/fi";
 import { useState } from "react";
 import Button from "../Ui/Button";
+import Breadcrumb from "../Ui/BreadCrumb";
+import type { BreadcrumbItem } from "../Ui/BreadCrumb";
+
+interface HeaderActionConfig {
+  showActions: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  editLabel?: string;
+}
 
 interface HeaderProps {
   onMenuToggle: () => void;
   onCreateClick?: () => void;
+  breadcrumbItems?: BreadcrumbItem[];
+  headerActions?: HeaderActionConfig | null;
 }
 
-export default function Header({ onMenuToggle, onCreateClick }: HeaderProps) {
+export default function Header({
+  onMenuToggle,
+  onCreateClick,
+  breadcrumbItems = [],
+  headerActions = null,
+}: HeaderProps) {
   const location = useLocation();
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
@@ -24,15 +40,16 @@ export default function Header({ onMenuToggle, onCreateClick }: HeaderProps) {
       case "/settings":
         return "Settings";
       default:
-        // Capitalize route name
-        const segment = pathname.substring(1);
+        const segment = pathname.substring(1).split("/")[0];
         return segment.charAt(0).toUpperCase() + segment.slice(1);
     }
   };
 
+  const currentTitle = getPageTitle(location.pathname);
+
   return (
     <header className="h-[72px] bg-white border-b border-border shadow-xs px-4 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-30">
-      {/* Left side: Hamburger (mobile/tablet only) + Page Title */}
+      {/* Left side: Hamburger + Page Title / Breadcrumbs */}
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuToggle}
@@ -41,35 +58,68 @@ export default function Header({ onMenuToggle, onCreateClick }: HeaderProps) {
         >
           <FiMenu size={24} />
         </button>
-        <h1 className="font-semibold text-[23px] text-text-secondary leading-none">
-          {getPageTitle(location.pathname)}
-        </h1>
+
+        {breadcrumbItems && breadcrumbItems.length > 0 ? (
+          <Breadcrumb items={breadcrumbItems} />
+        ) : (
+          <h1 className="font-semibold text-[23px] text-text-secondary leading-none">
+            {currentTitle}
+          </h1>
+        )}
       </div>
 
-      {/* Right side: Action Button + Divider + User Profile */}
+      {/* Right side: Action Buttons + User Profile */}
       <div className="flex items-center gap-4 md:gap-5">
-        {/* Create Property CTA */}
-        {getPageTitle(location.pathname) === "Villages" && (
-          <Button
-            variant="create"
-            onClick={onCreateClick}
-            leftIcon={<FiPlus size={20} />}
-            className="px-3 md:px-4"
-        >
-          <span className="">Create Village</span>
-        </Button>
+        {/* If generic details actions are present, render them */}
+        {headerActions && headerActions.showActions ? (
+          <div className="flex items-center gap-3">
+            {/* Delete button (red trash bin) */}
+            <Button
+              variant="icon"
+              onClick={headerActions.onDelete}
+              className="flex items-center justify-center p-2 rounded-xl text-[#D7110E] hover:bg-red-50 transition-colors w-10 h-10 select-none active:scale-95"
+              aria-label="Delete entity"
+            >
+              <FiTrash2 size={24} />
+            </Button>
+            {/* Edit button */}
+            <Button
+              variant="create"
+              onClick={headerActions.onEdit}
+              leftIcon={<FiEdit3 size={18} />}
+              className="px-4 h-[36px] bg-[#1E8CAB] hover:bg-[#156D85] text-white"
+            >
+              {headerActions.editLabel || "Edit"}
+            </Button>
+          </div>
+        ) : (
+          <>
+            {/* Villages Create Button */}
+            {currentTitle === "Villages" && (
+              <Button
+                variant="create"
+                onClick={onCreateClick}
+                leftIcon={<FiPlus size={20} />}
+                className="px-3 md:px-4"
+              >
+                <span>Create Village</span>
+              </Button>
+            )}
+
+            {/* Overview / Overview Create Button */}
+            {currentTitle === "Overview" && (
+              <Button
+                variant="create"
+                onClick={onCreateClick}
+                leftIcon={<FiPlus size={20} />}
+                className="px-3 md:px-4"
+              >
+                <span>Create Property</span>
+              </Button>
+            )}
+          </>
         )}
 
-           {getPageTitle(location.pathname) === "Overview" && (
-          <Button
-            variant="create"
-            onClick={onCreateClick}
-            leftIcon={<FiPlus size={20} />}
-            className="px-3 md:px-4"
-        >
-          <span className="">Create Property</span>
-        </Button>
-        )}
         {/* Vertical Divider (Hidden on small mobile) */}
         <div className="hidden xs:block w-px h-8 bg-border" />
 

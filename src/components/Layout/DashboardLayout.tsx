@@ -5,10 +5,22 @@ import Header from "./Header";
 import PageContainer from "./PageContainer";
 import { AnimatePresence, motion } from "framer-motion";
 import { FiX } from "react-icons/fi";
+import type { BreadcrumbItem } from "../Ui/BreadCrumb";
+
+interface HeaderActionConfig {
+  showActions: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  editLabel?: string;
+}
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  // States for dynamic breadcrumbs and actions overrides
+  const [breadcrumbItems, setBreadcrumbItems] = useState<BreadcrumbItem[]>([]);
+  const [headerActions, setHeaderActions] = useState<HeaderActionConfig | null>(null);
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-background text-text-secondary">
@@ -59,11 +71,20 @@ export default function DashboardLayout() {
         <Header
           onMenuToggle={() => setSidebarOpen(true)}
           onCreateClick={() => setIsCreateOpen(true)}
+          breadcrumbItems={breadcrumbItems}
+          headerActions={headerActions}
         />
 
         {/* Scrollable Page Body */}
         <PageContainer>
-          <Outlet context={{ isCreateOpen, setIsCreateOpen }} />
+          <Outlet
+            context={{
+              isCreateOpen,
+              setIsCreateOpen,
+              setBreadcrumbItems,
+              setHeaderActions,
+            }}
+          />
         </PageContainer>
       </div>
     </div>

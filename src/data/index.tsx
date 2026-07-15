@@ -1,5 +1,6 @@
 import type { FieldConfig } from "../components/Ui/FormDrawer";
 import type { Village } from "../interface/village";
+import type { Property } from "../interface/property";
 import portoGolfImg from "../assets/default.png";
 
 
@@ -125,6 +126,64 @@ export const mockVillages: Village[] = [
     developer: "Amer group",
     startingPrice: "2.2M",
     availableProperties: 9,
+    image: portoGolfImg,
+  },
+];
+
+export const mockProperties: Property[] = [
+  {
+    id: 1,
+    creationDate: "04/11/2026",
+    name: "Chalet in golden bay",
+    village: "Porto Golf",
+    listingType: "Developer",
+    status: "Available",
+    price: "1.2M",
+    developer: "Amer group",
+    image: portoGolfImg,
+  },
+  {
+    id: 2,
+    creationDate: "05/11/2026",
+    name: "Apartment in Porto Marina",
+    village: "Porto Marina",
+    listingType: "Resale",
+    status: "Available",
+    price: "2.8M",
+    developer: "Amer group",
+    image: portoGolfImg,
+  },
+  {
+    id: 3,
+    creationDate: "06/11/2026",
+    name: "Villa in Porto South",
+    village: "Porto South",
+    listingType: "Developer",
+    status: "Pending",
+    price: "4.5M",
+    developer: "Amer group",
+    image: portoGolfImg,
+  },
+  {
+    id: 4,
+    creationDate: "07/11/2026",
+    name: "Chalet in Porto October",
+    village: "Porto October",
+    listingType: "Resale",
+    status: "Sold",
+    price: "1.6M",
+    developer: "Amer group",
+    image: portoGolfImg,
+  },
+  {
+    id: 5,
+    creationDate: "08/11/2026",
+    name: "Penthouse in Porto New Cairo",
+    village: "Porto New Cairo",
+    listingType: "Developer",
+    status: "Available",
+    price: "3.2M",
+    developer: "Amer group",
     image: portoGolfImg,
   },
 ];
