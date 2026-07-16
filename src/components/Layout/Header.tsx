@@ -109,7 +109,7 @@ export default function Header({
             )}
 
             {/* Overview / Overview Create Button */}
-            {currentTitle === "Overview" && (
+            {/* {currentTitle === "Overview" && (
               <Button
                 variant="create"
                 onClick={onCreateClick}
@@ -118,7 +118,7 @@ export default function Header({
               >
                 <span>Create Property</span>
               </Button>
-            )}
+            )} */}
 
             {
               currentTitle === "Properties" && (
