@@ -4,6 +4,8 @@ import { useState } from "react";
 import Button from "../Ui/Button";
 import Breadcrumb from "../Ui/BreadCrumb";
 import type { BreadcrumbItem } from "../Ui/BreadCrumb";
+import { IoLockClosedOutline } from "react-icons/io5";
+import { IoIosLogOut } from "react-icons/io";
 
 interface HeaderActionConfig {
   showActions: boolean;
@@ -169,29 +171,32 @@ export default function Header({
 
           {/* Simple Dropdown Menu */}
           {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md border border-border shadow-md py-1 z-50">
+            <div className="absolute right-0 mt-2 w-[222px] bg-white rounded-md border border-border shadow-md py-1 z-50">
               <a
                 href="#profile"
-                className="block px-4 py-2 text-[14px] text-text-secondary hover:bg-light-primary hover:text-primary transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-[14px] text-text-secondary hover:bg-light-primary hover:text-primary transition-colors"
                 onClick={() => setProfileDropdownOpen(false)}
               >
-                My Profile
+               <IoLockClosedOutline  size={24}/>
+
+              Change Password
               </a>
-              <a
+              {/* <a
                 href="#settings"
                 className="block px-4 py-2 text-[14px] text-text-secondary hover:bg-light-primary hover:text-primary transition-colors"
                 onClick={() => setProfileDropdownOpen(false)}
               >
                 Account Settings
-              </a>
+              </a> */}
               <hr className="my-1 border-border" />
               <button
                 onClick={() => {
                   console.log("Logout clicked");
                   setProfileDropdownOpen(false);
                 }}
-                className="w-full text-left block px-4 py-2 text-[14px] text-red-600 hover:bg-red-50 transition-colors"
+                className="w-full flex items-center gap-2 px-4 py-2 text-[14px] text-red-600 hover:bg-red-50 transition-colors"
               >
+                <IoIosLogOut size={24} />
                 Sign out
               </button>
             </div>
