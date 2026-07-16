@@ -7,6 +7,7 @@ import PropertiesPage from "../pages/properties";
 import PropertyDetailsPage from "../pages/property-details";
 import SettingsPage from "../pages/settings";
 import LoginPage from "../pages/login";
+import ResetPasswordPage from "../pages/reset-password";
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -23,6 +24,7 @@ const router = createBrowserRouter(
     
     {/* login route */}
     <Route path="/login" element={<LoginPage />} />
+    <Route path="/reset-password" element={<ResetPasswordPage />} />
     </>
 ))
 

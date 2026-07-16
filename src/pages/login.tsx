@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-
+import { useNavigate } from "react-router-dom";
 import Input from "../components/Ui/Input";
 import Button from "../components/Ui/Button";
 import logoUrl from "../assets/Logo.svg";
@@ -22,6 +22,7 @@ const loginSchema = yup.object().shape({
 type LoginFormInputs = yup.InferType<typeof loginSchema>;
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -108,7 +109,7 @@ export default function LoginPage() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    console.log("Forgot password clicked");
+                    navigate("/reset-password");
                   }}
                   className="text-[13px] font-inter font-normal text-[#1e8cab] hover:underline"
                 >
