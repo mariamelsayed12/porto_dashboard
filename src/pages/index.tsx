@@ -1,3 +1,4 @@
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { FiMapPin } from "react-icons/fi";
 import QuickAction from "../components/Ui/QuickAction";
 import KpiCard from "../components/Ui/KpiCard";
@@ -65,6 +66,11 @@ const chartData = [
 ];
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const { setIsCreateOpen } = useOutletContext<{
+    setIsCreateOpen: (open: boolean) => void;
+  }>();
+
   return (
     <div className="w-full flex flex-col gap-8 md:gap-10">
       {/* 1. Quick Actions Row */}
@@ -74,21 +80,27 @@ export default function HomePage() {
           description="Search and manage existing listings."
           Icon={SearchIcon}
           iconColor="text-[#1E8CAB]"
-          onClick={() => console.log("Find Property clicked")}
+          onClick={() => navigate("/properties")}
         />
         <QuickAction
           title="Add Property"
           description="Create a new listing and publish it."
           Icon={AddPropertyIcon}
           iconColor="text-[#E07A5F]"
-          onClick={() => console.log("Add Property clicked")}
+          onClick={() => {
+            setIsCreateOpen(true);
+            navigate("/properties");
+          }}
         />
         <QuickAction
           title="Add Village"
           description="Manage compounds and destinations."
           Icon={BeachIcon}
           iconColor="text-[#F2CC8F]"
-          onClick={() => console.log("Add Village clicked")}
+          onClick={() => {
+            setIsCreateOpen(true);
+            navigate("/villages");
+          }}
         />
       </section>
 

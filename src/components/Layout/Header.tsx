@@ -117,6 +117,20 @@ export default function Header({
                 <span>Create Property</span>
               </Button>
             )}
+
+            {
+              currentTitle === "Properties" && (
+                 <Button
+          variant="create"
+          leftIcon={<FiPlus size={16} />}
+          onClick={onCreateClick}
+          id="create-property-btn"
+          className="self-end xl:self-auto h-10 px-6 rounded-[12px]"
+        >
+          Add Property
+        </Button>
+              )
+            }
           </>
         )}
 

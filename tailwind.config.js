@@ -16,7 +16,7 @@ export default {
       errorRed: "var(--error-red)",
       successGreen: "var(--success-green)",
       brandBlue: "var(--brand-blue)",
-
+      "error-red-600": "var(--error-red-600)",
       background: "var(--background)",
       "surface-overlay": "var(--surface-overlay)",
 

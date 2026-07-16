@@ -1,12 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { FiEye, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi";
+import { useNavigate, useSearchParams, useOutletContext } from "react-router-dom";
+import { FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { mockProperties, propertyFormFields } from "../data";
 import DataTable, { type ColumnDef, type ActionDef } from "../components/Ui/DataTable";
 import Pagination from "../components/Ui/Pagination";
 import DeleteModal from "../components/Ui/DeleteModal";
 import FormDrawer from "../components/Ui/FormDrawer";
-import Button from "../components/Ui/Button";
 import defaultImage from "../assets/default.png";
 import type { Property } from "../interface";
 import { truncateText } from "../utils";
@@ -124,7 +123,10 @@ export default function PropertiesPage() {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Create drawer
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const { isCreateOpen, setIsCreateOpen } = useOutletContext<{
+    isCreateOpen: boolean;
+    setIsCreateOpen: (open: boolean) => void;
+  }>();
 
   // Delete modal
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -446,15 +448,7 @@ export default function PropertiesPage() {
           />
         </div>
 
-        <Button
-          variant="create"
-          leftIcon={<FiPlus size={16} />}
-          onClick={() => setIsCreateOpen(true)}
-          id="create-property-btn"
-          className="self-end xl:self-auto h-10 px-6 rounded-[12px]"
-        >
-          Add Property
-        </Button>
+       
       </div>
 
       {/* More Filters Drawer */}

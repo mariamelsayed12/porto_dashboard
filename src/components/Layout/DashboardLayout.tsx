@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import PageContainer from "./PageContainer";
@@ -17,6 +17,12 @@ interface HeaderActionConfig {
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const location = useLocation();
+
+  // Close create drawer when navigating to a new route
+  useEffect(() => {
+    setIsCreateOpen(false);
+  }, [location.pathname]);
 
   // States for dynamic breadcrumbs and actions overrides
   const [breadcrumbItems, setBreadcrumbItems] = useState<BreadcrumbItem[]>([]);

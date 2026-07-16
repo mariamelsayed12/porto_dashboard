@@ -98,7 +98,7 @@ export default function DeleteModal({
                 onClick={onClose}
                 disabled={disabled || isLoading}
                 variant="icon"
-                className="h-12 px-6 rounded-xl border border-[#747474] text-[#1e8cab] hover:bg-[#EDEFF2] transition-colors font-medium text-base text-center flex items-center justify-center !w-auto"
+                className="h-12 px-6 rounded-xl border border-border text-primary  transition-colors font-medium text-base text-center flex items-center justify-center !w-auto"
               >
                 {cancelText}
               </Button>
@@ -108,7 +108,7 @@ export default function DeleteModal({
                 disabled={disabled || isLoading}
                 isLoading={isLoading}
                 variant="modalPrimary"
-                className="h-12 px-6 rounded-xl bg-[#d7110e] hover:bg-red-700 text-white transition-colors font-medium text-base text-center flex items-center justify-center !w-auto"
+                className="h-12 px-6 rounded-xl bg-error-red-600 hover:bg-red-700 text-white transition-colors font-medium text-base text-center flex items-center justify-center !w-auto"
               >
                 {confirmText}
               </Button>
