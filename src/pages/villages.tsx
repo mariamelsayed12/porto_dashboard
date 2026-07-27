@@ -8,6 +8,7 @@ import { villageFormFields, mockVillages } from "../data";
 import type { Village } from "../interface/index";
 import defualtImage from "../assets/default.png";
 import FilterSortSection, { type FilterConfig } from "../components/Ui/FilterSortSection";
+import { showSuccessToast } from "../components/Ui/Toast";
 
 const VillagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -217,6 +218,7 @@ const VillagesPage = () => {
 
     setVillagesList(updated);
     localStorage.setItem("porto_villages", JSON.stringify(updated));
+    showSuccessToast("Village updated successfully.");
     setIsEditOpen(false);
     setVillageToEdit(null);
   };
@@ -232,6 +234,7 @@ const VillagesPage = () => {
       const updated = villagesList.filter((v) => v.id !== villageToDelete.id);
       setVillagesList(updated);
       localStorage.setItem("porto_villages", JSON.stringify(updated));
+      showSuccessToast("Village deleted successfully.");
       setIsDeleteOpen(false);
       setVillageToDelete(null);
     }
@@ -259,6 +262,7 @@ const VillagesPage = () => {
     const updated = [newVillage, ...villagesList];
     setVillagesList(updated);
     localStorage.setItem("porto_villages", JSON.stringify(updated));
+    showSuccessToast("Village created successfully.");
     setIsCreateOpen(false);
   };
 

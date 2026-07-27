@@ -9,6 +9,7 @@ import PricingCard from "../components/Ui/PricingCard";
 import PropertyGalleryCard from "../components/Ui/PropertyGalleryCard";
 import type { BreadcrumbItem } from "../components/Ui/BreadCrumb";
 import type { Property } from "../interface";
+import { showSuccessToast } from "../components/Ui/Toast";
 
 import defaultImg from "../assets/default.png";
 
@@ -116,6 +117,7 @@ export default function PropertyDetailsPage() {
     );
     setPropertiesList(updatedList);
     localStorage.setItem("porto_properties", JSON.stringify(updatedList));
+    showSuccessToast("Property details updated successfully.");
     setIsEditOpen(false);
   };
 
@@ -125,6 +127,7 @@ export default function PropertyDetailsPage() {
       (p) => String(p.id) !== String(property.id)
     );
     localStorage.setItem("porto_properties", JSON.stringify(updatedList));
+    showSuccessToast("Property deleted successfully.");
     setIsDeleteOpen(false);
     navigate("/properties");
   };

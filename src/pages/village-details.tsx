@@ -5,6 +5,7 @@ import FormDrawer from "../components/Ui/FormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
 import type { Village } from "../interface/index";
 import type { BreadcrumbItem } from "../components/Ui/BreadCrumb";
+import { showSuccessToast } from "../components/Ui/Toast";
 
 import defaultImg from "../assets/default.png";
 
@@ -176,7 +177,7 @@ export default function VillageDetailsPage() {
 
     setVillagesList(updatedList);
     localStorage.setItem("porto_villages", JSON.stringify(updatedList));
-    alert(`Success! Village updated.`);
+    showSuccessToast("Village updated successfully.");
     setIsEditOpen(false);
   };
 
@@ -184,6 +185,7 @@ export default function VillageDetailsPage() {
     if (!village) return;
     const updatedList = villagesList.filter((v) => String(v.id) !== String(village.id));
     localStorage.setItem("porto_villages", JSON.stringify(updatedList));
+    showSuccessToast("Village deleted successfully.");
     setIsDeleteOpen(false);
     navigate("/villages");
   };

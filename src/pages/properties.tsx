@@ -10,6 +10,7 @@ import defaultImage from "../assets/default.png";
 import type { Property } from "../interface";
 import { truncateText } from "../utils";
 import FilterSortSection, { type FilterConfig } from "../components/Ui/FilterSortSection";
+import { showSuccessToast } from "../components/Ui/Toast";
 import FilterDrawer from "../components/Ui/filterCcomponents/FilterDrawer";
 import { useUnitsFilter, matchUnit } from "../hooks/useUnitsFilter";
 
@@ -313,6 +314,7 @@ export default function PropertiesPage() {
     const updated = propertiesList.filter((p) => p.id !== propertyToDelete.id);
     setPropertiesList(updated);
     localStorage.setItem("porto_properties", JSON.stringify(updated));
+    showSuccessToast("Property deleted successfully.");
     setIsDeleteOpen(false);
     setPropertyToDelete(null);
     setCurrentPage((prev) => {
@@ -347,6 +349,7 @@ export default function PropertiesPage() {
       const updated = [newProperty, ...propertiesList];
       setPropertiesList(updated);
       localStorage.setItem("porto_properties", JSON.stringify(updated));
+      showSuccessToast("Property created successfully.");
       setIsCreateOpen(false);
       setCurrentPage(1);
     },
