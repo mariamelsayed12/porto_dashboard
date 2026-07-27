@@ -22,16 +22,16 @@ export default function PropertyGalleryCard({
       : Array(5).fill(undefined);
 
   return (
-    <div className="bg-white border border-border rounded-md p-6 flex flex-col gap-4 w-full">
+    <div className="bg-white border border-[#D4D5D8] rounded-[12px] p-[24px] flex flex-col gap-[24px] w-full">
       <p className="font-poppins font-medium text-[23px] text-text-secondary leading-none">
         Property gallery
       </p>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-[24px] overflow-y-auto no-scrollbar scroll-smooth snap-y snap-mandatory w-full h-[353px]">
         {displayImages.map((src, idx) => (
           <div
             key={idx}
-            className="relative w-full h-[120px] rounded-md overflow-hidden bg-light-gray shrink-0"
+            className="relative w-full h-[101.4px] rounded-[12px] overflow-hidden bg-light-gray shrink-0 snap-start"
           >
             {src ? (
               <img
