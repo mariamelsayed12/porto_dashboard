@@ -164,7 +164,7 @@ export default function FormDrawer({
             className="relative z-10 flex h-full w-full flex-col bg-[#F5F9FA] shadow-2xl sm:max-w-[522px]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-6 border-b border-[#EDEFF2] bg-[#F5F9FA]">
+            <div className="flex items-center justify-between px-6 py-6 border-b border-[#C0C4C8] bg-[#F5F9FA]">
               <h2 className="text-[23px] font-medium text-text-secondary">
                 {title}
               </h2>
@@ -193,7 +193,10 @@ export default function FormDrawer({
               {fields.map((field, idx) => {
                 if (field.type === "divider") {
                   return (
-                    <div key={`div-${idx}`} className="h-0.5 w-full bg-[#EDEFF2] my-2" />
+                    <div
+                      key={`div-${idx}`}
+                      className="w-full border-t border-[#C0C4C8]"
+                    />
                   );
                 }
 
@@ -248,7 +251,7 @@ export default function FormDrawer({
             </form>
 
             {/* Footer actions */}
-            <div className="flex justify-end items-center gap-4 px-6 py-6 border-t border-[#EDEFF2] bg-[#F5F9FA]">
+            <div className="flex justify-end items-center gap-4 px-6 py-6 border-t border-[#C0C4C8] bg-[#F5F9FA]">
               <Button
                 type="button"
                 onClick={onClose}

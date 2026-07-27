@@ -296,7 +296,7 @@ export default function VillageDetailsPage() {
             ).map((label, idx) => (
               <div
                 key={idx}
-                className="bg-white border border-[#d4d5d8] border-solid px-[24px] py-[12px] rounded-[44px] select-none hover:bg-[#edeff2] transition-colors duration-150 cursor-default"
+                className="bg-white border border-[#d4d5d8] border-solid px-[24px] py-[12px] rounded-[44px] select-none  transition-colors duration-150 cursor-default"
               >
                 <p className="font-poppins font-medium text-[16px] text-[#464646] text-center leading-[normal]">
                   {label}
