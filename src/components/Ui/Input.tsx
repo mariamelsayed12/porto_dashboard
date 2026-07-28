@@ -26,7 +26,7 @@ const inputContainerVariants = cva(
         false: "",
       },
       disabled: {
-        true: "bg-slate-50 border-gray-200 opacity-60 cursor-not-allowed pointer-events-none",
+        true: "!bg-[#EDEFF2] !border-transparent cursor-default pointer-events-none",
         false: "",
       },
     },
@@ -118,7 +118,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             type={currentInputType}
             disabled={disabled}
-            className={`w-full h-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-text-secondary placeholder:text-text-naturalGray placeholder:opacity-75 disabled:cursor-not-allowed ${className}`.trim()}
+            className={`w-full h-full bg-transparent border-none outline-none focus:outline-none focus:ring-0 text-text-secondary placeholder:text-text-naturalGray placeholder:opacity-75 disabled:text-text-secondary disabled:opacity-100 disabled:cursor-default ${className}`.trim()}
             {...props}
           />
 

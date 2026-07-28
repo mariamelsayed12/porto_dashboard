@@ -74,7 +74,7 @@ export default function CountryCodeDropdown({
           border border-[#747474] rounded-sm bg-white px-3 py-2.5
           text-text-darker text-[13px] font-normal cursor-pointer select-none
           hover:border-[#464646] transition-colors focus:outline-none focus:ring-1 focus:ring-[#1E8CAB] focus:border-[#1E8CAB]
-          disabled:bg-slate-50 disabled:border-gray-200 disabled:opacity-60 disabled:cursor-not-allowed
+          disabled:bg-[#EDEFF2] disabled:border-transparent disabled:opacity-100 disabled:cursor-default
         `}
       >
         <span className="flex items-center gap-1">
