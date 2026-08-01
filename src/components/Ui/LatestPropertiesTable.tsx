@@ -1,19 +1,40 @@
 import { FiMoreVertical } from "react-icons/fi";
 
-interface Property {
-  id: string | number;
-  creationDate: string;
-  name: string;
-  village: string;
-  listingType: string;
-  status: "Available" | "Sold Out" | "Rented" | "Available Soon" | string;
+interface LatestProperty {
+  _id: string;
+    name: string;
+    listingType: string;
+    status: string;
+    installmentPrice: number;
+    finishingStatus: string;
+    deliveryDate: string;
+    village: {
+      _id: string;
+      name: string;
+      slug: string;
+    };
+    createdAt: string;
 }
 
 interface LatestPropertiesTableProps {
-  properties: Property[];
+  properties: LatestProperty[];
 }
 
 export default function LatestPropertiesTable({ properties }: LatestPropertiesTableProps) {
+  // Format ISO date string to a human-readable format
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
   // Status badge style helper
   const getStatusStyle = (status: string) => {
     switch (status.toLowerCase()) {
@@ -69,15 +90,15 @@ export default function LatestPropertiesTable({ properties }: LatestPropertiesTa
           {/* Table Body */}
           <tbody className="divide-y divide-border">
             {properties.map((property) => (
-              <tr key={property.id} className="hover:bg-[#fcfdfe] transition-colors">
+              <tr key={property._id} className="hover:bg-[#fcfdfe] transition-colors">
                 <td className="py-4 px-4 font-medium text-[14px] text-text-secondary whitespace-nowrap">
-                  {property.creationDate}
+                  {formatDate(property.createdAt)}
                 </td>
-                <td className="py-4 px-4 font-medium text-[14px] text-text-secondary truncate max-w-[180px]">
+                <td className="py-4 px-4 font-medium text-[14px] text-text-secondary truncate max-w-[160px]">
                   {property.name}
                 </td>
                 <td className="py-4 px-4 font-medium text-[14px] text-text-secondary truncate max-w-[140px]">
-                  {property.village}
+                  {property.village.name}
                 </td>
                 <td className="py-4 px-4 font-medium text-[14px] text-text-secondary whitespace-nowrap">
                   {property.listingType}

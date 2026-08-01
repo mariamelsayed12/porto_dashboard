@@ -1,11 +1,13 @@
 import { useForm } from "react-hook-form";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import Input from "../components/Ui/Input";
 import Button from "../components/Ui/Button";
 import logoUrl from "../assets/Logo.svg";
 import loginHeroUrl from "../assets/login.png";
+import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
+import { useState } from "react";
 
 // Validation schema using Yup
 const loginSchema = yup.object().shape({
@@ -22,11 +24,11 @@ const loginSchema = yup.object().shape({
 type LoginFormInputs = yup.InferType<typeof loginSchema>;
 
 export default function LoginPage() {
-  const navigate = useNavigate();
+  const [loading,setLoading]=useState(false);
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginFormInputs>({
     resolver: yupResolver(loginSchema) as any,
     defaultValues: {
@@ -36,10 +38,48 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = (data: LoginFormInputs) => {
-    // Demonstration submit action (no backend/API logic as requested)
-    console.log("Login form submitted successfully:", data);
-    alert(`Form submitted successfully! Email: ${data.email}`);
+  const onSubmit =async (data: LoginFormInputs) => {
+    setLoading(true);
+    console.log(data);
+  try {
+    const res = await fetch("https://real-estate-gules-three.vercel.app/api/v1/admin/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: data.email,
+        password: data.password,
+      }),
+    });
+    if(res.status===200){
+      const data=await res.json();
+      localStorage.setItem("loggedInUser", JSON.stringify(data));
+      const accessToken = data.token;
+      localStorage.setItem("accessToken", accessToken);
+      showSuccessToast("Login successfully");
+      setLoading(false);
+      setTimeout(() => {
+        location.replace("/");
+      }, 2000);
+    }else{
+      setLoading(false);
+      let errorMessage = "Incorrect email or password.";
+      try {
+        const errorData = await res.json();
+        if (errorData) {
+          errorMessage = errorData.message || errorData.error || errorData.msg || "Invalid email or password.";
+        }
+      } catch (err) {
+        // fallback to default error message
+      }
+      showErrorToast(errorMessage);
+    }
+  } catch (error) {
+    showErrorToast("Network error. Please check your internet connection.");
+  }
+
+    
   };
 
   return (
@@ -105,7 +145,7 @@ export default function LoginPage() {
                   />
                   <span className="text-[13px] font-inter text-[#464646]">Remember me</span>
                 </label>
-                <a
+                {/* <a
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
@@ -114,7 +154,7 @@ export default function LoginPage() {
                   className="text-[13px] font-inter font-normal text-[#1e8cab] hover:underline"
                 >
                   Forgot password ?
-                </a>
+                </a> */}
               </div>
 
               {/* Submit Button */}
@@ -122,7 +162,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   variant="login"
-                  isLoading={isSubmitting}
+                  isLoading={loading}
                 >
                   Login
                 </Button>

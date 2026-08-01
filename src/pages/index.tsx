@@ -3,69 +3,72 @@ import { FiMapPin } from "react-icons/fi";
 import QuickAction from "../components/Ui/QuickAction";
 import KpiCard from "../components/Ui/KpiCard";
 import LatestPropertiesTable from "../components/Ui/LatestPropertiesTable";
-import PropertyDistributionChart from "../components/Ui/PropertyDistributionChart";
+// import PropertyDistributionChart from "../components/Ui/PropertyDistributionChart";
 import HomeIcon from "../icons/homeicon";
 import TrueHomeIcon from "../icons/TrueHomeIcon";
 import XHomeIcon from "../icons/XHomeIcon";
 import SearchIcon from "../icons/SearchIcon";
 import AddPropertyIcon from "../icons/AddPropertyIcon";
 import BeachIcon from "../icons/BeachIcon";
+import { useGetDashboardOverviewQuery } from "../../app/services/DashboardOverview";
+import PropertyDistributionChart from "../components/Ui/PropertyDistributionChart";
 
 // Mock Data for Table
-const latestProperties = [
-  {
-    id: 1,
-    creationDate: "04/11/2026",
-    name: "Challet in golden bay",
-    village: "Porto Golf",
-    listingType: "Developer",
-    status: "Available",
-  },
-  {
-    id: 2,
-    creationDate: "04/11/2026",
-    name: "Challet in golden bay",
-    village: "Porto Golf",
-    listingType: "Developer",
-    status: "Available",
-  },
-  {
-    id: 3,
-    creationDate: "04/11/2026",
-    name: "Challet in golden bay",
-    village: "Porto Golf",
-    listingType: "Developer",
-    status: "Available",
-  },
-  {
-    id: 4,
-    creationDate: "04/11/2026",
-    name: "Challet in golden bay",
-    village: "Porto Golf",
-    listingType: "Developer",
-    status: "Available",
-  },
-  {
-    id: 5,
-    creationDate: "04/11/2026",
-    name: "Challet in golden bay",
-    village: "Porto Golf",
-    listingType: "Developer",
-    status: "Available",
-  },
-];
+// const latestProperties = [
+//   {
+//     id: 1,
+//     creationDate: "04/11/2026",
+//     name: "Challet in golden bay",
+//     village: "Porto Golf",
+//     listingType: "Developer",
+//     status: "Available",
+//   },
+//   {
+//     id: 2,
+//     creationDate: "04/11/2026",
+//     name: "Challet in golden bay",
+//     village: "Porto Golf",
+//     listingType: "Developer",
+//     status: "Available",
+//   },
+//   {
+//     id: 3,
+//     creationDate: "04/11/2026",
+//     name: "Challet in golden bay",
+//     village: "Porto Golf",
+//     listingType: "Developer",
+//     status: "Available",
+//   },
+//   {
+//     id: 4,
+//     creationDate: "04/11/2026",
+//     name: "Challet in golden bay",
+//     village: "Porto Golf",
+//     listingType: "Developer",
+//     status: "Available",
+//   },
+//   {
+//     id: 5,
+//     creationDate: "04/11/2026",
+//     name: "Challet in golden bay",
+//     village: "Porto Golf",
+//     listingType: "Developer",
+//     status: "Available",
+//   },
+// ];
 
 // Mock Data for Chart
-const chartData = [
-  { village: "village 1", count: 18 },
-  { village: "village 2", count: 25 },
-  { village: "village 3", count: 32 },
-  { village: "village 4", count: 20 },
-  { village: "village 5", count: 42 },
-  { village: "village 6", count: 15 },
-];
+// const chartData = [
+//   { village: "village 1", count: 18 },
+//   { village: "village 2", count: 25 },
+//   { village: "village 3", count: 32 },
+//   { village: "village 4", count: 20 },
+//   { village: "village 5", count: 42 },
+//   { village: "village 6", count: 15 },
+// ];
 
 export default function HomePage() {
+  const { data: dashboardData ,isLoading } = useGetDashboardOverviewQuery();
   const navigate = useNavigate();
   const { setIsCreateOpen } = useOutletContext<{
     setIsCreateOpen: (open: boolean) => void;
@@ -107,25 +110,35 @@ export default function HomePage() {
       {/* 2. KPI Cards Row */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <KpiCard
+        isLoading={isLoading}
           title="Total Properties"
-          value={100}
+          value={dashboardData?.totalProperties ?? 0}
           Icon={HomeIcon}
         />
         <KpiCard
+          isLoading={isLoading}
           title="Active Listing"
-          value={100}
+          value={
+            (dashboardData?.propertiesByStatus?.["Available"] ?? 0) +
+            (dashboardData?.propertiesByStatus?.["Available Soon"] ?? 0)
+          }
           subtext="Available & available soon"
           Icon={TrueHomeIcon}
         />
         <KpiCard
+          isLoading={isLoading}
           title="Inactive Listing"
-          value={100}
+          value={
+            (dashboardData?.propertiesByStatus?.["Sold Out"] ?? 0) +
+            (dashboardData?.propertiesByStatus?.["Not Available"] ?? 0)
+          }
           subtext="Sold out & rented"
           Icon={XHomeIcon}
         />
         <KpiCard
+          isLoading={isLoading}
           title="Total Villages"
-          value={6}
+          value={dashboardData?.totalVillages ?? 0}
           Icon={FiMapPin}
         />
       </section>
@@ -134,12 +147,12 @@ export default function HomePage() {
       <section className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Side: Table */}
         <div className="w-full lg:flex-1 shrink-0">
-          <LatestPropertiesTable properties={latestProperties} />
+          <LatestPropertiesTable properties={dashboardData?.latestProperties ?? []} />
         </div>
 
         {/* Right Side: Chart */}
         <div className="w-full lg:w-[413px] shrink-0">
-          <PropertyDistributionChart data={chartData} />
+          <PropertyDistributionChart data={dashboardData?.villagesWithPropertyCount ?? []} />
         </div>
       </section>
     </div>
