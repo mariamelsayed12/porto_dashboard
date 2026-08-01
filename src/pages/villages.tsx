@@ -4,27 +4,36 @@ import VillageCard from "../components/Ui/VillageCard";
 import EmptyState from "../components/Ui/EmptyState";
 import FormDrawer from "../components/Ui/FormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
-import { villageFormFields, mockVillages } from "../data";
-import type { Village } from "../interface/index";
+import { villageFormFields } from "../data";
+import EditVillageDrawer from "../components/Villages/EditVillageDrawer";
+import VillagesSkeleton from "../components/Villages/VillagesSkeleton";
 import defualtImage from "../assets/default.png";
 import FilterSortSection, { type FilterConfig } from "../components/Ui/FilterSortSection";
-import { showSuccessToast } from "../components/Ui/Toast";
+import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
+import {
+  useGetVillageQuery,
+  useCreateVillageMutation,
+  useUpdateVillageMutation,
+  useDeleteVillageMutation,
+  type IVillage,
+} from "../../app/services/crudVillage";
 
 const VillagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: villages, isLoading, isError } = useGetVillageQuery();
+  
+  const [createVillage] = useCreateVillageMutation();
+  const [updateVillage, { isLoading: isUpdating }] = useUpdateVillageMutation();
+  const [deleteVillage, { isLoading: isDeleting }] = useDeleteVillageMutation();
+
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [villagesList, setVillagesList] = useState<Village[]>(() => {
-    const saved = localStorage.getItem("porto_villages");
-    return saved ? JSON.parse(saved) : mockVillages;
-  });
-
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [villageToDelete, setVillageToDelete] = useState<Village | null>(null);
+  const [villageToDelete, setVillageToDelete] = useState<IVillage | null>(null);
 
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const [villageToEdit, setVillageToEdit] = useState<Village | null>(null);
+  const [villageToEdit, setVillageToEdit] = useState<IVillage | null>(null);
 
   const { isCreateOpen, setIsCreateOpen } = useOutletContext<{
     isCreateOpen: boolean;
@@ -61,32 +70,29 @@ const VillagesPage = () => {
     setSearchParams(newParams, { replace: true });
   };
 
-  // Filter villages by name and developer
+  // Filter villages by name and developerName
   const filteredVillages = useMemo(() => {
-    return villagesList.filter((v) => {
+    if (!villages) return [];
+    return villages.filter((v) => {
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        if (!v.name.toLowerCase().includes(q) && !v.developer.toLowerCase().includes(q)) {
+        if (!v.name.toLowerCase().includes(q) && !v.developerName.toLowerCase().includes(q)) {
           return false;
         }
       }
       if (selectedDevelopers.length > 0) {
-        if (!selectedDevelopers.includes(v.developer)) {
+        if (!selectedDevelopers.includes(v.developerName)) {
           return false;
         }
       }
       return true;
     });
-  }, [searchQuery, villagesList, selectedDevelopers]);
+  }, [searchQuery, villages, selectedDevelopers]);
 
+  // Sort villages dynamically
   const sortedVillages = useMemo(() => {
     const list = [...filteredVillages];
     if (!activeSort) return list;
-
-    const parsePrice = (priceStr: string): number => {
-      const val = parseFloat(priceStr.replace(/[^0-9.]/g, ""));
-      return isNaN(val) ? 0 : val;
-    };
 
     list.sort((a, b) => {
       if (activeSort === "name-asc") {
@@ -96,180 +102,83 @@ const VillagesPage = () => {
         return b.name.localeCompare(a.name);
       }
       if (activeSort === "price-asc") {
-        return parsePrice(a.startingPrice) - parsePrice(b.startingPrice);
+        return (a.startingPrice || 0) - (b.startingPrice || 0);
       }
       if (activeSort === "price-desc") {
-        return parsePrice(b.startingPrice) - parsePrice(a.startingPrice);
+        return (b.startingPrice || 0) - (a.startingPrice || 0);
       }
       return 0;
     });
     return list;
   }, [filteredVillages, activeSort]);
 
-  const editFormFields = useMemo(() => {
-    if (!villageToEdit) return [];
-    return [
-      {
-        name: "name",
-        label: "Village name",
-        type: "text" as const,
-        placeholder: "Input text",
-        required: true,
-        defaultValue: villageToEdit.name,
-      },
-      {
-        name: "developer",
-        label: "Developer name",
-        type: "text" as const,
-        placeholder: "Input text",
-        required: true,
-        defaultValue: villageToEdit.developer,
-      },
-      {
-        type: "divider" as const,
-        name: "div-1",
-      },
-      {
-        name: "price",
-        label: "Starting price",
-        type: "text" as const,
-        placeholder: "Input text",
-        required: true,
-        defaultValue: villageToEdit.startingPrice,
-      },
-      {
-        name: "rentalYield",
-        label: "Rental yield",
-        type: "text" as const,
-        placeholder: "Input text",
-        required: true,
-        defaultValue: "7.5%",
-      },
-      {
-        type: "divider" as const,
-        name: "div-2",
-      },
-      {
-        name: "amenities",
-        label: "Amenities",
-        type: "multiselect" as const,
-        placeholder: "Select amenities",
-        required: true,
-        options: [
-          { label: "Pool", value: "pool" },
-          { label: "Gym", value: "gym" },
-          { label: "Beach", value: "beach" },
-          { label: "Security", value: "security" },
-          { label: "Parking", value: "parking" },
-          { label: "Restaurant", value: "restaurant" },
-          { label: "Kids Area", value: "kids" },
-        ],
-        defaultValue: ["pool", "gym", "beach", "security", "parking"],
-      },
-      {
-        type: "divider" as const,
-        name: "div-3",
-      },
-      {
-        name: "media",
-        label: "Media",
-        type: "image-upload" as const,
-        required: true,
-        defaultValue: {
-          cover: villageToEdit.image || null,
-          images: [null, null, null, null],
-        },
-      },
-      {
-        type: "divider" as const,
-        name: "div-4",
-      },
-      {
-        name: "location",
-        label: "Location",
-        type: "location" as const,
-        required: true,
-        defaultValue: "760 Market Street, San Francisco, CA 94107",
-      },
-    ];
-  }, [villageToEdit]);
-
-  const handleEdit = (id: string | number) => {
-    const village = villagesList.find((v) => v.id === id) || null;
+  const handleEdit = (id: string) => {
+    const village = villages?.find((v) => v._id === id) || null;
     setVillageToEdit(village);
     setIsEditOpen(true);
   };
 
-  const handleEditSubmit = (data: Record<string, any>) => {
+  const handleEditSubmit = async (formData: FormData) => {
     if (!villageToEdit) return;
-    const coverImage = data.media?.cover || villageToEdit.image;
-
-    const updated = villagesList.map((v) =>
-      v.id === villageToEdit.id
-        ? {
-            ...v,
-            name: data.name,
-            developer: data.developer,
-            startingPrice: data.price || v.startingPrice,
-            image: coverImage,
-          }
-        : v
-    );
-
-    setVillagesList(updated);
-    localStorage.setItem("porto_villages", JSON.stringify(updated));
-    showSuccessToast("Village updated successfully.");
-    setIsEditOpen(false);
-    setVillageToEdit(null);
+    return updateVillage({ id: villageToEdit._id, body: formData }).unwrap();
   };
 
-  const handleDelete = (id: string | number) => {
-    const village = villagesList.find((v) => v.id === id) || null;
+  const handleDelete = (id: string) => {
+    const village = villages?.find((v) => v._id === id) || null;
     setVillageToDelete(village);
     setIsDeleteOpen(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (villageToDelete) {
-      const updated = villagesList.filter((v) => v.id !== villageToDelete.id);
-      setVillagesList(updated);
-      localStorage.setItem("porto_villages", JSON.stringify(updated));
-      showSuccessToast("Village deleted successfully.");
-      setIsDeleteOpen(false);
-      setVillageToDelete(null);
+      try {
+        await deleteVillage(villageToDelete._id).unwrap();
+        showSuccessToast("Village deleted successfully.");
+        setIsDeleteOpen(false);
+        setVillageToDelete(null);
+      } catch (err: any) {
+        let errMsg = "Failed to delete village.";
+        if (err?.data?.message === "validation.deletePrevented") {
+          errMsg = "This village cannot be deleted because it contains active properties. Please delete or reassign its properties first.";
+        } else if (err?.data?.message) {
+          errMsg = err.data.message;
+        }
+        showErrorToast(errMsg);
+      }
     }
   };
 
-  const handleViewDetails = (id: string | number) => {
+  const handleViewDetails = (id: string) => {
     navigate(`/villages/${id}`);
   };
 
-  const handleCreateSubmit = (data: Record<string, any>) => {
-    const newId = Date.now();
-    const coverImage = data.media?.cover || defualtImage;
+  const handleCreateSubmit = async (data: Record<string, any>) => {
+    try {
+      const coverImage = data.media?.cover || defualtImage;
+      const body = {
+        name: data.name,
+        developerName: data.developer,
+        startingPrice: Number(data.price) || 1000000,
+        rentalYield: Number(data.rentalYield) || 7.5,
+        coverImage,
+        galleryImages: data.media?.images?.filter(Boolean) || [],
+        locationText: data.location,
+        amenities: data.amenities || [],
+      };
 
-    const newVillage: Village = {
-      id: newId,
-      name: data.name,
-      developer: data.developer,
-      startingPrice: data.price || "1M",
-      availableProperties: 10,
-      image: coverImage,
-      location: data.location,
-      amenities: data.amenities,
-    };
-
-    const updated = [newVillage, ...villagesList];
-    setVillagesList(updated);
-    localStorage.setItem("porto_villages", JSON.stringify(updated));
-    showSuccessToast("Village created successfully.");
-    setIsCreateOpen(false);
+      await createVillage(body).unwrap();
+      showSuccessToast("Village created successfully.");
+      setIsCreateOpen(false);
+    } catch (err: any) {
+      showErrorToast(err?.data?.message || "Failed to create village.");
+    }
   };
 
   const developerOptions = useMemo(() => {
-    const developers = Array.from(new Set(villagesList.map((v) => v.developer)));
+    if (!villages) return [];
+    const developers = Array.from(new Set(villages.map((v) => v.developerName).filter(Boolean)));
     return developers.map((dev) => ({ label: dev, value: dev }));
-  }, [villagesList]);
+  }, [villages]);
 
   const filterConfigs: FilterConfig[] = [
     {
@@ -287,6 +196,18 @@ const VillagesPage = () => {
     { label: "Price (Low to High)", value: "price-asc" },
     { label: "Price (High to Low)", value: "price-desc" },
   ];
+
+  if (isLoading) {
+    return <VillagesSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <div className="w-full flex items-center justify-center py-32">
+        <EmptyState message="Failed to load villages. Please try again later." />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -306,7 +227,7 @@ const VillagesPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedVillages.map((village) => (
             <VillageCard
-              key={village.id}
+              key={village._id}
               village={village}
               onEdit={handleEdit}
               onDelete={handleDelete}
@@ -320,7 +241,7 @@ const VillagesPage = () => {
             message={
               searchQuery
                 ? `No villages found for "${searchQuery}".`
-                : "No added Villages yet."
+                : "No villages available."
             }
           />
         </div>
@@ -338,21 +259,21 @@ const VillagesPage = () => {
       />
 
       {/* Reusable Edit Village Drawer */}
-      <FormDrawer
+      <EditVillageDrawer
         isOpen={isEditOpen}
         onClose={() => {
           setIsEditOpen(false);
           setVillageToEdit(null);
         }}
-        title="Edit Village"
-        fields={editFormFields}
-        onSubmit={handleEditSubmit}
-        submitText="Save Changes"
-        cancelText="Cancel"
+        village={villageToEdit}
+        onUpdate={handleEditSubmit}
+        isLoading={isUpdating}
       />
 
       {/* Reusable Delete Village Modal */}
       <DeleteModal
+        isLoading={isDeleting}
+        disabled={isDeleting}       
         isOpen={isDeleteOpen}
         onClose={() => {
           setIsDeleteOpen(false);
@@ -361,8 +282,8 @@ const VillagesPage = () => {
         onConfirm={handleConfirmDelete}
         title="Are you sure you want to delete this village ?"
         entityName={villageToDelete?.name}
-        entitySubText={villageToDelete?.developer}
-        entityImage={villageToDelete?.image}
+        entitySubText={villageToDelete?.developerName}
+        entityImage={villageToDelete?.coverImage}
         confirmText="Yes, delete"
         cancelText="Cancel"
       />

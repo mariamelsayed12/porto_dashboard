@@ -1,5 +1,11 @@
 import { useLocation } from "react-router-dom";
-import { FiMenu, FiPlus, FiChevronDown, FiTrash2, FiEdit3 } from "react-icons/fi";
+import {
+  FiMenu,
+  FiPlus,
+  FiChevronDown,
+  FiTrash2,
+  FiEdit3,
+} from "react-icons/fi";
 import { useState } from "react";
 import Button from "../Ui/Button";
 import Breadcrumb from "../Ui/BreadCrumb";
@@ -120,19 +126,17 @@ export default function Header({
               </Button>
             )} */}
 
-            {
-              currentTitle === "Properties" && (
-                 <Button
-          variant="create"
-          leftIcon={<FiPlus size={16} />}
-          onClick={onCreateClick}
-          id="create-property-btn"
-          className="self-end xl:self-auto h-10 px-6 rounded-[12px]"
-        >
-          Add Property
-        </Button>
-              )
-            }
+            {currentTitle === "Properties" && (
+              <Button
+                variant="create"
+                leftIcon={<FiPlus size={16} />}
+                onClick={onCreateClick}
+                id="create-property-btn"
+                className="self-end xl:self-auto h-10 px-6 rounded-[12px]"
+              >
+                Add Property
+              </Button>
+            )}
           </>
         )}
 
@@ -177,9 +181,8 @@ export default function Header({
                 className="flex items-center gap-2 px-4 py-2 text-[14px] text-text-secondary hover:bg-light-primary hover:text-primary transition-colors"
                 onClick={() => setProfileDropdownOpen(false)}
               >
-               <IoLockClosedOutline  size={24}/>
-
-              Change Password
+                <IoLockClosedOutline size={24} />
+                Change Password
               </a>
               {/* <a
                 href="#settings"

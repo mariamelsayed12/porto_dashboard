@@ -147,12 +147,18 @@ export default function HomePage() {
       <section className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left Side: Table */}
         <div className="w-full lg:flex-1 shrink-0">
-          <LatestPropertiesTable properties={dashboardData?.latestProperties ?? []} />
+          <LatestPropertiesTable
+            properties={dashboardData?.latestProperties ?? []}
+            isLoading={isLoading}
+          />
         </div>
 
         {/* Right Side: Chart */}
         <div className="w-full lg:w-[413px] shrink-0">
-          <PropertyDistributionChart data={dashboardData?.villagesWithPropertyCount ?? []} />
+          <PropertyDistributionChart
+            data={dashboardData?.villagesWithPropertyCount ?? []}
+            isLoading={isLoading}
+          />
         </div>
       </section>
     </div>

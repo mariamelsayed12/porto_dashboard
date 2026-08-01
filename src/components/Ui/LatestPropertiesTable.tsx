@@ -1,4 +1,5 @@
 import { FiMoreVertical } from "react-icons/fi";
+import LatestPropertiesTableSkeleton from "./LatestPropertiesTableSkeleton";
 
 interface LatestProperty {
   _id: string;
@@ -18,9 +19,13 @@ interface LatestProperty {
 
 interface LatestPropertiesTableProps {
   properties: LatestProperty[];
+  isLoading?: boolean;
 }
 
-export default function LatestPropertiesTable({ properties }: LatestPropertiesTableProps) {
+export default function LatestPropertiesTable({ properties, isLoading }: LatestPropertiesTableProps) {
+  if (isLoading) {
+    return <LatestPropertiesTableSkeleton />;
+  }
   // Format ISO date string to a human-readable format
   const formatDate = (dateString: string) => {
     try {

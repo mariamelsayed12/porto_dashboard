@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import PropertyDistributionChartSkeleton from "./PropertyDistributionChartSkeleton";
 
 interface ChartData {
   _id: string;
@@ -10,9 +11,13 @@ interface ChartData {
 
 interface PropertyDistributionChartProps {
   data?: ChartData[];
+  isLoading?: boolean;
 }
 
-export default function PropertyDistributionChart({ data = [] }: PropertyDistributionChartProps) {
+export default function PropertyDistributionChart({ data = [], isLoading }: PropertyDistributionChartProps) {
+  if (isLoading) {
+    return <PropertyDistributionChartSkeleton />;
+  }
   // Find dynamic maximum value from data
   const maxCount = data.reduce((max, item) => Math.max(max, item.propertyCount), 0);
   // Round up to the nearest multiple of 10 to ensure neat ticks (minimum of 10 to avoid 0-bound issues)

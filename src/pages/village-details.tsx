@@ -1,12 +1,16 @@
 import { useParams, useNavigate, useOutletContext } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
-import { mockVillages } from "../data";
-import FormDrawer from "../components/Ui/FormDrawer";
+import { useState, useEffect } from "react";
+import EditVillageDrawer from "../components/Villages/EditVillageDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
-import type { Village } from "../interface/index";
 import type { BreadcrumbItem } from "../components/Ui/BreadCrumb";
-import { showSuccessToast } from "../components/Ui/Toast";
-
+import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
+import Spinner from "../components/Ui/LoadingSpinner";
+import EmptyState from "../components/Ui/EmptyState";
+import {
+  useGetVillageByIdQuery,
+  useUpdateVillageMutation,
+  useDeleteVillageMutation,
+} from "../../app/services/crudVillage";
 import defaultImg from "../assets/default.png";
 
 interface HeaderActionConfig {
@@ -26,17 +30,16 @@ interface LayoutContextType {
 export default function VillageDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+
   const { setBreadcrumbItems, setHeaderActions } = useOutletContext<LayoutContextType>();
 
-  const [villagesList, setVillagesList] = useState<Village[]>(() => {
-    const saved = localStorage.getItem("porto_villages");
-    return saved ? JSON.parse(saved) : mockVillages;
-  });
+  const { data: village, isLoading, isError } = useGetVillageByIdQuery(
+    { id: id || "" },
+    { skip: !id }
+  );
 
-  const village = useMemo(() => {
-    return villagesList.find((v) => String(v.id) === String(id)) || null;
-  }, [villagesList, id]);
+  const [updateVillage, { isLoading: isUpdating }] = useUpdateVillageMutation();
+  const [deleteVillage] = useDeleteVillageMutation();
 
   // Edit / Delete states
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -69,131 +72,41 @@ export default function VillageDetailsPage() {
     };
   }, [village, setBreadcrumbItems, setHeaderActions]);
 
-  const editFormFields = useMemo(() => {
-    if (!village) return [];
-    return [
-      {
-        name: "name",
-        label: "Village name",
-        type: "text" as const,
-        placeholder: "Input text",
-        required: true,
-        defaultValue: village.name,
-      },
-      {
-        name: "developer",
-        label: "Developer name",
-        type: "text" as const,
-        placeholder: "Input text",
-        required: true,
-        defaultValue: village.developer,
-      },
-      {
-        type: "divider" as const,
-        name: "div-1",
-      },
-      {
-        name: "price",
-        label: "Starting price",
-        type: "text" as const,
-        placeholder: "Input text",
-        required: true,
-        defaultValue: village.startingPrice,
-      },
-      {
-        name: "rentalYield",
-        label: "Rental yield",
-        type: "text" as const,
-        placeholder: "Input text",
-        required: true,
-        defaultValue: "7.5%",
-      },
-      {
-        type: "divider" as const,
-        name: "div-2",
-      },
-      {
-        name: "amenities",
-        label: "Amenities",
-        type: "multiselect" as const,
-        placeholder: "Select amenities",
-        required: true,
-        options: [
-          { label: "Pool", value: "pool" },
-          { label: "Gym", value: "gym" },
-          { label: "Beach", value: "beach" },
-          { label: "Security", value: "security" },
-          { label: "Parking", value: "parking" },
-          { label: "Restaurant", value: "restaurant" },
-          { label: "Kids Area", value: "kids" },
-        ],
-        defaultValue: village.amenities || ["pool", "gym", "beach", "security", "parking"],
-      },
-      {
-        type: "divider" as const,
-        name: "div-3",
-      },
-      {
-        name: "media",
-        label: "Media",
-        type: "image-upload" as const,
-        required: true,
-        defaultValue: {
-          cover: village.image || null,
-          images: [null, null, null, null],
-        },
-      },
-      {
-        type: "divider" as const,
-        name: "div-4",
-      },
-      {
-        name: "location",
-        label: "Location",
-        type: "location" as const,
-        required: true,
-        defaultValue: village.location || "760 Market Street, San Francisco, CA 94107",
-      },
-    ];
-  }, [village]);
-
-  const handleEditSubmit = (data: Record<string, any>) => {
+  const handleEditSubmit = async (formData: FormData) => {
     if (!village) return;
-    const coverImage = data.media?.cover || village.image;
-    
-    const updatedList = villagesList.map((v) =>
-      String(v.id) === String(village.id)
-        ? {
-            ...v,
-            name: data.name,
-            developer: data.developer,
-            startingPrice: data.price || v.startingPrice,
-            image: coverImage,
-            location: data.location,
-            amenities: data.amenities,
-          }
-        : v
+    return updateVillage({ id: village._id, body: formData }).unwrap();
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!village) return;
+    try {
+      await deleteVillage(village._id).unwrap();
+      showSuccessToast("Village deleted successfully.");
+      setIsDeleteOpen(false);
+      navigate("/villages");
+    } catch (err: any) {
+      let errMsg = "Failed to delete village.";
+      if (err?.data?.message === "validation.deletePrevented") {
+        errMsg = "This village cannot be deleted because it contains active properties. Please delete or reassign its properties first.";
+      } else if (err?.data?.message) {
+        errMsg = err.data.message;
+      }
+      showErrorToast(errMsg);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex items-center justify-center py-32">
+        <Spinner />
+      </div>
     );
+  }
 
-    setVillagesList(updatedList);
-    localStorage.setItem("porto_villages", JSON.stringify(updatedList));
-    showSuccessToast("Village updated successfully.");
-    setIsEditOpen(false);
-  };
-
-  const handleConfirmDelete = () => {
-    if (!village) return;
-    const updatedList = villagesList.filter((v) => String(v.id) !== String(village.id));
-    localStorage.setItem("porto_villages", JSON.stringify(updatedList));
-    showSuccessToast("Village deleted successfully.");
-    setIsDeleteOpen(false);
-    navigate("/villages");
-  };
-
-  if (!village) {
+  if (isError || !village) {
     return (
       <div className="w-full text-center py-20 bg-[#f5f9fa]">
-        <h2 className="text-2xl font-bold font-poppins text-[#141414]">Village Not Found</h2>
+        <EmptyState message="Village Not Found" />
         <button
           onClick={() => navigate("/villages")}
           className="mt-4 px-6 py-2 bg-primary text-white rounded-lg font-poppins font-medium hover:bg-[#156D85] transition-colors"
@@ -204,13 +117,12 @@ export default function VillageDetailsPage() {
     );
   }
 
-
-  const startingPriceFormatted = village.startingPrice.toLowerCase().includes("egp") 
-    ? village.startingPrice 
-    : `${village.startingPrice} EGP`;
+  const startingPriceFormatted = village.startingPrice
+    ? `${village.startingPrice.toLocaleString()} EGP`
+    : "N/A";
 
   return (
-    <div className="w-full min-h-screen bg-[#f5f9fa] flex flex-col lg:flex-row gap-[24px] p-0 md:px-[32px] ">
+    <div className="w-full min-h-screen bg-[#f5f9fa] flex flex-col lg:flex-row gap-[24px] p-0 md:px-[32px]">
       {/* Left content panel */}
       <div className="flex-1 flex flex-col gap-[24px] max-w-full lg:max-w-[845px]">
         {/* Header banner card */}
@@ -218,7 +130,7 @@ export default function VillageDetailsPage() {
           {/* Cover image banner container */}
           <div className="w-full md:w-[378px] h-[250px] md:h-auto rounded-md overflow-hidden shrink-0 relative">
             <img
-              src={village.image}
+              src={village.coverImage || defaultImg}
               alt={village.name}
               className="w-full h-full object-cover absolute inset-0"
             />
@@ -232,12 +144,9 @@ export default function VillageDetailsPage() {
                 <h2 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
                   {village.name}
                 </h2>
-                <span className="font-poppins font-normal text-[14px] text-[#464646]">
-                  Last updated 2 days ago
-                </span>
               </div>
               <p className="font-poppins font-medium text-[16px] text-[#464646] w-full">
-                {village.developer}
+                {village.developerName}
               </p>
             </div>
 
@@ -253,113 +162,106 @@ export default function VillageDetailsPage() {
                 </span>
               </div>
 
-              {/* Box 2: Properties */}
-              <div className="bg-[#edeff2] border border-[#d4d5d8] border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
-                <span className="font-poppins font-normal text-[16px] text-[#464646]">
-                  Properties
-                </span>
-                <span className="font-poppins font-medium text-[19px] text-[#141414]">
-                  {village.availableProperties || 24}
-                </span>
-              </div>
-
-              {/* Box 3: Amenities Count */}
+              {/* Box 2: Amenities Count */}
               <div className="bg-[#edeff2] border border-[#d4d5d8] border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
                 <span className="font-poppins font-normal text-[16px] text-[#464646]">
                   Amenities
                 </span>
                 <span className="font-poppins font-medium text-[19px] text-[#141414]">
-                  {village.amenities ? village.amenities.length : 8}
+                  {village.amenities ? village.amenities.length : 0}
                 </span>
               </div>
 
-              {/* Box 4: Rental Yield */}
-              <div className="bg-[#edeff2] border border-[#d4d5d8] border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
-                <span className="font-poppins font-normal text-[16px] text-[#464646]">
-                  Rental yield
-                </span>
-                <span className="font-poppins font-medium text-[19px] text-[#141414]">
-                  7%
-                </span>
-              </div>
+              {/* Box 3: Rental Yield */}
+              {village.rentalYield !== undefined && (
+                <div className="bg-[#edeff2] border border-[#d4d5d8] border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
+                  <span className="font-poppins font-normal text-[16px] text-[#464646]">
+                    Rental yield
+                  </span>
+                  <span className="font-poppins font-medium text-[19px] text-[#141414]">
+                    {village.rentalYield}%
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Amenities section card */}
-        <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] p-[24px] flex flex-col gap-[24px] w-full">
+        {village.amenities && village.amenities.length > 0 && (
+          <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] p-[24px] flex flex-col gap-[24px] w-full">
+            <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
+              Amenities
+            </h3>
+            <div className="flex flex-wrap gap-[16px] items-center w-full">
+              {village.amenities.map((a, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white border border-[#d4d5d8] border-solid px-[24px] py-[12px] rounded-[44px] select-none transition-colors duration-150 cursor-default"
+                >
+                  <p className="font-poppins font-medium text-[16px] text-[#464646] text-center leading-[normal]">
+                    {a.charAt(0).toUpperCase() + a.slice(1)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Location Section Card */}
+        {village.locationText && (
+          <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] overflow-hidden w-full flex flex-col">
+            <div className="h-[244px] w-full relative overflow-hidden shrink-0">
+              <img
+                src={defaultImg}
+                alt="Location map coordinates"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="p-[24px] flex flex-col items-start w-full">
+              <div className="flex flex-col gap-[8px] items-start leading-[normal] w-full">
+                <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
+                  Location
+                </h3>
+                <p className="font-poppins font-normal text-[16px] text-[#464646]">
+                  {village.locationText}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Right gallery sidebar column */}
+      {village.galleryImages && village.galleryImages.length > 0 && (
+        <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] p-[24px] flex flex-col gap-[24px] w-full lg:w-[411px] shrink-0">
           <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
-            Amenities
+            Village Gallery
           </h3>
-          <div className="flex flex-wrap gap-[16px] items-center w-full">
-            {(village.amenities && village.amenities.length > 0 
-              ? village.amenities.map(a => a.charAt(0).toUpperCase() + a.slice(1))
-              : ["Pool", "Gym", "Beach Access", "24/7 Security", "Private Parking", "Restaurants", "Kids Play Area"]
-            ).map((label, idx) => (
+          <div className="flex flex-col gap-[24px] w-full">
+            {village.galleryImages.map((imgUrl, idx) => (
               <div
                 key={idx}
-                className="bg-white border border-[#d4d5d8] border-solid px-[24px] py-[12px] rounded-[44px] select-none  transition-colors duration-150 cursor-default"
+                className="h-[153px] rounded-[12px] overflow-hidden relative w-full shrink-0 shadow-xs border border-border"
               >
-                <p className="font-poppins font-medium text-[16px] text-[#464646] text-center leading-[normal]">
-                  {label}
-                </p>
+                <img
+                  src={imgUrl}
+                  alt={`Gallery photo ${idx + 1}`}
+                  className="w-full h-full object-cover"
+                />
               </div>
             ))}
           </div>
         </div>
-
-        {/* Location Section Card */}
-        <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] overflow-hidden w-full flex flex-col">
-          <div className="h-[244px] w-full relative overflow-hidden shrink-0">
-            <img
-              src={defaultImg}
-              alt="Location map coordinates"
-              className="w-full h-full object-cover"
-            />
-          </div>
-          <div className="p-[24px] flex flex-col items-start w-full">
-            <div className="flex flex-col gap-[8px] items-start leading-[normal] w-full">
-              <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
-                Location
-              </h3>
-              <p className="font-poppins font-normal text-[16px] text-[#464646]">
-                {village.location || "North coast, Egypt"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right gallery sidebar column */}
-      <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] p-[24px] flex flex-col gap-[24px] w-full lg:w-[411px] shrink-0">
-        <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
-          Village Gallery
-        </h3>
-        <div className="flex flex-col gap-[24px] w-full">
-          {[1, 2, 3, 4, 5].map((item) => (
-            <div
-              key={item}
-              className="h-[153px] rounded-[12px] overflow-hidden relative w-full shrink-0 shadow-xs border border-border"
-            >
-              <img
-                src={defaultImg}
-                alt={`Gallery photo ${item}`}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
 
       {/* Form Drawer (Edit Flow) */}
-      <FormDrawer
+      <EditVillageDrawer
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
-        title="Edit Village"
-        fields={editFormFields}
-        onSubmit={handleEditSubmit}
-        submitText="Save Changes"
-        cancelText="Cancel"
+        village={village}
+        onUpdate={handleEditSubmit}
+        isLoading={isUpdating}
       />
 
       {/* Delete Modal Confirmation overlay */}
@@ -369,8 +271,8 @@ export default function VillageDetailsPage() {
         onConfirm={handleConfirmDelete}
         title="Are you sure you want to delete this village ?"
         entityName={village.name}
-        entitySubText={village.developer}
-        entityImage={village.image}
+        entitySubText={village.developerName}
+        entityImage={village.coverImage}
       />
     </div>
   );
