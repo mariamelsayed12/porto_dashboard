@@ -121,8 +121,11 @@ export default function FormDrawer({
             newErrors[field.name] = "Please select at least one option";
           }
         } else if (field.type === "location") {
-          if (!val || !val.trim()) {
-            newErrors[field.name] = "Location search query is required";
+          const isEmpty = !val || 
+            (typeof val === "string" && !val.trim()) || 
+            (typeof val === "object" && (!val.locationText?.en?.trim() && !val.locationText?.ar?.trim()));
+          if (isEmpty) {
+            newErrors[field.name] = "Location is required";
           }
         } else {
           if (val === undefined || val === null || val === "") {

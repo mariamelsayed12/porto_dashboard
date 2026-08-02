@@ -1,15 +1,24 @@
 import { useState, useMemo, useCallback } from "react";
-import { useNavigate, useSearchParams, useOutletContext } from "react-router-dom";
+import {
+  useNavigate,
+  useSearchParams,
+  useOutletContext,
+} from "react-router-dom";
 import { FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
 import { mockProperties, propertyFormFields } from "../data";
-import DataTable, { type ColumnDef, type ActionDef } from "../components/Ui/DataTable";
+import DataTable, {
+  type ColumnDef,
+  type ActionDef,
+} from "../components/Ui/DataTable";
 import Pagination from "../components/Ui/Pagination";
 import DeleteModal from "../components/Ui/DeleteModal";
 import FormDrawer from "../components/Ui/FormDrawer";
 import defaultImage from "../assets/default.png";
 import type { Property } from "../interface";
 import { truncateText } from "../utils";
-import FilterSortSection, { type FilterConfig } from "../components/Ui/FilterSortSection";
+import FilterSortSection, {
+  type FilterConfig,
+} from "../components/Ui/FilterSortSection";
 import { showSuccessToast } from "../components/Ui/Toast";
 import FilterDrawer from "../components/Ui/filterCcomponents/FilterDrawer";
 import { useUnitsFilter, matchUnit } from "../hooks/useUnitsFilter";
@@ -24,7 +33,6 @@ function StatusBadge({ status }: { status: string }) {
     "sold out": "bg-brandBlue text-text-secondary",
     rented: "bg-brandBlue text-text-secondary",
     "not available": "bg-errorRed text-text-secondary",
-
   };
   const cls = styles[status.toLowerCase()] ?? "bg-light-gray text-text-darker";
   return (
@@ -48,7 +56,9 @@ const propertiesColumns: ColumnDef<Property>[] = [
     label: "Creation date",
     width: "w-[13%]",
     render: (v) => (
-      <span className="whitespace-nowrap text-text-darker font-medium">{v as string}</span>
+      <span className="whitespace-nowrap text-text-darker font-medium">
+        {v as string}
+      </span>
     ),
   },
   {
@@ -56,7 +66,10 @@ const propertiesColumns: ColumnDef<Property>[] = [
     label: "Property name",
     width: "w-[26%]",
     render: (v) => (
-      <span className="block max-w-[220px] truncate font-medium text-text-secondary" title={v as string}>
+      <span
+        className="block max-w-[220px] truncate font-medium text-text-secondary"
+        title={v as string}
+      >
         {truncateText(v as string, 20)}
       </span>
     ),
@@ -73,9 +86,7 @@ const propertiesColumns: ColumnDef<Property>[] = [
     key: "listingType",
     label: "Listing type",
     width: "w-[14%]",
-    render: (v) => (
-      <span className="whitespace-nowrap">{v as string}</span>
-    ),
+    render: (v) => <span className="whitespace-nowrap">{v as string}</span>,
   },
   {
     key: "price",
@@ -97,15 +108,16 @@ const propertiesColumns: ColumnDef<Property>[] = [
     key: "finishingStatus",
     label: "Finishing status",
     width: "w-[16%]",
-    render: (v) => <span className="whitespace-nowrap">{v as string ?? "—"}</span>
+    render: (v) => (
+      <span className="whitespace-nowrap">{(v as string) ?? "—"}</span>
+    ),
   },
   {
-    key:"deliveryDate",
-    label:"Delivery date",
-    width:"w-[16%]",
-    render:(v)=> <span className="whitespace-nowrap">{v as string}</span>
-  }
-
+    key: "deliveryDate",
+    label: "Delivery date",
+    width: "w-[16%]",
+    render: (v) => <span className="whitespace-nowrap">{v as string}</span>,
+  },
 ];
 
 // ─── PropertiesPage ───────────────────────────────────────────────────────────
@@ -131,7 +143,9 @@ export default function PropertiesPage() {
 
   // Delete modal
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(null);
+  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(
+    null,
+  );
 
   // More Filters drawer
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
@@ -212,7 +226,7 @@ export default function PropertiesPage() {
       // 2. Listing Type Filter
       if (selectedListing.length > 0) {
         const matchesListing = selectedListing.some(
-          (type) => p.listingType.toLowerCase() === type.toLowerCase()
+          (type) => p.listingType.toLowerCase() === type.toLowerCase(),
         );
         if (!matchesListing) return false;
       }
@@ -220,7 +234,7 @@ export default function PropertiesPage() {
       // 3. Property Type Filter
       if (selectedPropertyType.length > 0) {
         const matchesPropType = selectedPropertyType.some(
-          (type) => (p.propertyType || "").toLowerCase() === type.toLowerCase()
+          (type) => (p.propertyType || "").toLowerCase() === type.toLowerCase(),
         );
         if (!matchesPropType) return false;
       }
@@ -228,7 +242,7 @@ export default function PropertiesPage() {
       // 4. Property Status Filter
       if (selectedStatus.length > 0) {
         const matchesStatus = selectedStatus.some(
-          (stat) => p.status.toLowerCase() === stat.toLowerCase()
+          (stat) => p.status.toLowerCase() === stat.toLowerCase(),
         );
         if (!matchesStatus) return false;
       }
@@ -240,7 +254,14 @@ export default function PropertiesPage() {
 
       return true;
     });
-  }, [propertiesList, searchQuery, selectedListing, selectedPropertyType, selectedStatus, filters]);
+  }, [
+    propertiesList,
+    searchQuery,
+    selectedListing,
+    selectedPropertyType,
+    selectedStatus,
+    filters,
+  ]);
 
   const sortedProperties = useMemo(() => {
     const list = [...filteredProperties];
@@ -301,7 +322,7 @@ export default function PropertiesPage() {
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleViewDetails = useCallback(
     (property: Property) => navigate(`/properties/${property.id}`),
-    [navigate]
+    [navigate],
   );
 
   const handleOpenDelete = useCallback((property: Property) => {
@@ -337,7 +358,10 @@ export default function PropertiesPage() {
         listingType: (data.listingType as string) || "Developer",
         price: data.price as string | undefined,
         status: "Available",
-        creationDate: new Date().toLocaleDateString("en-GB").split("/").join("/"),
+        creationDate: new Date()
+          .toLocaleDateString("en-GB")
+          .split("/")
+          .join("/"),
         image: coverImage,
         location: data.location as string | undefined,
         propertyType: data.propertyType as string | undefined,
@@ -353,7 +377,7 @@ export default function PropertiesPage() {
       setIsCreateOpen(false);
       setCurrentPage(1);
     },
-    [propertiesList]
+    [propertiesList],
   );
 
   // ── Action column definitions ──────────────────────────────────────────────
@@ -379,7 +403,7 @@ export default function PropertiesPage() {
         className: "text-red-600  ",
       },
     ],
-    [handleViewDetails, handleOpenDelete, navigate]
+    [handleViewDetails, handleOpenDelete, navigate],
   );
 
   // Filter config object for the filter bar dropdowns
@@ -435,7 +459,6 @@ export default function PropertiesPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="w-full flex flex-col gap-6">
-
       {/* ── Filter & Sort Bar ────────────────────────────────────────────── */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 w-full">
         <div className="flex-1 w-full">
@@ -450,8 +473,6 @@ export default function PropertiesPage() {
             onMoreFiltersClick={() => setIsFilterDrawerOpen(true)}
           />
         </div>
-
-       
       </div>
 
       {/* More Filters Drawer */}
@@ -464,7 +485,6 @@ export default function PropertiesPage() {
         resetFilters={resetFilters}
         tempFilteredCount={tempFilteredCount}
       />
-
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
       <DataTable<Property>
@@ -487,8 +507,11 @@ export default function PropertiesPage() {
           <p className="text-[13px] text-text-darker font-poppins order-2 sm:order-1">
             Showing{" "}
             <span className="font-medium text-text-secondary">
-              {Math.min((currentPage - 1) * PAGE_SIZE + 1, filteredProperties.length)}–
-              {Math.min(currentPage * PAGE_SIZE, filteredProperties.length)}
+              {Math.min(
+                (currentPage - 1) * PAGE_SIZE + 1,
+                filteredProperties.length,
+              )}
+              –{Math.min(currentPage * PAGE_SIZE, filteredProperties.length)}
             </span>{" "}
             of{" "}
             <span className="font-medium text-text-secondary">

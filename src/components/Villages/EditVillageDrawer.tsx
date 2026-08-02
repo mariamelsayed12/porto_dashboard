@@ -1,14 +1,22 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
 import { FiX, FiUpload, FiTrash2, FiPlus, FiAlertCircle } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import type { IVillage } from "../../../app/services/crudVillage";
+import {
+  useGetVillageQuery,
+  useGetVillageByIdQuery,
+  type IVillage,
+} from "../../../app/services/crudVillage";
+import { skipToken } from "@reduxjs/toolkit/query";
 import { showSuccessToast, showErrorToast } from "../Ui/Toast";
 import Button from "../Ui/Button";
 import Input from "../Ui/Input";
 import MultiSelectDropdown from "../Ui/MultiSelectDropdown";
+import LocationPicker from "../Ui/LocationPicker";
+import Spinner from "../Ui/LoadingSpinner";
+import { ALLOWED_AMENITIES, translations } from "../../data";
+import { validationSchema } from "../../validation";
 
 interface EditVillageDrawerProps {
   isOpen: boolean;
@@ -18,160 +26,6 @@ interface EditVillageDrawerProps {
   isLoading?: boolean;
 }
 
-const ALLOWED_AMENITIES = [
-  { value: "Pools", en: "Pools", ar: "حمامات سباحة" },
-  { value: "Marina", en: "Marina", ar: "مارينا" },
-  { value: "Cafes", en: "Cafes", ar: "مقاهي" },
-  { value: "Beaches", en: "Beaches", ar: "شواطئ" },
-  { value: "Restaurants", en: "Restaurants", ar: "مطاعم" },
-  { value: "Hotel Services", en: "Hotel Services", ar: "خدمات فندقية" },
-  { value: "Security", en: "Security", ar: "أمن وحراسة" },
-  { value: "Medical Services", en: "Medical Services", ar: "خدمات طبية" },
-  { value: "Sports Facilities", en: "Sports Facilities", ar: "مرافق رياضية" },
-  { value: "Gyms", en: "Gyms", ar: "صالات رياضية" },
-  { value: "Spas", en: "Spas", ar: "سبا" },
-  { value: "Clubhouse", en: "Clubhouse", ar: "كلوب هاوس" },
-  { value: "Commercial Area", en: "Commercial Area", ar: "منطقة تجارية" },
-  { value: "Green Areas", en: "Green Areas", ar: "مناطق خضراء" },
-  { value: "Kids Area", en: "Kids Area", ar: "منطقة أطفال" },
-];
-
-const translations = {
-  en: {
-    title: "Edit Village",
-    formLanguage: "Language",
-    saveChanges: "Save Changes",
-    cancel: "Cancel",
-    nameEn: "Village Name (English)",
-    nameAr: "Village Name (Arabic)",
-    developerEn: "Developer Name (English)",
-    developerAr: "Developer Name (Arabic)",
-    locationEn: "Location (English)",
-    locationAr: "Location (Arabic)",
-    startingPrice: "Starting Price (EGP)",
-    rentalYield: "Rental Yield (%)",
-    googleMapsUrl: "Google Maps URL",
-    latitude: "Latitude",
-    longitude: "Longitude",
-    amenities: "Amenities",
-    coverImage: "Cover Image",
-    galleryImages: "Gallery Images (Max 5)",
-    uploadNew: "Upload Image",
-    replace: "Replace Image",
-    placeholderPrice: "Enter starting price",
-    placeholderYield: "Enter rental yield",
-    placeholderUrl: "Enter Google Maps location URL",
-    placeholderLat: "Enter latitude",
-    placeholderLng: "Enter longitude",
-  },
-  ar: {
-    title: "تعديل القرية",
-    formLanguage: "اللغة",
-    saveChanges: "حفظ التغييرات",
-    cancel: "إلغاء",
-    nameEn: "اسم القرية (بالإنجليزي)",
-    nameAr: "اسم القرية (بالعربي)",
-    developerEn: "اسم المطور (بالإنجليزي)",
-    developerAr: "اسم المطور (بالعربي)",
-    locationEn: "الموقع (بالإنجليزي)",
-    locationAr: "الموقع (بالعربي)",
-    startingPrice: "السعر المبدئي (جنيه)",
-    rentalYield: "العائد الإيجاري (%)",
-    googleMapsUrl: "رابط خرائط جوجل",
-    latitude: "خط العرض",
-    longitude: "خط الطول",
-    amenities: "المرافق والخدمات",
-    coverImage: "الصورة الرئيسية",
-    galleryImages: "معرض الصور (الحد الأقصى 5)",
-    uploadNew: "تحميل الصورة",
-    replace: "استبدال الصورة",
-    placeholderPrice: "أدخل السعر المبدئي",
-    placeholderYield: "أدخل نسبة العائد الإيجاري",
-    placeholderUrl: "أدخل رابط الموقع على خرائط جوجل",
-    placeholderLat: "أدخل خط العرض",
-    placeholderLng: "أدخل خط الطول",
-  },
-};
-
-const validationSchema = yup.object().shape({
-  name: yup.object().shape({
-    en: yup.string().trim().min(3, "Must be at least 3 characters").max(100, "Cannot exceed 100 characters").required("Required"),
-    ar: yup.string().trim().min(3, "Must be at least 3 characters").max(100, "Cannot exceed 100 characters").required("Required"),
-  }),
-  developerName: yup.object().shape({
-    en: yup.string().trim().min(3, "Must be at least 3 characters").max(100, "Cannot exceed 100 characters").required("Required"),
-    ar: yup.string().trim().min(3, "Must be at least 3 characters").max(100, "Cannot exceed 100 characters").required("Required"),
-  }),
-  locationText: yup.object().shape({
-    en: yup.string().trim().min(3, "Must be at least 3 characters").max(100, "Cannot exceed 100 characters").required("Required"),
-    ar: yup.string().trim().min(3, "Must be at least 3 characters").max(100, "Cannot exceed 100 characters").required("Required"),
-  }),
-  startingPrice: yup
-    .number()
-    .typeError("Must be a positive number")
-    .positive("Must be greater than 0")
-    .required("Required"),
-  rentalYield: yup
-    .number()
-    .typeError("Must be a number >= 0")
-    .min(0, "Must be at least 0")
-    .required("Required"),
-  coverImage: yup
-    .mixed()
-    .required("Cover image is required")
-    .test("fileType", "Only JPEG, PNG, or WEBP images are accepted", (value) => {
-      if (!value) return false;
-      if (typeof value === "string") return true;
-      if (value instanceof File) {
-        return ["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(value.type);
-      }
-      return false;
-    }),
-  galleryImages: yup
-    .array()
-    .of(
-      yup.mixed().test("fileType", "Only JPEG, PNG, or WEBP images are accepted", (value) => {
-        if (!value) return false;
-        if (typeof value === "string") return true;
-        if (value instanceof File) {
-          return ["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(value.type);
-        }
-        return false;
-      })
-    )
-    .max(5, "Maximum 5 gallery images allowed")
-    .optional(),
-  googleMapsUrl: yup
-    .string()
-    .trim()
-    .url("Must be a valid URL")
-    .test("isGoogleMaps", "Must be a valid Google Maps URL", (value) => {
-      if (!value) return true;
-      return value.includes("google.com/maps") || value.includes("maps.app.goo.gl") || value.includes("goo.gl/maps");
-    })
-    .optional(),
-  latitude: yup
-    .number()
-    .typeError("Must be a number")
-    .min(-90, "Latitude must be between -90 and 90")
-    .max(90, "Latitude must be between -90 and 90")
-    .optional()
-    .nullable()
-    .transform((value, originalValue) => originalValue === "" ? null : value),
-  longitude: yup
-    .number()
-    .typeError("Must be a number")
-    .min(-180, "Longitude must be between -180 and 180")
-    .max(180, "Longitude must be between -180 and 180")
-    .optional()
-    .nullable()
-    .transform((value, originalValue) => originalValue === "" ? null : value),
-  amenities: yup
-    .array()
-    .of(yup.string().required())
-    .optional()
-    .default([]),
-});
 
 export default function EditVillageDrawer({
   isOpen,
@@ -186,6 +40,31 @@ export default function EditVillageDrawer({
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  const { data: englishVillage, isLoading: isEnLoading, isFetching: isEnFetching } = useGetVillageByIdQuery(
+    village?._id && isOpen ? { id: village._id, lang: "en" } : skipToken
+  );
+  const { data: arabicVillage, isLoading: isArLoading, isFetching: isArFetching } = useGetVillageByIdQuery(
+    village?._id && isOpen ? { id: village._id, lang: "ar" } : skipToken
+  );
+
+  const { data: villagesEn } = useGetVillageQuery({ lang: "en" });
+  const { data: villagesAr } = useGetVillageQuery({ lang: "ar" });
+
+  const locationOptions = useMemo(() => {
+    if (!villagesEn || !villagesAr) return [];
+    const optionsMap = new Map<string, { en: string; ar: string }>();
+    villagesEn.forEach((v) => {
+      const arVillage = villagesAr.find((av) => av._id === v._id);
+      if (v.locationText && arVillage?.locationText) {
+        optionsMap.set(v.locationText.toLowerCase(), {
+          en: v.locationText,
+          ar: arVillage.locationText,
+        });
+      }
+    });
+    return Array.from(optionsMap.values());
+  }, [villagesEn, villagesAr]);
 
   const {
     register,
@@ -212,28 +91,32 @@ export default function EditVillageDrawer({
     },
   });
 
-  // Populate data when drawer opens or village changes
+  // Populate data when drawer opens or village details load
   useEffect(() => {
     if (isOpen && village) {
-      // Handle potential legacy values or nested structures
-      const getLangValue = (val: any, lang: "en" | "ar") => {
-        if (!val) return "";
-        if (typeof val === "object") return val[lang] || "";
-        return val;
-      };
+      // Only reset the form when we have the correct, non-stale bilingual data
+      const isDataReady = englishVillage?._id === village._id && arabicVillage?._id === village._id;
+      if (!isDataReady) return;
+
+      const nameEn = englishVillage?.name || village.name || "";
+      const nameAr = arabicVillage?.name || "";
+      const devEn = englishVillage?.developerName || village.developerName || "";
+      const devAr = arabicVillage?.developerName || "";
+      const locEn = englishVillage?.locationText || village.locationText || "";
+      const locAr = arabicVillage?.locationText || "";
 
       reset({
         name: {
-          en: getLangValue(village.name, "en"),
-          ar: getLangValue(village.name, "ar"),
+          en: nameEn,
+          ar: nameAr,
         },
         developerName: {
-          en: getLangValue(village.developerName, "en"),
-          ar: getLangValue(village.developerName, "ar"),
+          en: devEn,
+          ar: devAr,
         },
         locationText: {
-          en: getLangValue(village.locationText, "en"),
-          ar: getLangValue(village.locationText, "ar"),
+          en: locEn,
+          ar: locAr,
         },
         startingPrice: village.startingPrice || 0,
         rentalYield: village.rentalYield || 0,
@@ -245,7 +128,31 @@ export default function EditVillageDrawer({
         amenities: village.amenities || [],
       });
     }
-  }, [isOpen, village, reset]);
+  }, [isOpen, village, englishVillage, arabicVillage, reset]);
+
+  // Reset form to default empty values when closed to prevent stale data on reopen
+  useEffect(() => {
+    if (!isOpen) {
+      reset({
+        name: { en: "", ar: "" },
+        developerName: { en: "", ar: "" },
+        locationText: { en: "", ar: "" },
+        startingPrice: 0,
+        rentalYield: 0,
+        coverImage: "",
+        galleryImages: [],
+        googleMapsUrl: "",
+        latitude: null,
+        longitude: null,
+        amenities: [],
+      });
+      setCoverPreviewUrl(null);
+      setGalleryPreviewUrls([]);
+    }
+  }, [isOpen, reset]);
+
+  const isDataStale = !englishVillage || !arabicVillage || englishVillage._id !== village?._id || arabicVillage._id !== village?._id;
+  const isInitializing = isOpen && village && (isEnLoading || isArLoading || isEnFetching || isArFetching || isDataStale);
 
   const coverImage = watch("coverImage");
   const galleryImages = watch("galleryImages") as (File | string)[];
@@ -428,10 +335,15 @@ export default function EditVillageDrawer({
             </div>
 
             {/* Scrollable Form Content */}
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6"
-            >
+            {isInitializing ? (
+              <div className="flex-1 flex items-center justify-center py-20 text-[#1E8CAB]">
+                <Spinner />
+              </div>
+            ) : (
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6"
+              >
               {/* Form errors indicator */}
               {Object.keys(errors).length > 0 && (
                 <div className="flex items-center gap-2 rounded-lg bg-red-50 p-4 text-sm text-red-600 border border-red-100">
@@ -488,30 +400,7 @@ export default function EditVillageDrawer({
                 </div>
               </div>
 
-              {/* Location Text - English & Arabic Side-by-Side */}
-              <div className="flex flex-col gap-4 border-b border-[#EDEFF2] pb-5">
-                <span className="text-sm font-semibold text-text-secondary">
-                  {isArabic ? "تفاصيل الموقع" : "Location Info"}
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label={t.locationEn}
-                    placeholder="e.g. Kilo 120, Alamein"
-                    required
-                    {...register("locationText.en")}
-                    error={errors.locationText?.en?.message}
-                  />
-                  <Input
-                    label={t.locationAr}
-                    placeholder="مثال: الكيلو 120، العلمين"
-                    required
-                    dir="rtl"
-                    {...register("locationText.ar")}
-                    error={errors.locationText?.ar?.message}
-                  />
-                </div>
-              </div>
-
+             
               {/* Price and Yield */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-[#EDEFF2] pb-5">
                 <Input
@@ -533,37 +422,6 @@ export default function EditVillageDrawer({
                 />
               </div>
 
-              {/* Maps and Coordinates */}
-              <div className="flex flex-col gap-4 border-b border-[#EDEFF2] pb-5">
-                <span className="text-sm font-semibold text-text-secondary">
-                  {isArabic ? "خرائط وإحداثيات الموقع (اختياري)" : "Maps & Coordinates (Optional)"}
-                </span>
-                <Input
-                  label={t.googleMapsUrl}
-                  type="text"
-                  placeholder={t.placeholderUrl}
-                  {...register("googleMapsUrl")}
-                  error={errors.googleMapsUrl?.message}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    label={t.latitude}
-                    type="number"
-                    step="any"
-                    placeholder={t.placeholderLat}
-                    {...register("latitude")}
-                    error={errors.latitude?.message}
-                  />
-                  <Input
-                    label={t.longitude}
-                    type="number"
-                    step="any"
-                    placeholder={t.placeholderLng}
-                    {...register("longitude")}
-                    error={errors.longitude?.message}
-                  />
-                </div>
-              </div>
 
               {/* Amenities Multi-select */}
               <div className="border-b border-[#EDEFF2] pb-5">
@@ -684,7 +542,42 @@ export default function EditVillageDrawer({
 
               {/* Submit Button invisible helper */}
               <button type="submit" className="hidden" />
+               {/* Location Selector (Bilingual) */}
+              <div className="border-b border-[#EDEFF2] pb-5">
+                <Controller
+                  control={control}
+                  name="locationText"
+                  render={({ field: { value: locationTextVal } }) => (
+                    <LocationPicker
+                      label={isArabic ? "الموقع" : "Location"}
+                      required
+                      value={{
+                        locationText: {
+                          en: locationTextVal?.en || "",
+                          ar: locationTextVal?.ar || "",
+                        },
+                        googleMapsUrl: watch("googleMapsUrl") || "",
+                        latitude: watch("latitude") || 0,
+                        longitude: watch("longitude") || 0,
+                      }}
+                      onChange={(newVal: any) => {
+                        setValue("locationText", newVal.locationText, { shouldValidate: true });
+                        setValue("googleMapsUrl", newVal.googleMapsUrl, { shouldValidate: true });
+                        setValue("latitude", newVal.latitude, { shouldValidate: true });
+                        setValue("longitude", newVal.longitude, { shouldValidate: true });
+                      }}
+                      options={locationOptions}
+                      error={errors.locationText?.en?.message || errors.locationText?.ar?.message}
+                      isArabic={isArabic}
+                    />
+                  )}
+                />
+              </div>
+
             </form>
+            )}
+
+            
 
             {/* Footer Actions */}
             <div className="flex justify-end items-center gap-4 px-6 py-5 border-t border-[#C0C4C8] bg-[#F5F9FA]">

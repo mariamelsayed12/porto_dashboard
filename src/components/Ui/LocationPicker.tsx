@@ -1,72 +1,467 @@
+import { useState, useRef, useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
-import mapMockup from "../../assets/map-mockup.png";
 import Input from "./Input";
+import Spinner from "./LoadingSpinner";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Resolve Leaflet default marker icon paths in Vite
+import markerIcon from "leaflet/dist/images/marker-icon.png";
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconUrl: markerIcon,
+  iconRetinaUrl: markerIcon2x,
+  shadowUrl: markerShadow,
+});
+
+export interface LocationValue {
+  locationText: {
+    en: string;
+    ar: string;
+  };
+  googleMapsUrl: string;
+  latitude: number;
+  longitude: number;
+}
+
+const parseLocationName = (suggestion: any) => {
+  const displayName = suggestion.display_name || "";
+  const parts = displayName.split(",");
+  const title = parts[0]?.trim() || "";
+  const subtitle = parts.slice(1).map((p: string) => p.trim()).join(", ") || "";
+  return { title, subtitle };
+};
+
+const getRelevanceScore = (suggestion: any, query: string): number => {
+  let score = 0;
+  const displayName = (suggestion.display_name || "").toLowerCase();
+  const queryLower = query.toLowerCase().trim();
+
+  // 1. Textual match boosts (coastal real-estate terms)
+  const highPriority = [
+    "north coast", "sahel", "الساحل الشمالي", "الساحل",
+    "alamein", "العلمين",
+    "sidi abdel rahman", "sidi abd el-rahman", "سيدي عبد الرحمن", "سيدي عبدالرحمن",
+    "ras el hekma", "ras el-hekma", "راس الحكمة", "رأس الحكمة",
+    "sokhna", "السخنة",
+    "marina", "مارينا",
+    "hurghada", "ghardaqah", "الغردقة",
+    "gouna", "الجونة",
+    "soma bay", "somabay", "سوما باي",
+    "makadi", "مكادي",
+    "sahl hasheesh", "سهل حشيش"
+  ];
+
+  const mediumPriority = [
+    "matruh", "مطروح",
+    "red sea", "البحر الاحمر", "البحر الأحمر",
+    "alexandria", "الاسكندرية", "الإسكندرية",
+    "coast", "coastal", "beach", "resort", "village", "قرية", "شاطئ", "ساحل", "شاليه", "chalet", "bay"
+  ];
+
+  highPriority.forEach((word) => {
+    if (displayName.includes(word)) {
+      score += 150;
+    }
+  });
+
+  mediumPriority.forEach((word) => {
+    if (displayName.includes(word)) {
+      score += 60;
+    }
+  });
+
+  // 2. Coordinate-based coastal region boosts
+  const lat = parseFloat(suggestion.lat);
+  const lon = parseFloat(suggestion.lon);
+
+  if (!isNaN(lat) && !isNaN(lon)) {
+    // North Coast / Mediterranean Coast (Alexandria to Matrouh)
+    const isNorthCoast = (lat >= 30.5 && lat <= 31.6) && (lon >= 25.0 && lon <= 32.5);
+    // Ain Sokhna / Gulf of Suez
+    const isSokhna = (lat >= 29.0 && lat <= 30.2) && (lon >= 32.2 && lon <= 32.7);
+    // Red Sea Coast (Hurghada, El Gouna, etc.)
+    const isRedSea = (lat >= 26.0 && lat <= 28.5) && (lon >= 33.4 && lon <= 34.5);
+
+    if (isNorthCoast || isSokhna || isRedSea) {
+      score += 100;
+    }
+  }
+
+  // 3. Lexical query match boost
+  if (displayName.includes(queryLower)) {
+    score += 50;
+    if (displayName.startsWith(queryLower)) {
+      score += 30;
+    }
+  }
+
+  return score;
+};
+
 
 interface LocationPickerProps {
   label?: string;
   required?: boolean;
-  value: string;
-  onChange: (value: string) => void;
+  value: string | LocationValue | { en?: string; ar?: string } | null | undefined;
+  onChange: (value: LocationValue | string) => void;
+  options?: any[]; // Kept for interface compatibility
   error?: string;
+  isArabic?: boolean;
 }
 
 export default function LocationPicker({
   label = "Location",
   required = false,
-  value = "",
+  value,
   onChange,
   error,
+  isArabic = false,
 }: LocationPickerProps) {
-  // Use a default address if none is provided yet
-  const displayAddress = value || "760 Market Street, San Francisco, CA 94107";
+  const [localQuery, setLocalQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<L.Map | null>(null);
+  const markerInstance = useRef<L.Marker | null>(null);
+
+  // Extract location fields from whatever structure was passed as value
+  let displayAddressEn = "";
+  let displayAddressAr = "";
+  let lat: number | null = null;
+  let lng: number | null = null;
+  let googleMapsUrl = "";
+
+  if (typeof value === "string") {
+    displayAddressEn = value;
+    displayAddressAr = value;
+  } else if (value && typeof value === "object") {
+    if ("locationText" in value && value.locationText) {
+      const locVal = value as LocationValue;
+      displayAddressEn = locVal.locationText.en || "";
+      displayAddressAr = locVal.locationText.ar || "";
+      lat = typeof locVal.latitude === "number" ? locVal.latitude : null;
+      lng = typeof locVal.longitude === "number" ? locVal.longitude : null;
+      googleMapsUrl = locVal.googleMapsUrl || "";
+    } else {
+      const bilingual = value as { en?: string; ar?: string };
+      displayAddressEn = bilingual.en || "";
+      displayAddressAr = bilingual.ar || "";
+    }
+  }
+
+  // 1. Sync input search query when value or language switches
+  useEffect(() => {
+    setLocalQuery(isArabic ? displayAddressAr : displayAddressEn);
+  }, [value, isArabic, displayAddressEn, displayAddressAr]);
+
+  // 2. Close dropdown on click outside and reset query to selected value
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        setLocalQuery(isArabic ? displayAddressAr : displayAddressEn);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isArabic, displayAddressEn, displayAddressAr]);
+
+  // 3. Initialize Leaflet Map once
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const initialLat = lat ?? 30.0444;
+    const initialLng = lng ?? 31.2357;
+    const hasCoords = lat !== null && lng !== null;
+
+    const map = L.map(mapRef.current, {
+      zoomControl: true,
+      attributionControl: false,
+    }).setView([initialLat, initialLng], hasCoords ? 14 : 6);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+    }).addTo(map);
+
+    let marker: L.Marker | null = null;
+    if (hasCoords) {
+      marker = L.marker([initialLat, initialLng]).addTo(map);
+      markerInstance.current = marker;
+    }
+
+    mapInstance.current = map;
+
+    // Use ResizeObserver to automatically invalidate map size when container dimensions change
+    let resizeObserver: ResizeObserver | null = null;
+    if (window.ResizeObserver && mapRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapInstance.current) {
+          mapInstance.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(mapRef.current);
+    }
+
+    // Use IntersectionObserver to invalidate map size when it becomes visible in the viewport
+    let intersectionObserver: IntersectionObserver | null = null;
+    if (window.IntersectionObserver && mapRef.current) {
+      intersectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && mapInstance.current) {
+            setTimeout(() => {
+              mapInstance.current?.invalidateSize();
+            }, 100);
+          }
+        });
+      }, { threshold: 0.1 });
+      intersectionObserver.observe(mapRef.current);
+    }
+
+    // Multi-stage timeouts to guarantee tile loading even if animations or network calls lag
+    const timeouts = [200, 500, 1000, 2000].map(delay =>
+      setTimeout(() => {
+        if (mapInstance.current) {
+          mapInstance.current.invalidateSize();
+        }
+      }, delay)
+    );
+
+    return () => {
+      timeouts.forEach(clearTimeout);
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
+      if (intersectionObserver) {
+        intersectionObserver.disconnect();
+      }
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+        markerInstance.current = null;
+      }
+    };
+  }, []);
+
+  // 4. Update map center and marker when coords change from parent/outside
+  useEffect(() => {
+    if (!mapInstance.current) return;
+
+    if (lat !== null && lng !== null) {
+      const center = L.latLng(lat, lng);
+      
+      // Force Leaflet to recalculate container size when coordinates are set/updated from parent (e.g. when asynchronous data loads in Edit mode)
+      mapInstance.current.invalidateSize();
+
+      if (markerInstance.current) {
+        markerInstance.current.setLatLng(center);
+      } else {
+        markerInstance.current = L.marker(center).addTo(mapInstance.current);
+      }
+      
+      const currentCenter = mapInstance.current.getCenter();
+      if (currentCenter.distanceTo(center) > 100) {
+        mapInstance.current.setView(center, 14);
+      }
+    } else {
+      if (markerInstance.current) {
+        markerInstance.current.remove();
+        markerInstance.current = null;
+      }
+    }
+  }, [lat, lng]);
+
+  const fetchGeocode = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Geocoding failed: status ${res.status}`);
+    }
+    return await res.json();
+  };
+
+  // 5. Geocode search query suggestions (with 400ms debounce)
+  useEffect(() => {
+    if (!localQuery || localQuery.trim().length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    // Skip geocoding if the localQuery matches the current display address (means it was loaded/synced from selected state)
+    if (localQuery === (isArabic ? displayAddressAr : displayAddressEn)) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsLoadingSuggestions(true);
+      try {
+        const langParam = isArabic ? "ar" : "en";
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          localQuery
+        )}&format=json&addressdetails=1&limit=10&accept-language=${langParam}&countrycodes=eg&viewbox=25.0,32.0,35.0,26.0&email=porto_dashboard_dev@gmail.com`;
+
+        const data = await fetchGeocode(url);
+        if (data && Array.isArray(data)) {
+          // Sort results based on coastal/real-estate relevance
+          const rankedData = [...data].sort((a, b) => {
+            const scoreA = getRelevanceScore(a, localQuery);
+            const scoreB = getRelevanceScore(b, localQuery);
+            return scoreB - scoreA;
+          });
+          setSuggestions(rankedData);
+        }
+      } catch (err) {
+        console.error("Geocoding search failed:", err);
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [localQuery, isArabic, displayAddressEn, displayAddressAr]);
+
+  // 6. Handle suggestion selection
+  const handleSelectSuggestion = async (suggestion: any) => {
+    const selectedLat = parseFloat(suggestion.lat);
+    const selectedLng = parseFloat(suggestion.lon);
+
+    if (mapInstance.current) {
+      mapInstance.current.flyTo([selectedLat, selectedLng], 14);
+    }
+
+    setIsLoadingSuggestions(true);
+    setIsOpen(false);
+
+    const urlEn = `https://nominatim.openstreetmap.org/reverse?lat=${selectedLat}&lon=${selectedLng}&format=json&accept-language=en&email=porto_dashboard_dev@gmail.com`;
+    const urlAr = `https://nominatim.openstreetmap.org/reverse?lat=${selectedLat}&lon=${selectedLng}&format=json&accept-language=ar&email=porto_dashboard_dev@gmail.com`;
+
+    let textEn = "";
+    let textAr = "";
+
+    try {
+      const [resEn, resAr] = await Promise.all([
+        fetchGeocode(urlEn).catch(() => null),
+        fetchGeocode(urlAr).catch(() => null),
+      ]);
+
+      textEn = resEn?.display_name || "";
+      textAr = resAr?.display_name || "";
+    } catch (err) {
+      console.error("Reverse geocoding failed:", err);
+    }
+
+    // Sensible fallbacks to preserve bilingual data structures
+    if (!textEn) {
+      textEn = isArabic ? (displayAddressEn || suggestion.display_name) : suggestion.display_name;
+    }
+    if (!textAr) {
+      textAr = isArabic ? suggestion.display_name : (displayAddressAr || suggestion.display_name);
+    }
+
+    const computedGmapsUrl = `https://www.google.com/maps?q=${selectedLat},${selectedLng}`;
+
+    onChange({
+      locationText: {
+        en: textEn,
+        ar: textAr,
+      },
+      googleMapsUrl: computedGmapsUrl,
+      latitude: selectedLat,
+      longitude: selectedLng,
+    });
+
+    setLocalQuery(isArabic ? textAr : textEn);
+    setIsLoadingSuggestions(false);
+  };
+
+  // 7. Handle manual typing commit on blur (e.g. Tab key)
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (e.relatedTarget && !containerRef.current?.contains(e.relatedTarget as Node)) {
+      setIsOpen(false);
+      setLocalQuery(isArabic ? displayAddressAr : displayAddressEn);
+    }
+  };
 
   return (
-    <div className="flex flex-col w-full gap-2">
-      {/* Search Input using Input component */}
-      <Input
-        label={label}
-        required={required}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Search location"
-        leftIcon={<FiSearch className="w-5 h-5" />}
-        error={error}
-        variant="modal"
-        size="md"
-      />
-
-      {/* Map View Container */}
-      <div className="relative h-[194px] w-full rounded-xl overflow-hidden border border-border">
-        {/* Map Background */}
-        <img
-          src={mapMockup}
-          alt="Map background"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+    <div ref={containerRef} className="flex flex-col w-full gap-2 relative">
+      <div className="relative">
+        <Input
+          label={label}
+          required={required}
+          value={localQuery}
+          onChange={(e) => {
+            const val = e.target.value;
+            setLocalQuery(val);
+            setIsOpen(true);
+          }}
+          onBlur={handleBlur}
+          onFocus={() => setIsOpen(true)}
+          placeholder={isArabic ? "ابحث عن الموقع..." : "Search location..."}
+          leftIcon={<FiSearch className="w-5 h-5 text-text-secondary" />}
+          error={error}
+          variant="modal"
+          size="md"
+          dir={isArabic ? "rtl" : "ltr"}
         />
 
-        {/* Address Overlay Badge */}
-        <div className="absolute top-[57px] left-1/2 -translate-x-1/2 bg-[rgba(15,15,20,0.88)] text-white px-2.5 py-1.5 rounded-lg text-[11px] font-medium font-sans whitespace-nowrap shadow-md z-10">
-          {displayAddress}
-        </div>
+        {/* Dropdown Suggestions List */}
+        {isOpen && (suggestions.length > 0 || isLoadingSuggestions || (localQuery.trim().length >= 3 && suggestions.length === 0)) && (
+          <div className="absolute top-full left-0 z-50 w-full mt-1 max-h-60 overflow-y-auto bg-white border border-[#D4D5D8] rounded-xl shadow-lg">
+            {isLoadingSuggestions ? (
+              <div className="flex items-center justify-center p-4">
+                <Spinner />
+              </div>
+            ) : suggestions.length > 0 ? (
+              suggestions.map((suggestion, idx) => {
+                const { title, subtitle } = parseLocationName(suggestion);
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => handleSelectSuggestion(suggestion)}
+                    className="px-4 py-3 cursor-pointer hover:bg-[#F5F9FA] hover:text-[#1E8CAB] text-text-secondary border-b border-[#F0F2F5] last:border-b-0 flex gap-3 items-start transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4 text-[#1E8CAB] mt-0.5 shrink-0"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <div className="flex flex-col min-w-0 flex-1 ltr:text-left rtl:text-right">
+                      <span className="font-semibold text-sm text-[#1F2937] leading-tight truncate">
+                        {title}
+                      </span>
+                      {subtitle && (
+                        <span className="text-xs text-[#6B7280] mt-0.5 truncate block">
+                          {subtitle}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="px-4 py-3 text-sm text-text-secondary text-center">
+                {isArabic ? "لم يتم العثور على نتائج" : "No locations found"}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-        {/* Pin Marker Overlay */}
-        <div className="absolute top-[110px] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center">
-          {/* Custom Pin SVG matching Figma */}
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="drop-shadow-lg"
-          >
-            <path
-              d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2Z"
-              fill="#1E8CAB"
-            />
-            <circle cx="12" cy="9" r="3" fill="white" />
-          </svg>
-        </div>
+      {/* Map View Container */}
+      <div className="relative h-[194px] w-full rounded-xl overflow-hidden border border-border z-0">
+        <div ref={mapRef} className="w-full h-full" />
       </div>
     </div>
   );

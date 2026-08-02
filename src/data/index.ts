@@ -365,3 +365,84 @@ export const propertyFormFields: FieldConfig[] = [
 ];
 
 
+export const ALLOWED_AMENITIES = [
+  { value: "Pools", en: "Pools", ar: "حمامات سباحة" },
+  { value: "Marina", en: "Marina", ar: "مارينا" },
+  { value: "Cafes", en: "Cafes", ar: "مقاهي" },
+  { value: "Beaches", en: "Beaches", ar: "شواطئ" },
+  { value: "Restaurants", en: "Restaurants", ar: "مطاعم" },
+  { value: "Hotel Services", en: "Hotel Services", ar: "خدمات فندقية" },
+  { value: "Security", en: "Security", ar: "أمن وحراسة" },
+  { value: "Medical Services", en: "Medical Services", ar: "خدمات طبية" },
+  { value: "Sports Facilities", en: "Sports Facilities", ar: "مرافق رياضية" },
+  { value: "Gyms", en: "Gyms", ar: "صالات رياضية" },
+  { value: "Spas", en: "Spas", ar: "سبا" },
+  { value: "Clubhouse", en: "Clubhouse", ar: "كلوب هاوس" },
+  { value: "Commercial Area", en: "Commercial Area", ar: "منطقة تجارية" },
+  { value: "Green Areas", en: "Green Areas", ar: "مناطق خضراء" },
+  { value: "Kids Area", en: "Kids Area", ar: "منطقة أطفال" },
+];
+
+
+export const translations = {
+  en: {
+    title: "Edit Village",
+    formLanguage: "Language",
+    saveChanges: "Save Changes",
+    cancel: "Cancel",
+    nameEn: "Village Name (English)",
+    nameAr: "Village Name (Arabic)",
+    developerEn: "Developer Name (English)",
+    developerAr: "Developer Name (Arabic)",
+    locationEn: "Location (English)",
+    locationAr: "Location (Arabic)",
+    startingPrice: "Starting Price (EGP)",
+    rentalYield: "Rental Yield (%)",
+    googleMapsUrl: "Google Maps URL",
+    latitude: "Latitude",
+    longitude: "Longitude",
+    amenities: "Amenities",
+    coverImage: "Cover Image",
+    galleryImages: "Gallery Images (Max 5)",
+    uploadNew: "Upload Image",
+    replace: "Replace Image",
+    placeholderPrice: "Enter starting price",
+    placeholderYield: "Enter rental yield",
+    placeholderUrl: "Enter Google Maps location URL",
+    placeholderLat: "Enter latitude",
+    placeholderLng: "Enter longitude",
+  },
+  ar: {
+    title: "تعديل القرية",
+    formLanguage: "اللغة",
+    saveChanges: "حفظ التغييرات",
+    cancel: "إلغاء",
+    nameEn: "اسم القرية (بالإنجليزي)",
+    nameAr: "اسم القرية (بالعربي)",
+    developerEn: "اسم المطور (بالإنجليزي)",
+    developerAr: "اسم المطور (بالعربي)",
+    locationEn: "الموقع (بالإنجليزي)",
+    locationAr: "الموقع (بالعربي)",
+    startingPrice: "السعر المبدئي (جنيه)",
+    rentalYield: "العائد الإيجاري (%)",
+    googleMapsUrl: "رابط خرائط جوجل",
+    latitude: "خط العرض",
+    longitude: "خط الطول",
+    amenities: "المرافق والخدمات",
+    coverImage: "الصورة الرئيسية",
+    galleryImages: "معرض الصور (الحد الأقصى 5)",
+    uploadNew: "تحميل الصورة",
+    replace: "استبدال الصورة",
+    placeholderPrice: "أدخل السعر المبدئي",
+    placeholderYield: "أدخل نسبة العائد الإيجاري",
+    placeholderUrl: "أدخل رابط الموقع على خرائط جوجل",
+    placeholderLat: "أدخل خط العرض",
+    placeholderLng: "أدخل خط الطول",
+  },
+};
+
+
+
+
+
+

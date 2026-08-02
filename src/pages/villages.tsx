@@ -155,6 +155,8 @@ const VillagesPage = () => {
   const handleCreateSubmit = async (data: Record<string, any>) => {
     try {
       const coverImage = data.media?.cover || defualtImage;
+      const isLocObject = typeof data.location === "object" && data.location !== null;
+      
       const body = {
         name: data.name,
         developerName: data.developer,
@@ -162,7 +164,10 @@ const VillagesPage = () => {
         rentalYield: Number(data.rentalYield) || 7.5,
         coverImage,
         galleryImages: data.media?.images?.filter(Boolean) || [],
-        locationText: data.location,
+        locationText: isLocObject ? data.location.locationText : data.location,
+        googleMapsUrl: isLocObject ? data.location.googleMapsUrl : "",
+        latitude: isLocObject ? data.location.latitude : null,
+        longitude: isLocObject ? data.location.longitude : null,
         amenities: data.amenities || [],
       };
 

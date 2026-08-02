@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Geocoding</title>
+</head>
+<body>
+  <h1>Testing Geocoding in Browser</h1>
+  <button id="testBtn">Run Geocode Test</button>
+  <pre id="output">Click button to run test...</pre>
+
+  <script>
+    document.getElementById("testBtn").addEventListener("click", async () => {
+      const output = document.getElementById("output");
+      output.textContent = "Testing...";
+
+      const url = "https://nominatim.openstreetmap.org/search?q=Alamein&format=json&addressdetails=1&limit=5&accept-language=en&email=porto_dashboard_dev@gmail.com";
+      
+      try {
+        const res = await fetch(url);
+        output.textContent += `\nStatus: ${res.status}`;
+        const data = await res.json();
+        output.textContent += `\nData count: ${data.length}`;
+        if (data.length > 0) {
+          output.textContent += `\nFirst result: ${data[0].display_name}`;
+        }
+      } catch (err) {
+        output.textContent += `\nError: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
