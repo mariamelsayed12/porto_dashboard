@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useOutletContext } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import EditVillageDrawer from "../components/Villages/EditVillageDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
 import type { BreadcrumbItem } from "../components/Ui/BreadCrumb";
@@ -7,11 +7,15 @@ import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
 import Spinner from "../components/Ui/LoadingSpinner";
 import EmptyState from "../components/Ui/EmptyState";
 import {
+  useGetVillageQuery,
   useGetVillageByIdQuery,
   useUpdateVillageMutation,
   useDeleteVillageMutation,
 } from "../../app/services/crudVillage";
+import { useGetPropertyQuery } from "../../app/services/crudproperties";
 import defaultImg from "../assets/default.png";
+import GoogleMap from "../components/Ui/GoogleMap";
+import VillageDetailsSkeleton from "../components/Villages/VillageDetailsSkeleton";
 
 interface HeaderActionConfig {
   showActions: boolean;
@@ -31,12 +35,52 @@ export default function VillageDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const { setBreadcrumbItems, setHeaderActions } = useOutletContext<LayoutContextType>();
+  const { setBreadcrumbItems, setHeaderActions } =
+    useOutletContext<LayoutContextType>();
 
-  const { data: village, isLoading, isError } = useGetVillageByIdQuery(
-    { id: id || "" },
-    { skip: !id }
+  const isObjectId = useMemo(
+    () => (id ? /^[0-9a-fA-F]{24}$/.test(id) : false),
+    [id],
   );
+
+  const {
+    data: villages,
+    isLoading: isListLoading,
+    isError: isListError,
+  } = useGetVillageQuery();
+
+  const resolvedId = useMemo(() => {
+    if (!id) return "";
+    if (isObjectId) return id;
+    if (!villages) return "";
+    const found = villages.find((v) => v.slug === id);
+    return found ? found._id : "";
+  }, [id, isObjectId, villages]);
+
+  const {
+    data: village,
+    isLoading: isDetailLoading,
+    isError: isDetailError,
+  } = useGetVillageByIdQuery(
+    { id: resolvedId },
+    { skip: !resolvedId }
+  );
+
+  const isLoading = isObjectId
+    ? isDetailLoading
+    : isListLoading || (villages && resolvedId ? isDetailLoading : !villages);
+
+  const isError = isObjectId
+    ? isDetailError
+    : isListError || (villages !== undefined && (!resolvedId || isDetailError));
+
+  const { data: properties, isLoading: isPropertiesLoading } =
+    useGetPropertyQuery({ lang: "en" });
+
+  const propertyCount = useMemo(() => {
+    if (!properties || !village) return 0;
+    return properties.filter((p) => p.village?._id === village._id).length;
+  }, [properties, village]);
 
   const [updateVillage, { isLoading: isUpdating }] = useUpdateVillageMutation();
   const [deleteVillage] = useDeleteVillageMutation();
@@ -47,7 +91,13 @@ export default function VillageDetailsPage() {
 
   // Sync breadcrumbs and header actions
   useEffect(() => {
-    if (village) {
+    if (isLoading) {
+      setBreadcrumbItems([
+        { label: "Villages", href: "/villages" },
+        { label: "Loading..." },
+      ]);
+      setHeaderActions(null);
+    } else if (village) {
       setBreadcrumbItems([
         { label: "Villages", href: "/villages" },
         { label: `${village.name} Details` },
@@ -70,7 +120,7 @@ export default function VillageDetailsPage() {
       setBreadcrumbItems([]);
       setHeaderActions(null);
     };
-  }, [village, setBreadcrumbItems, setHeaderActions]);
+  }, [village, isLoading, setBreadcrumbItems, setHeaderActions]);
 
   const handleEditSubmit = async (formData: FormData) => {
     if (!village) return;
@@ -87,7 +137,8 @@ export default function VillageDetailsPage() {
     } catch (err: any) {
       let errMsg = "Failed to delete village.";
       if (err?.data?.message === "validation.deletePrevented") {
-        errMsg = "This village cannot be deleted because it contains active properties. Please delete or reassign its properties first.";
+        errMsg =
+          "This village cannot be deleted because it contains active properties. Please delete or reassign its properties first.";
       } else if (err?.data?.message) {
         errMsg = err.data.message;
       }
@@ -96,16 +147,12 @@ export default function VillageDetailsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="w-full flex items-center justify-center py-32">
-        <Spinner />
-      </div>
-    );
+    return <VillageDetailsSkeleton />;
   }
 
   if (isError || !village) {
     return (
-      <div className="w-full text-center py-20 bg-[#f5f9fa]">
+      <div className="w-full h-screen flex flex-col items-center justify-center text-center py-20 bg-[#f5f9fa]">
         <EmptyState message="Village Not Found" />
         <button
           onClick={() => navigate("/villages")}
@@ -126,9 +173,9 @@ export default function VillageDetailsPage() {
       {/* Left content panel */}
       <div className="flex-1 flex flex-col gap-[24px] max-w-full lg:max-w-[845px]">
         {/* Header banner card */}
-        <div className="bg-white border border-border border-solid rounded-md flex flex-col md:flex-row p-[24px] gap-[24px] w-full items-stretch">
+        <div className="bg-white border border-border border-solid rounded-md flex flex-col md:flex-row  gap-[24px] w-full items-stretch">
           {/* Cover image banner container */}
-          <div className="w-full md:w-[378px] h-[250px] md:h-auto rounded-md overflow-hidden shrink-0 relative">
+          <div className="w-full md:w-[378px] h-[250px] md:h-auto rounded-l-md  overflow-hidden shrink-0 relative">
             <img
               src={village.coverImage || defaultImg}
               alt={village.name}
@@ -137,7 +184,7 @@ export default function VillageDetailsPage() {
           </div>
 
           {/* Details stack on right */}
-          <div className="flex-1 flex flex-col gap-[24px] justify-between">
+          <div className="flex-1 p-[24px] flex flex-col gap-[24px] justify-between">
             {/* Header metadata */}
             <div className="flex flex-col gap-[8px] items-start w-full">
               <div className="flex items-center justify-between w-full gap-4 flex-wrap">
@@ -158,7 +205,17 @@ export default function VillageDetailsPage() {
                   Starting price
                 </span>
                 <span className="font-poppins font-medium text-[19px] text-[#141414] truncate max-w-full">
-                  {startingPriceFormatted}
+                  {isLoading ? <Spinner /> : `${startingPriceFormatted}`}
+                </span>
+              </div>
+
+              {/* Box 3: properties Count */}
+              <div className="bg-[#edeff2] border border-[#d4d5d8] border-solid rounded-[12px] p-[16px] flex flex-col gap-[4px] items-start justify-center">
+                <span className="font-poppins font-normal text-[16px] text-[#464646]">
+                  properties
+                </span>
+                <span className="font-poppins font-medium text-[19px] text-[#141414]">
+                  {isPropertiesLoading ? <Spinner /> : propertyCount}
                 </span>
               </div>
 
@@ -168,7 +225,11 @@ export default function VillageDetailsPage() {
                   Amenities
                 </span>
                 <span className="font-poppins font-medium text-[19px] text-[#141414]">
-                  {village.amenities ? village.amenities.length : 0}
+                  {isLoading ? (
+                    <Spinner />
+                  ) : (
+                    `${village.amenities ? village.amenities.length : 0}`
+                  )}
                 </span>
               </div>
 
@@ -179,7 +240,7 @@ export default function VillageDetailsPage() {
                     Rental yield
                   </span>
                   <span className="font-poppins font-medium text-[19px] text-[#141414]">
-                    {village.rentalYield}%
+                    {isLoading ? <Spinner /> : `${village.rentalYield}%`}
                   </span>
                 </div>
               )}
@@ -212,10 +273,22 @@ export default function VillageDetailsPage() {
         {village.locationText && (
           <div className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] overflow-hidden w-full flex flex-col">
             <div className="h-[244px] w-full relative overflow-hidden shrink-0">
-              <img
-                src={defaultImg}
-                alt="Location map coordinates"
-                className="w-full h-full object-cover"
+              <GoogleMap
+                coordinates={
+                  village.latitude && village.longitude
+                    ? { lat: village.latitude, lng: village.longitude }
+                    : (() => {
+                        const parts = village.locationText.split(",");
+                        const lat = parseFloat(parts[0]);
+                        const lng = parseFloat(parts[1]);
+                        return !isNaN(lat) && !isNaN(lng)
+                          ? { lat, lng }
+                          : undefined;
+                      })()
+                }
+                googleMapsUrl={village.googleMapsUrl || village.locationText}
+                title={village.name}
+                className="relative w-full h-full group"
               />
             </div>
             <div className="p-[24px] flex flex-col items-start w-full">
@@ -223,7 +296,7 @@ export default function VillageDetailsPage() {
                 <h3 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
                   Location
                 </h3>
-                <p className="font-poppins font-normal text-[16px] text-[#464646]">
+                <p className="font-poppins font-medium text-[16px] text-[#464646]">
                   {village.locationText}
                 </p>
               </div>

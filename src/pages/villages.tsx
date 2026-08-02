@@ -2,12 +2,10 @@ import { useState, useMemo } from "react";
 import { useOutletContext, useNavigate, useSearchParams } from "react-router-dom";
 import VillageCard from "../components/Ui/VillageCard";
 import EmptyState from "../components/Ui/EmptyState";
-import FormDrawer from "../components/Ui/FormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
-import { villageFormFields } from "../data";
 import EditVillageDrawer from "../components/Villages/EditVillageDrawer";
+import CreateVillageDrawer from "../components/Villages/CreateVillageDrawer";
 import VillagesSkeleton from "../components/Villages/VillagesSkeleton";
-import defualtImage from "../assets/default.png";
 import FilterSortSection, { type FilterConfig } from "../components/Ui/FilterSortSection";
 import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
 import {
@@ -22,7 +20,7 @@ const VillagesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: villages, isLoading, isError } = useGetVillageQuery();
   
-  const [createVillage] = useCreateVillageMutation();
+  const [createVillage, { isLoading: isCreating }] = useCreateVillageMutation();
   const [updateVillage, { isLoading: isUpdating }] = useUpdateVillageMutation();
   const [deleteVillage, { isLoading: isDeleting }] = useDeleteVillageMutation();
 
@@ -152,31 +150,8 @@ const VillagesPage = () => {
     navigate(`/villages/${id}`);
   };
 
-  const handleCreateSubmit = async (data: Record<string, any>) => {
-    try {
-      const coverImage = data.media?.cover || defualtImage;
-      const isLocObject = typeof data.location === "object" && data.location !== null;
-      
-      const body = {
-        name: data.name,
-        developerName: data.developer,
-        startingPrice: Number(data.price) || 1000000,
-        rentalYield: Number(data.rentalYield) || 7.5,
-        coverImage,
-        galleryImages: data.media?.images?.filter(Boolean) || [],
-        locationText: isLocObject ? data.location.locationText : data.location,
-        googleMapsUrl: isLocObject ? data.location.googleMapsUrl : "",
-        latitude: isLocObject ? data.location.latitude : null,
-        longitude: isLocObject ? data.location.longitude : null,
-        amenities: data.amenities || [],
-      };
-
-      await createVillage(body).unwrap();
-      showSuccessToast("Village created successfully.");
-      setIsCreateOpen(false);
-    } catch (err: any) {
-      showErrorToast(err?.data?.message || "Failed to create village.");
-    }
+  const handleCreateSubmit = async (formData: FormData) => {
+    await createVillage(formData).unwrap();
   };
 
   const developerOptions = useMemo(() => {
@@ -253,14 +228,11 @@ const VillagesPage = () => {
       )}
 
       {/* Reusable Create Village Drawer */}
-      <FormDrawer
+      <CreateVillageDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        title="Create Village"
-        fields={villageFormFields}
-        onSubmit={handleCreateSubmit}
-        submitText="Create"
-        cancelText="Cancel"
+        onCreate={handleCreateSubmit}
+        isLoading={isCreating}
       />
 
       {/* Reusable Edit Village Drawer */}

@@ -103,7 +103,7 @@ export default function Header({
         ) : (
           <>
             {/* Villages Create Button */}
-            {currentTitle === "Villages" && (
+            {location.pathname === "/villages" && (
               <Button
                 variant="create"
                 onClick={onCreateClick}
@@ -126,7 +126,7 @@ export default function Header({
               </Button>
             )} */}
 
-            {currentTitle === "Properties" && (
+            {location.pathname === "/properties" && (
               <Button
                 variant="create"
                 leftIcon={<FiPlus size={16} />}

@@ -88,7 +88,7 @@ export const VillageApiSlice = createApi({
     }),
 
     //--------------------- Create Village ---------------------
-    createVillage: builder.mutation<IVillage, Partial<IVillage>>({
+    createVillage: builder.mutation<IVillage, FormData>({
       query: (body) => ({
         url: "villages",
         method: "POST",
