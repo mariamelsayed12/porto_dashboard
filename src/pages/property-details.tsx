@@ -9,7 +9,7 @@ import PricingCard from "../components/Ui/PricingCard";
 import PropertyGalleryCard from "../components/Ui/PropertyGalleryCard";
 import type { BreadcrumbItem } from "../components/Ui/BreadCrumb";
 import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
-import Spinner from "../components/Ui/LoadingSpinner";
+import PropertyDetailsSkeleton from "../components/Properties/PropertyDetailsSkeleton";
 import {
   useGetPropertyByIdQuery,
   useUpdatePropertyMutation,
@@ -41,7 +41,7 @@ export default function PropertyDetailsPage() {
   const { setBreadcrumbItems, setHeaderActions } =
     useOutletContext<LayoutContextType>();
 
-  const { data: property, isLoading, isError } = useGetPropertyByIdQuery(
+  const { data: property, isLoading, error } = useGetPropertyByIdQuery(
     { id: id || "", lang: "en" },
     { skip: !id }
   );
@@ -65,7 +65,13 @@ export default function PropertyDetailsPage() {
         onDelete: () => setIsDeleteOpen(true),
         editLabel: "Edit Property",
       });
-    } else {
+    } else if (!isLoading && error) {
+      setBreadcrumbItems([
+        { label: "Properties", href: "/properties" },
+        { label: "Error" },
+      ]);
+      setHeaderActions(null);
+    } else if (!isLoading) {
       setBreadcrumbItems([
         { label: "Properties", href: "/properties" },
         { label: "Not Found" },
@@ -77,7 +83,7 @@ export default function PropertyDetailsPage() {
       setBreadcrumbItems([]);
       setHeaderActions(null);
     };
-  }, [property, setBreadcrumbItems, setHeaderActions]);
+  }, [property, isLoading, error, setBreadcrumbItems, setHeaderActions]);
 
   // ── Edit form fields pre-filled from property data ────────────────────────
   const editFormFields = useMemo(() => {
@@ -139,16 +145,51 @@ export default function PropertyDetailsPage() {
     }
   };
 
+  // 1. Loading state
   if (isLoading) {
+    return <PropertyDetailsSkeleton />;
+  }
+
+  // 2. Error state
+  if (error) {
+    const is404 = (error as any)?.status === 404;
+
+    if (is404) {
+      return (
+        <div className="w-full flex flex-col items-center justify-center py-24 gap-4">
+          <p className="font-poppins font-medium text-[23px] text-text-secondary">
+            Property Not Found
+          </p>
+          <button
+            onClick={() => navigate("/properties")}
+            className="h-10 px-6 bg-primary text-white rounded-md font-poppins font-medium text-[16px] hover:bg-[#156d85] transition-colors"
+          >
+            Back to Properties
+          </button>
+        </div>
+      );
+    }
+
     return (
-      <div className="w-full flex items-center justify-center py-32">
-        <Spinner />
+      <div className="w-full flex flex-col items-center justify-center py-24 gap-4 text-center px-4">
+        <p className="font-poppins font-medium text-[23px] text-red-600">
+          An error occurred while loading property details.
+        </p>
+        <p className="text-text-secondary text-sm max-w-md">
+          {((error as any)?.data?.message || (error as any)?.error || "Please check your network and try again.")}
+        </p>
+        <button
+          onClick={() => navigate("/properties")}
+          className="h-10 px-6 bg-primary text-white rounded-md font-poppins font-medium text-[16px] hover:bg-[#156d85] transition-colors"
+        >
+          Back to Properties
+        </button>
       </div>
     );
   }
 
-  // ── Not found state ───────────────────────────────────────────────────────
-  if (isError || !property) {
+  // 3. Not Found (empty response data)
+  if (!property) {
     return (
       <div className="w-full flex flex-col items-center justify-center py-24 gap-4">
         <p className="font-poppins font-medium text-[23px] text-text-secondary">
