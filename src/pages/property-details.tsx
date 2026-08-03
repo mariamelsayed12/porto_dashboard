@@ -46,7 +46,7 @@ export default function PropertyDetailsPage() {
   );
 
   const [updateProperty, { isLoading: isUpdateLoading }] = useUpdatePropertyMutation();
-  const [deleteProperty] = useDeletePropertyMutation();
+  const [deleteProperty,{isLoading:isDeleteloading}] = useDeletePropertyMutation();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -211,11 +211,13 @@ export default function PropertyDetailsPage() {
         isLoading={isUpdateLoading}
         mode="edit"
         propertyId={property._id}
+      
       />
 
       {/* ── Delete Modal ──────────────────────────────────────────────────── */}
       <DeleteModal
         isOpen={isDeleteOpen}
+        isLoading={isDeleteloading}
         onClose={() => setIsDeleteOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Are you sure you want to delete this property?"
