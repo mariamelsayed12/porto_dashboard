@@ -5,7 +5,7 @@ import {
   useOutletContext,
 } from "react-router-dom";
 import { FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
-import { mockProperties, propertyFormFields } from "../data";
+import { propertyFormFields } from "../data";
 import DataTable, {
   type ColumnDef,
   type ActionDef,
@@ -14,14 +14,20 @@ import Pagination from "../components/Ui/Pagination";
 import DeleteModal from "../components/Ui/DeleteModal";
 import FormDrawer from "../components/Ui/FormDrawer";
 import defaultImage from "../assets/default.png";
-import type { Property } from "../interface";
 import { truncateText } from "../utils";
 import FilterSortSection, {
   type FilterConfig,
 } from "../components/Ui/FilterSortSection";
-import { showSuccessToast } from "../components/Ui/Toast";
+import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
 import FilterDrawer from "../components/Ui/filterCcomponents/FilterDrawer";
-import { useUnitsFilter, matchUnit } from "../hooks/useUnitsFilter";
+import { useUnitsFilter } from "../hooks/useUnitsFilter";
+import {
+  useGetPropertyQuery,
+  useCreatePropertyMutation,
+  useDeletePropertyMutation,
+  type IProperty,
+} from "../../app/services/crudproperties";
+import { useGetVillageQuery } from "../../app/services/crudVillage";
 
 // ─── Status badge helper ──────────────────────────────────────────────────────
 
@@ -44,20 +50,16 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const PAGE_SIZE = 6;
-
 // ─── Column definitions ───────────────────────────────────────────────────────
 
-const propertiesColumns: ColumnDef<Property>[] = [
+const propertiesColumns: ColumnDef<IProperty>[] = [
   {
-    key: "creationDate",
+    key: "createdAt",
     label: "Creation date",
     width: "w-[13%]",
     render: (v) => (
       <span className="whitespace-nowrap text-text-darker font-medium">
-        {v as string}
+        {v ? new Date(v as string).toLocaleDateString("en-GB") : "—"}
       </span>
     ),
   },
@@ -79,7 +81,9 @@ const propertiesColumns: ColumnDef<Property>[] = [
     label: "Village",
     width: "w-[18%]",
     render: (v) => (
-      <span className="block max-w-[150px] truncate">{v as string}</span>
+      <span className="block max-w-[150px] truncate">
+        {(v as any)?.name || "—"}
+      </span>
     ),
   },
   {
@@ -89,12 +93,14 @@ const propertiesColumns: ColumnDef<Property>[] = [
     render: (v) => <span className="whitespace-nowrap">{v as string}</span>,
   },
   {
-    key: "price",
+    key: "installmentPrice",
     label: "Price",
     width: "w-[13%]",
     render: (v) => (
       <span className="font-medium text-text-secondary whitespace-nowrap">
-        {v ? `${v as string} EGP` : "—"}
+        {v !== undefined && v !== null
+          ? `${(v as number).toLocaleString()} EGP`
+          : "—"}
       </span>
     ),
   },
@@ -126,12 +132,6 @@ export default function PropertiesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // ── State ──────────────────────────────────────────────────────────────────
-  const [propertiesList, setPropertiesList] = useState<Property[]>(() => {
-    const saved = localStorage.getItem("porto_properties");
-    return saved ? JSON.parse(saved) : mockProperties;
-  });
-
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -143,7 +143,7 @@ export default function PropertiesPage() {
 
   // Delete modal
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [propertyToDelete, setPropertyToDelete] = useState<Property | null>(
+  const [propertyToDelete, setPropertyToDelete] = useState<IProperty | null>(
     null,
   );
 
@@ -157,8 +157,7 @@ export default function PropertiesPage() {
     setTempFilters,
     applyFilters,
     resetFilters,
-    tempFilteredCount,
-  } = useUnitsFilter(propertiesList);
+  } = useUnitsFilter([]);
 
   // ── Filter values from URL ─────────────────────────────────────────────────
   const selectedListing = useMemo(() => {
@@ -209,179 +208,236 @@ export default function PropertiesPage() {
     setCurrentPage(1);
   };
 
-  // ── Derived data (Filtering + Sorting) ─────────────────────────────────────
-  const filteredProperties = useMemo(() => {
-    return propertiesList.filter((p) => {
-      // 1. Text Search Query (filters by name, village, status, listingType)
-      if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        const matchesQuery =
-          p.name.toLowerCase().includes(q) ||
-          p.village.toLowerCase().includes(q) ||
-          p.status.toLowerCase().includes(q) ||
-          p.listingType.toLowerCase().includes(q);
-        if (!matchesQuery) return false;
-      }
+  // Helper mapping function for Property Types
+  const mapPropertyTypeToApi = useCallback((type: string): string[] => {
+    const t = type.toLowerCase();
+    if (t === "chalet" || t === "chalets") {
+      return ["Luxury Chalet"];
+    }
+    if (t === "villa" || t === "villas") {
+      return ["Standalone Villa", "Water Villa Lagoon View"];
+    }
+    if (t === "apartment" || t === "apartments") {
+      return ["Studio Apartment", "Modern Apartment", "Penthouse with Private Pool", "Duplex Garden Unit"];
+    }
+    if (t === "twin house" || t === "twinhouse" || t === "townhouse" || t === "town house") {
+      return ["Twin House", "Townhouse Corner"];
+    }
+    return [type];
+  }, []);
 
-      // 2. Listing Type Filter
-      if (selectedListing.length > 0) {
-        const matchesListing = selectedListing.some(
-          (type) => p.listingType.toLowerCase() === type.toLowerCase(),
-        );
-        if (!matchesListing) return false;
-      }
+  // Fetch villages to resolve name to ID
+  const { data: villagesList } = useGetVillageQuery();
 
-      // 3. Property Type Filter
-      if (selectedPropertyType.length > 0) {
-        const matchesPropType = selectedPropertyType.some(
-          (type) => (p.propertyType || "").toLowerCase() === type.toLowerCase(),
-        );
-        if (!matchesPropType) return false;
-      }
+  // Helper to build query parameters for backend API
+  const buildQueryParams = useCallback((
+    filtersState: typeof filters,
+    extraParams?: { page?: number; limit?: number }
+  ) => {
+    const params: Record<string, any> = {
+      ...extraParams
+    };
 
-      // 4. Property Status Filter
-      if (selectedStatus.length > 0) {
-        const matchesStatus = selectedStatus.some(
-          (stat) => p.status.toLowerCase() === stat.toLowerCase(),
-        );
-        if (!matchesStatus) return false;
-      }
+    if (searchQuery) {
+      params.keyword = searchQuery;
+    }
 
-      // 5. Extended/Drawer filters using useUnitsFilter matchUnit logic
-      if (!matchUnit(p, filters)) {
-        return false;
-      }
+    if (selectedListing.length > 0) {
+      params.listingType = selectedListing;
+    }
 
-      return true;
-    });
+    if (selectedStatus.length > 0) {
+      params.status = selectedStatus;
+    }
+
+    const propTypesToUse: string[] = [];
+    if (filtersState.propertyType) {
+      propTypesToUse.push(...mapPropertyTypeToApi(filtersState.propertyType));
+    }
+    if (selectedPropertyType.length > 0) {
+      selectedPropertyType.forEach(t => {
+        propTypesToUse.push(...mapPropertyTypeToApi(t));
+      });
+    }
+    if (propTypesToUse.length > 0) {
+      params.propertyType = Array.from(new Set(propTypesToUse));
+    }
+
+    const loc = filtersState.location;
+    if (loc && villagesList) {
+      const found = villagesList.find(
+        (v) => v.name.toLowerCase() === loc.toLowerCase()
+      );
+      if (found) {
+        params.village = found._id;
+      }
+    }
+
+    if (filtersState.bedrooms) {
+      if (filtersState.bedrooms === "5+") {
+        params["bedrooms[gte]"] = 5;
+      } else {
+        params.bedrooms = parseInt(filtersState.bedrooms, 10);
+      }
+    }
+
+    if (filtersState.bathrooms) {
+      if (filtersState.bathrooms === "3+") {
+        params["bathrooms[gte]"] = 3;
+      } else {
+        params["bathrooms[gte]"] = parseFloat(filtersState.bathrooms);
+      }
+    }
+
+    if (filtersState.areaFrom) {
+      params["area[gte]"] = parseFloat(filtersState.areaFrom);
+    }
+    if (filtersState.areaTo) {
+      params["area[lte]"] = parseFloat(filtersState.areaTo);
+    }
+
+    if (filtersState.priceFrom) {
+      params["installmentPrice[gte]"] = parseFloat(filtersState.priceFrom);
+    }
+    if (filtersState.priceTo) {
+      params["installmentPrice[lte]"] = parseFloat(filtersState.priceTo);
+    }
+
+    if (filtersState.downPayment) {
+      params["downPaymentAmount[lte]"] = parseFloat(filtersState.downPayment);
+    }
+    if (filtersState.monthlyInstallment) {
+      params["installmentValue[lte]"] = parseFloat(filtersState.monthlyInstallment);
+    }
+
+    if (filtersState.deliveryDate) {
+      if (filtersState.deliveryDate.toLowerCase() === "ready") {
+        params.deliveryDate = "Ready to Move";
+      } else {
+        params.deliveryDate = `${filtersState.deliveryDate}-12-30`;
+      }
+    }
+
+    if (filtersState.finishing) {
+      const finishVal = filtersState.finishing
+        .split(" ")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(" ");
+      params.finishingStatus = finishVal;
+    }
+
+    if (activeSort) {
+      if (activeSort === "newest") params.sort = "-createdAt";
+      else if (activeSort === "oldest") params.sort = "createdAt";
+      else if (activeSort === "min-price") params.sort = "installmentPrice";
+      else if (activeSort === "max-price") params.sort = "-installmentPrice";
+      else if (activeSort === "sooner-delivery") params.sort = "deliveryDate";
+      else if (activeSort === "late-delivery") params.sort = "-deliveryDate";
+    }
+
+    return params;
   }, [
-    propertiesList,
     searchQuery,
     selectedListing,
-    selectedPropertyType,
     selectedStatus,
-    filters,
+    selectedPropertyType,
+    villagesList,
+    activeSort,
+    mapPropertyTypeToApi,
   ]);
 
-  const sortedProperties = useMemo(() => {
-    const list = [...filteredProperties];
-    if (!activeSort) return list;
+  // Construct main query parameters
+  const queryParams = useMemo(() => {
+    return buildQueryParams(filters, { page: currentPage, limit: 10 });
+  }, [filters, currentPage, buildQueryParams]);
 
-    const parsePrice = (priceStr: string | undefined): number => {
-      if (!priceStr) return 0;
-      return parseFloat(priceStr.replace(/[^0-9.]/g, "")) || 0;
-    };
+  // Construct temp query parameters for drawer count
+  const tempQueryParams = useMemo(() => {
+    return buildQueryParams(tempFilters, { limit: 1 });
+  }, [tempFilters, buildQueryParams]);
 
-    const parseDate = (dateStr: string): number => {
-      const parts = dateStr.split("/");
-      if (parts.length === 3) {
-        const day = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const year = parseInt(parts[2], 10);
-        return new Date(year, month, day).getTime();
-      }
-      return new Date(dateStr).getTime() || 0;
-    };
+  // Fetch paginated properties data
+  const { data: propertiesResponse, isLoading } = useGetPropertyQuery(queryParams);
 
-    list.sort((a, b) => {
-      if (activeSort === "newest") {
-        return parseDate(b.creationDate) - parseDate(a.creationDate);
-      }
-      if (activeSort === "oldest") {
-        return parseDate(a.creationDate) - parseDate(b.creationDate);
-      }
-      if (activeSort === "min-price") {
-        return parsePrice(a.price) - parsePrice(b.price);
-      }
-      if (activeSort === "max-price") {
-        return parsePrice(b.price) - parsePrice(a.price);
-      }
-      if (activeSort === "sooner-delivery") {
-        const da = a.deliveryDate ? parseInt(a.deliveryDate, 10) || 9999 : 9999;
-        const db = b.deliveryDate ? parseInt(b.deliveryDate, 10) || 9999 : 9999;
-        return da - db;
-      }
-      if (activeSort === "late-delivery") {
-        const da = a.deliveryDate ? parseInt(a.deliveryDate, 10) || 0 : 0;
-        const db = b.deliveryDate ? parseInt(b.deliveryDate, 10) || 0 : 0;
-        return db - da;
-      }
-      return 0;
-    });
+  // Fetch count of matching items for the drawer
+  const { data: tempPropertiesResponse } = useGetPropertyQuery(
+    tempQueryParams,
+    { skip: !isFilterDrawerOpen }
+  );
 
-    return list;
-  }, [filteredProperties, activeSort]);
+  const activeTempFilteredCount = tempPropertiesResponse?.results || 0;
 
-  const totalPages = Math.ceil(sortedProperties.length / PAGE_SIZE);
+  const totalPages = useMemo(() => {
+    return propertiesResponse?.paginationResult?.numberOfPages || 1;
+  }, [propertiesResponse]);
 
-  const pagedProperties = useMemo(() => {
-    const start = (currentPage - 1) * PAGE_SIZE;
-    return sortedProperties.slice(start, start + PAGE_SIZE);
-  }, [sortedProperties, currentPage]);
+  const limit = useMemo(() => {
+    return propertiesResponse?.paginationResult?.limit || 10;
+  }, [propertiesResponse]);
+
+  const [createProperty] = useCreatePropertyMutation();
+  const [deleteProperty] = useDeletePropertyMutation();
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleViewDetails = useCallback(
-    (property: Property) => navigate(`/properties/${property.id}`),
+    (property: IProperty) => navigate(`/properties/${property._id}`),
     [navigate],
   );
 
-  const handleOpenDelete = useCallback((property: Property) => {
+  const handleOpenDelete = useCallback((property: IProperty) => {
     setPropertyToDelete(property);
     setIsDeleteOpen(true);
   }, []);
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!propertyToDelete) return;
-    const updated = propertiesList.filter((p) => p.id !== propertyToDelete.id);
-    setPropertiesList(updated);
-    localStorage.setItem("porto_properties", JSON.stringify(updated));
-    showSuccessToast("Property deleted successfully.");
-    setIsDeleteOpen(false);
-    setPropertyToDelete(null);
-    setCurrentPage((prev) => {
-      const newTotal = Math.ceil(updated.length / PAGE_SIZE);
-      return Math.min(prev, Math.max(1, newTotal));
-    });
-  }, [propertyToDelete, propertiesList]);
+    try {
+      await deleteProperty(propertyToDelete._id).unwrap();
+      showSuccessToast("Property deleted successfully.");
+      setIsDeleteOpen(false);
+      setPropertyToDelete(null);
+      setCurrentPage((prev) => {
+        const totalResults = propertiesResponse?.results || 0;
+        const newTotal = Math.ceil((totalResults - 1) / limit);
+        return Math.min(prev, Math.max(1, newTotal));
+      });
+    } catch (err: any) {
+      showErrorToast(err?.data?.message || "Failed to delete property.");
+    }
+  }, [propertyToDelete, deleteProperty, propertiesResponse?.results, limit]);
 
   const handleCreateSubmit = useCallback(
-    (data: Record<string, unknown>) => {
-      const newId = Date.now();
-      const coverImage =
-        (data.media as { cover?: string } | undefined)?.cover ?? defaultImage;
+    async (data: Record<string, unknown>) => {
+      try {
+        const formData = new FormData();
+        Object.keys(data).forEach((key) => {
+          if (key === "media") {
+            const media = data.media as any;
+            if (media?.file) {
+              formData.append("coverImage", media.file);
+            }
+          } else if (key === "amenities" && Array.isArray(data[key])) {
+            (data[key] as string[]).forEach((val) =>
+              formData.append("amenities", val),
+            );
+          } else {
+            formData.append(key, String(data[key] ?? ""));
+          }
+        });
 
-      const newProperty: Property = {
-        id: newId,
-        name: (data.name as string) || "New Property",
-        village: (data.village as string) || "",
-        developer: (data.developer as string) || "",
-        listingType: (data.listingType as string) || "Developer",
-        price: data.price as string | undefined,
-        status: "Available",
-        creationDate: new Date()
-          .toLocaleDateString("en-GB")
-          .split("/")
-          .join("/"),
-        image: coverImage,
-        location: data.location as string | undefined,
-        propertyType: data.propertyType as string | undefined,
-        amenities: data.amenities as string[] | undefined,
-        finishingStatus: data.finishingStatus as string | undefined,
-        deliveryDate: data.deliveryDate as string | undefined,
-      };
-
-      const updated = [newProperty, ...propertiesList];
-      setPropertiesList(updated);
-      localStorage.setItem("porto_properties", JSON.stringify(updated));
-      showSuccessToast("Property created successfully.");
-      setIsCreateOpen(false);
-      setCurrentPage(1);
+        await createProperty(formData).unwrap();
+        showSuccessToast("Property created successfully.");
+        setIsCreateOpen(false);
+        setCurrentPage(1);
+      } catch (err: any) {
+        showErrorToast(err?.data?.message || "Failed to create property.");
+      }
     },
-    [propertiesList],
+    [createProperty, setIsCreateOpen],
   );
 
   // ── Action column definitions ──────────────────────────────────────────────
-  const tableActions: ActionDef<Property>[] = useMemo(
+  const tableActions: ActionDef<IProperty>[] = useMemo(
     () => [
       {
         key: "view",
@@ -393,7 +449,7 @@ export default function PropertiesPage() {
         key: "edit",
         label: "Edit",
         icon: <FiEdit2 size={16} />,
-        onClick: (row) => navigate(`/properties/${row.id}`),
+        onClick: (row) => navigate(`/properties/${row._id}`),
       },
       {
         key: "delete",
@@ -437,9 +493,7 @@ export default function PropertiesPage() {
       options: [
         { label: "Available", value: "Available" },
         { label: "Available soon", value: "Available soon" },
-        { label: "Pending", value: "Pending" },
         { label: "Sold out", value: "Sold out" },
-        { label: "Rented", value: "Rented" },
         { label: "Not available", value: "Not available" },
       ],
       value: selectedStatus,
@@ -483,15 +537,15 @@ export default function PropertiesPage() {
         setTempFilters={setTempFilters}
         applyFilters={applyFilters}
         resetFilters={resetFilters}
-        tempFilteredCount={tempFilteredCount}
+        tempFilteredCount={activeTempFilteredCount}
       />
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
-      <DataTable<Property>
+      <DataTable<IProperty>
         columns={propertiesColumns}
-        data={pagedProperties}
+        data={propertiesResponse?.data || []}
         actions={tableActions}
-        isLoading={false}
+        isLoading={isLoading}
         emptyMessage={
           searchQuery
             ? `No properties found for "${searchQuery}".`
@@ -502,20 +556,20 @@ export default function PropertiesPage() {
       />
 
       {/* ── Pagination + count ───────────────────────────────────────────── */}
-      {filteredProperties.length > 0 && (
+      {(propertiesResponse?.results || 0) > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[13px] text-text-darker font-poppins order-2 sm:order-1">
             Showing{" "}
             <span className="font-medium text-text-secondary">
               {Math.min(
-                (currentPage - 1) * PAGE_SIZE + 1,
-                filteredProperties.length,
+                (currentPage - 1) * limit + 1,
+                propertiesResponse?.results || 0,
               )}
-              –{Math.min(currentPage * PAGE_SIZE, filteredProperties.length)}
+              –{Math.min(currentPage * limit, propertiesResponse?.results || 0)}
             </span>{" "}
             of{" "}
             <span className="font-medium text-text-secondary">
-              {filteredProperties.length}
+              {propertiesResponse?.results}
             </span>{" "}
             properties
           </p>
@@ -551,8 +605,12 @@ export default function PropertiesPage() {
         title="Are you sure you want to delete this property?"
         description="This action cannot be undone. All data associated with this property will be permanently removed."
         entityName={propertyToDelete?.name}
-        entitySubText={propertyToDelete?.village}
-        entityImage={propertyToDelete?.image}
+        entitySubText={propertyToDelete?.village?.name}
+        entityImage={
+          propertyToDelete?.coverImage ||
+          (propertyToDelete?.images && propertyToDelete?.images[0]) ||
+          defaultImage
+        }
         confirmText="Yes, delete"
         cancelText="Cancel"
       />

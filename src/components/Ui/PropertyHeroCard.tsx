@@ -1,4 +1,4 @@
-import type { Property } from "../../interface";
+import type { IProperty } from "../../../app/services/crudproperties";
 import PropertyDetailChip from "./PropertyDetailChip";
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
@@ -24,12 +24,12 @@ function StatusBadge({ status }: { status: string }) {
 // ─── PropertyHeroCard ─────────────────────────────────────────────────────────
 
 interface PropertyHeroCardProps {
-  property: Property;
+  property: IProperty;
   fallbackImage?: string;
 }
 
 export default function PropertyHeroCard({ property, fallbackImage }: PropertyHeroCardProps) {
-  const src = property.image || fallbackImage;
+  const src = property.coverImage || (property.images && property.images[0]) || fallbackImage;
 
   return (
     <div className="bg-white border border-border rounded-md flex flex-col md:flex-row overflow-hidden w-full">
@@ -59,9 +59,9 @@ export default function PropertyHeroCard({ property, fallbackImage }: PropertyHe
           </p>
           <div className="flex flex-col items-end gap-2 shrink-0">
             <StatusBadge status={property.status} />
-            {property.lastUpdated && (
+            {property.updatedAt && (
               <span className="font-poppins font-normal text-[14px] text-text-darker whitespace-nowrap">
-                {property.lastUpdated}
+                Last updated {new Date(property.updatedAt).toLocaleDateString("en-GB")}
               </span>
             )}
           </div>
@@ -71,7 +71,7 @@ export default function PropertyHeroCard({ property, fallbackImage }: PropertyHe
         <div className="flex flex-col gap-4 w-full">
           {/* Row 1: Village | Type */}
           <div className="flex gap-4">
-            <PropertyDetailChip label="Village" value={property.village} className="flex-1 min-w-0" />
+            <PropertyDetailChip label="Village" value={property.village?.name} className="flex-1 min-w-0" />
             <PropertyDetailChip label="Type" value={property.listingType} className="flex-1 min-w-0" />
           </div>
 

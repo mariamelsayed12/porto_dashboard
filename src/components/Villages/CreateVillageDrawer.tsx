@@ -5,7 +5,6 @@ import { FiX, FiUpload, FiTrash2, FiPlus, FiAlertCircle } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   useGetVillageQuery,
-  type IVillage,
 } from "../../../app/services/crudVillage";
 import { showSuccessToast, showErrorToast } from "../Ui/Toast";
 import Button from "../Ui/Button";

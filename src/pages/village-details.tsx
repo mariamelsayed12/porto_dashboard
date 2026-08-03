@@ -24,6 +24,7 @@ interface HeaderActionConfig {
   editLabel?: string;
 }
 
+
 interface LayoutContextType {
   isCreateOpen: boolean;
   setIsCreateOpen: (open: boolean) => void;
@@ -74,13 +75,14 @@ export default function VillageDetailsPage() {
     ? isDetailError
     : isListError || (villages !== undefined && (!resolvedId || isDetailError));
 
-  const { data: properties, isLoading: isPropertiesLoading } =
+  const { data: propertiesResponse, isLoading: isPropertiesLoading } =
     useGetPropertyQuery({ lang: "en" });
 
   const propertyCount = useMemo(() => {
+    const properties = propertiesResponse?.data;
     if (!properties || !village) return 0;
     return properties.filter((p) => p.village?._id === village._id).length;
-  }, [properties, village]);
+  }, [propertiesResponse, village]);
 
   const [updateVillage, { isLoading: isUpdating }] = useUpdateVillageMutation();
   const [deleteVillage] = useDeleteVillageMutation();

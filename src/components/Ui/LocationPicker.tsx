@@ -136,7 +136,6 @@ export default function LocationPicker({
   let displayAddressAr = "";
   let lat: number | null = null;
   let lng: number | null = null;
-  let googleMapsUrl = "";
 
   if (typeof value === "string") {
     displayAddressEn = value;
@@ -148,7 +147,6 @@ export default function LocationPicker({
       displayAddressAr = locVal.locationText.ar || "";
       lat = typeof locVal.latitude === "number" ? locVal.latitude : null;
       lng = typeof locVal.longitude === "number" ? locVal.longitude : null;
-      googleMapsUrl = locVal.googleMapsUrl || "";
     } else {
       const bilingual = value as { en?: string; ar?: string };
       displayAddressEn = bilingual.en || "";

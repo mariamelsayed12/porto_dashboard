@@ -1,7 +1,8 @@
-import { mockVillages } from "../../../data";
 import type { FilterState } from "../../../hooks/useUnitsFilter";
 import Button from "../Button";
 import Input from "../Input";
+import { DoubleRangeSlider } from "./DoubleRangeSlider";
+import { useGetVillageQuery, type IVillage } from "../../../../app/services/crudVillage";
 
 
 interface FilterContentProps {
@@ -24,6 +25,8 @@ const FilterContent = ({
   stickyFooter = true,
   displayMode = "drawer",
 }: FilterContentProps) => {
+  const { data: villagesList } = useGetVillageQuery();
+
   const handleTogglePropertyType = (type: string) => {
     setTempFilters((prev) => ({
       ...prev,
@@ -146,7 +149,7 @@ const FilterContent = ({
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {mockVillages.map(({name}) => {
+            {(villagesList || []).map(({ name }: IVillage) => {
               const isSelected =
                 (tempFilters.location || "").toLowerCase() ===
                 name.toLowerCase();
@@ -297,18 +300,21 @@ const FilterContent = ({
             </div>
           </div>
  
-          {/* Mock Range Slider */}
-          <div className="mt-6 px-1">
-            <div className="relative h-1 bg-[#E8EFF1] rounded-full">
-              <div className="absolute left-[15%] right-[55%] h-full bg-[#0A2540] rounded-full" />
-              <div className="absolute left-[15%] top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full shadow cursor-pointer hover:scale-110 transition-transform" />
-              <div className="absolute right-[55%] top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full shadow cursor-pointer hover:scale-110 transition-transform" />
-            </div>
-            <div className="mt-3 flex justify-between text-[10px] font-semibold text-[#7D8D93]">
-              <span>0 m2</span>
-              <span>100 m2</span>
-            </div>
-          </div>
+          {/* Double Range Slider for Area */}
+          <DoubleRangeSlider
+            min={0}
+            max={1000}
+            valueFrom={tempFilters.areaFrom}
+            valueTo={tempFilters.areaTo}
+            unit="m²"
+            onChange={(from, to) =>
+              setTempFilters((prev) => ({
+                ...prev,
+                areaFrom: from === 0 ? "" : String(from),
+                areaTo: to === 1000 ? "" : String(to),
+              }))
+            }
+          />
         </div>
  
         {/* Price Range Card */}
@@ -365,18 +371,23 @@ const FilterContent = ({
             </div>
           </div>
  
-          {/* Mock Range Slider */}
-          <div className="mt-6 px-1">
-            <div className="relative h-1 bg-[#E8EFF1] rounded-full">
-              <div className="absolute left-[10%] right-[60%] h-full bg-[#0A2540] rounded-full" />
-              <div className="absolute left-[10%] top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full shadow cursor-pointer hover:scale-110 transition-transform" />
-              <div className="absolute right-[60%] top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-2 border-primary rounded-full shadow cursor-pointer hover:scale-110 transition-transform" />
-            </div>
-            <div className="mt-3 flex justify-between text-[10px] font-semibold text-[#7D8D93]">
-              <span>0 EGP</span>
-              <span>100 EGP</span>
-            </div>
-          </div>
+          {/* Double Range Slider for Price */}
+          <DoubleRangeSlider
+            min={0}
+            max={100000000}
+            step={50000}
+            valueFrom={tempFilters.priceFrom}
+            valueTo={tempFilters.priceTo}
+            unit="EGP"
+            formatValue={(val) => val.toLocaleString()}
+            onChange={(from, to) =>
+              setTempFilters((prev) => ({
+                ...prev,
+                priceFrom: from === 0 ? "" : String(from),
+                priceTo: to === 100000000 ? "" : String(to),
+              }))
+            }
+          />
         </div>
  
         {/* Payments Card */}
@@ -530,7 +541,7 @@ const FilterContent = ({
           <Button
             type="button"
             onClick={handleReset}
-            className="w-1/2 rounded-md border border-border bg-white text-primary font-bold hover:bg-gray-50 h-12 text-sm"
+            className="w-1/2 rounded-md border  text-gray-500 border-border bg-white text-primary font-bold hover:bg-gray-50 h-12 text-sm"
           >
             Reset All
           </Button>

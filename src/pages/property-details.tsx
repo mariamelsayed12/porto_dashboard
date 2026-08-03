@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useOutletContext } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
-import { mockProperties, propertyFormFields } from "../data";
+import { propertyFormFields } from "../data";
 import FormDrawer from "../components/Ui/FormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
 import PropertyHeroCard from "../components/Ui/PropertyHeroCard";
@@ -8,8 +8,13 @@ import PropertyInfoCard from "../components/Ui/PropertyInfoCard";
 import PricingCard from "../components/Ui/PricingCard";
 import PropertyGalleryCard from "../components/Ui/PropertyGalleryCard";
 import type { BreadcrumbItem } from "../components/Ui/BreadCrumb";
-import type { Property } from "../interface";
-import { showSuccessToast } from "../components/Ui/Toast";
+import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
+import Spinner from "../components/Ui/LoadingSpinner";
+import {
+  useGetPropertyByIdQuery,
+  useUpdatePropertyMutation,
+  useDeletePropertyMutation,
+} from "../../app/services/crudproperties";
 
 import defaultImg from "../assets/default.png";
 
@@ -36,16 +41,13 @@ export default function PropertyDetailsPage() {
   const { setBreadcrumbItems, setHeaderActions } =
     useOutletContext<LayoutContextType>();
 
-  // Load from localStorage (kept in sync with Properties page)
-  const [propertiesList, setPropertiesList] = useState<Property[]>(() => {
-    const saved = localStorage.getItem("porto_properties");
-    return saved ? JSON.parse(saved) : mockProperties;
-  });
-
-  const property = useMemo(
-    () => propertiesList.find((p) => String(p.id) === String(id)) ?? null,
-    [propertiesList, id]
+  const { data: property, isLoading, isError } = useGetPropertyByIdQuery(
+    { id: id || "", lang: "en" },
+    { skip: !id }
   );
+
+  const [updateProperty] = useUpdatePropertyMutation();
+  const [deleteProperty] = useDeletePropertyMutation();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -86,11 +88,11 @@ export default function PropertyDetailsPage() {
         field.name === "name"
           ? property.name
           : field.name === "village"
-          ? property.village
+          ? property.village?.name || ""
           : field.name === "developer"
-          ? property.developer ?? ""
+          ? property.village?.name || ""
           : field.name === "price"
-          ? property.price ?? ""
+          ? property.installmentPrice?.toString() ?? ""
           : field.name === "listingType"
           ? property.listingType
           : field.name === "propertyType"
@@ -100,40 +102,53 @@ export default function PropertyDetailsPage() {
   }, [property]);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleEditSubmit = (data: Record<string, unknown>) => {
+  const handleEditSubmit = async (data: Record<string, unknown>) => {
     if (!property) return;
-    const updatedList = propertiesList.map((p) =>
-      String(p.id) === String(property.id)
-        ? {
-            ...p,
-            name: (data.name as string) || p.name,
-            village: (data.village as string) || p.village,
-            developer: data.developer as string | undefined,
-            price: data.price as string | undefined,
-            listingType: (data.listingType as string) || p.listingType,
-            propertyType: data.propertyType as string | undefined,
+    try {
+      const formData = new FormData();
+      Object.keys(data).forEach((key) => {
+        if (key === "media") {
+          const media = data.media as any;
+          if (media?.file) {
+            formData.append("coverImage", media.file);
           }
-        : p
-    );
-    setPropertiesList(updatedList);
-    localStorage.setItem("porto_properties", JSON.stringify(updatedList));
-    showSuccessToast("Property details updated successfully.");
-    setIsEditOpen(false);
+        } else if (key === "amenities" && Array.isArray(data[key])) {
+          (data[key] as string[]).forEach((val) => formData.append("amenities", val));
+        } else {
+          formData.append(key, String(data[key] ?? ""));
+        }
+      });
+
+      await updateProperty({ id: property._id, body: formData }).unwrap();
+      showSuccessToast("Property details updated successfully.");
+      setIsEditOpen(false);
+    } catch (err: any) {
+      showErrorToast(err?.data?.message || "Failed to update property.");
+    }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!property) return;
-    const updatedList = propertiesList.filter(
-      (p) => String(p.id) !== String(property.id)
-    );
-    localStorage.setItem("porto_properties", JSON.stringify(updatedList));
-    showSuccessToast("Property deleted successfully.");
-    setIsDeleteOpen(false);
-    navigate("/properties");
+    try {
+      await deleteProperty(property._id).unwrap();
+      showSuccessToast("Property deleted successfully.");
+      setIsDeleteOpen(false);
+      navigate("/properties");
+    } catch (err: any) {
+      showErrorToast(err?.data?.message || "Failed to delete property.");
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="w-full flex items-center justify-center py-32">
+        <Spinner />
+      </div>
+    );
+  }
 
   // ── Not found state ───────────────────────────────────────────────────────
-  if (!property) {
+  if (isError || !property) {
     return (
       <div className="w-full flex flex-col items-center justify-center py-24 gap-4">
         <p className="font-poppins font-medium text-[23px] text-text-secondary">
@@ -151,12 +166,12 @@ export default function PropertyDetailsPage() {
 
   // ── Pricing data object ───────────────────────────────────────────────────
   const pricingData = {
-    totalPrice: property.totalPrice ?? (property.price ? `${property.price} EGP` : undefined),
-    downPayment: property.downPayment,
-    monthlyInstallment: property.monthlyInstallment,
+    totalPrice: property.installmentPrice ? `${property.installmentPrice.toLocaleString()} EGP` : undefined,
+    downPayment: property.downPaymentAmount ? `${property.downPaymentAmount.toLocaleString()} EGP` : undefined,
+    monthlyInstallment: property.installmentValue ? `${property.installmentValue.toLocaleString()} EGP` : undefined,
     installmentPeriod: property.installmentPeriod,
-    rentalYield: property.rentalYield,
-    cashPrice: property.price ? `${property.price} EGP` : undefined,
+    rentalYield: undefined,
+    cashPrice: property.installmentPrice ? `${property.installmentPrice.toLocaleString()} EGP` : undefined,
   };
 
   // ─── Page Layout ────────────────────────────────────────────────────────────
@@ -184,8 +199,8 @@ export default function PropertyDetailsPage() {
 
         {/* Gallery card */}
         <PropertyGalleryCard
-          images={property.gallery}
-          fallbackImage={property.image || defaultImg}
+          images={property.images}
+          fallbackImage={property.coverImage || (property.images && property.images[0]) || defaultImg}
           propertyName={property.name}
         />
       </div>
@@ -209,8 +224,8 @@ export default function PropertyDetailsPage() {
         title="Are you sure you want to delete this property?"
         description="This action cannot be undone. All data associated with this property will be permanently removed."
         entityName={property.name}
-        entitySubText={property.village}
-        entityImage={property.image}
+        entitySubText={property.village?.name}
+        entityImage={property.coverImage || (property.images && property.images[0]) || defaultImg}
       />
     </div>
   );

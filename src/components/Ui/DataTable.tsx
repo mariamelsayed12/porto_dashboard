@@ -36,7 +36,7 @@ export interface ActionDef<TRow = Record<string, unknown>> {
 
 // ─── DataTable Props ─────────────────────────────────────────────────────────
 
-export interface DataTableProps<TRow extends { id: string | number }> {
+export interface DataTableProps<TRow extends { id?: string | number; _id?: string }> {
   /** Column definitions */
   columns: ColumnDef<TRow>[];
   /** Row data array */
@@ -86,7 +86,7 @@ const alignClass = (align?: "left" | "center" | "right") => {
 
 // ─── DataTable Component ──────────────────────────────────────────────────────
 
-export default function DataTable<TRow extends { id: string | number }>({
+export default function DataTable<TRow extends { id?: string | number; _id?: string }>({
   columns,
   data,
   actions,
@@ -141,7 +141,7 @@ export default function DataTable<TRow extends { id: string | number }>({
             {!isLoading &&
               data.map((row) => (
                 <tr
-                  key={row.id}
+                  key={row.id ?? row._id}
                   // onClick={() => onRowClick?.(row)}
                   className={`group transition-colors text-center duration-150 hover:bg-[#F5F9FA] ${onRowClick ? "cursor-pointer" : ""}`}
                 >

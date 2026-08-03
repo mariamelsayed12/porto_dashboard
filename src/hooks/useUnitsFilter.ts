@@ -30,71 +30,39 @@ export const initialFilterState: FilterState = {
   location: "",
 };
 
-// Deterministic finishing assignment since mock data doesn't have a finishing field
-export const getFinishingForUnit = (unitId: number| string): string => {
-  const strId = String(unitId);
-  let hash = 0;
-  for (let i = 0; i < strId.length; i++) {
-    hash = strId.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % 4;
-  const finishingTypes = [
-    "Not finished",
-    "Semi finished",
-    "Finished",
-    "Fully furnished",
-  ];
-  return finishingTypes[index];
-};
-
 // Helper function to check if a unit matches a set of filters
 export const matchUnit = (
-  unit: Property,
+  unit: IProperty,
   filterState: FilterState,
 ): boolean => {
   // 1. Property Type Filter
   if (filterState.propertyType) {
-    const parts = (unit.location || "").split("•");
-    const unitType = parts.length > 1 ? parts[1].trim().toLowerCase() : "";
+    const unitType = (unit.propertyType || "").toLowerCase();
     const selectedTypes = filterState.propertyType.split(",").map(t => t.trim().toLowerCase());
-
-    const isChalet = (t: string) =>
-      t === "chalet" || t === "challet" || t === "chalets" || t === "challets";
+    const isChalet = (t: string) => t === "chalet" || t === "challet" || t === "chalets" || t === "challets";
 
     let matchesType = false;
     for (const targetType of selectedTypes) {
       if (isChalet(targetType)) {
         if (isChalet(unitType)) matchesType = true;
       } else if (targetType === "twin house" || targetType === "twinhouse") {
-        if (
-          unitType === "twin house" ||
-          unitType === "townhouse" ||
-          unitType === "town house"
-        ) {
+        if (unitType === "twin house" || unitType === "townhouse" || unitType === "town house" || unitType === "twinhouse" || unitType === "townhouse") {
           matchesType = true;
         }
       } else if (targetType === "apartment") {
-        if (
-          unitType === "apartment" ||
-          unitType === "studio" ||
-          unitType === "penthouse"
-        ) {
+        if (unitType === "apartment" || unitType === "studio" || unitType === "penthouse") {
           matchesType = true;
         }
       } else {
         if (unitType === targetType) matchesType = true;
       }
     }
-
     if (!matchesType) return false;
   }
 
   // 2. Bedrooms Filter
   if (filterState.bedrooms) {
-    const bedStat = unit.stats?.find((s) => s.icon === "bed");
-    if (!bedStat) return false;
-    const bedValue = parseInt(bedStat.value, 10);
-
+    const bedValue = unit.bedrooms || 0;
     if (filterState.bedrooms === "5+") {
       if (bedValue < 5) return false;
     } else {
@@ -105,10 +73,7 @@ export const matchUnit = (
 
   // 3. Bathrooms Filter
   if (filterState.bathrooms) {
-    const bathStat = unit.stats?.find((s) => s.icon === "bath");
-    if (!bathStat) return false;
-    const bathValue = parseFloat(bathStat.value);
-
+    const bathValue = unit.bathrooms || 0;
     if (filterState.bathrooms === "3+") {
       if (bathValue < 3) return false;
     } else {
@@ -118,76 +83,37 @@ export const matchUnit = (
   }
 
   // 4. Area Range Filter
-  const areaStat = unit.stats?.find((s) => s.icon === "area");
-  const areaValue = areaStat ? parseFloat(areaStat.value) : NaN;
+  const areaValue = unit.area || 0;
   if (filterState.areaFrom) {
-    if (isNaN(areaValue) || areaValue < parseFloat(filterState.areaFrom))
-      return false;
+    if (areaValue < parseFloat(filterState.areaFrom)) return false;
   }
   if (filterState.areaTo) {
-    if (isNaN(areaValue) || areaValue > parseFloat(filterState.areaTo))
-      return false;
+    if (areaValue > parseFloat(filterState.areaTo)) return false;
   }
 
   // 5. Price Range Filter
-  const priceValue = parseFloat((unit.price || "").replace(/[^0-9.]/g, ""));
+  const priceValue = unit.installmentPrice || 0;
   if (filterState.priceFrom) {
-    if (isNaN(priceValue) || priceValue < parseFloat(filterState.priceFrom))
-      return false;
+    if (priceValue < parseFloat(filterState.priceFrom)) return false;
   }
   if (filterState.priceTo) {
-    if (isNaN(priceValue) || priceValue > parseFloat(filterState.priceTo))
-      return false;
+    if (priceValue > parseFloat(filterState.priceTo)) return false;
   }
 
   // 6. Payments Filter (Down Payment & Monthly Installment)
-  let unitDownPayment = 0;
-  let unitMonthlyInstallment = 0;
-
-  if (!isNaN(priceValue)) {
-    const note = (unit.downPayment || "").toLowerCase();
-    if (note.includes("full cash payment")) {
-      unitDownPayment = priceValue;
-      unitMonthlyInstallment = 0;
-    } else {
-      // Down payment percent match
-      const pctMatch = note.match(/(\d+(?:\.\d+)?)\s*%\s*down/i);
-      if (pctMatch) {
-        const pct = parseFloat(pctMatch[1]);
-        unitDownPayment = priceValue * (pct / 100);
-      }
-
-      // Installment quarterly match
-      const qtMatch = note.match(/([\d,]+)\s*quarterly/i);
-      if (qtMatch) {
-        const qtVal = parseFloat(qtMatch[1].replace(/,/g, ""));
-        unitMonthlyInstallment = qtVal / 3;
-      }
-    }
-  }
-
   if (filterState.downPayment) {
-    if (unitDownPayment > parseFloat(filterState.downPayment)) return false;
+    const downPaymentValue = unit.downPaymentAmount || 0;
+    if (downPaymentValue > parseFloat(filterState.downPayment)) return false;
   }
   if (filterState.monthlyInstallment) {
-    if (unitMonthlyInstallment > parseFloat(filterState.monthlyInstallment))
-      return false;
+    const monthlyInstallmentValue = unit.installmentValue || 0;
+    if (monthlyInstallmentValue > parseFloat(filterState.monthlyInstallment)) return false;
   }
 
   // 7. Delivery Date Filter
   if (filterState.deliveryDate) {
-    // Find delivery badge
-    const deliveryBadge = unit.listingType;
-    let deliveryYear: number | null = null;
-    if (deliveryBadge) {
-      const match = deliveryBadge.match(/delivery in (\d+)/i);
-      if (match) {
-        deliveryYear = parseInt(match[1], 10);
-      }
-    }
-
+    let deliveryYear = parseInt(unit.deliveryDate || "", 10) || null;
     if (filterState.deliveryDate.toLowerCase() === "ready") {
-      // If there's a delivery badge and the year is in the future
       if (deliveryYear && deliveryYear > 2026) return false;
     } else {
       const targetYear = parseInt(filterState.deliveryDate, 10);
@@ -197,20 +123,15 @@ export const matchUnit = (
 
   // 8. Finishing Filter
   if (filterState.finishing) {
-    const unitFinishing = getFinishingForUnit(unit.id);
-    if (unitFinishing.toLowerCase() !== filterState.finishing.toLowerCase())
-      return false;
+    const unitFinishing = unit.finishingStatus || "";
+    if (unitFinishing.toLowerCase() !== filterState.finishing.toLowerCase()) return false;
   }
 
-  // 9. Location Filter
+  // 9. Location (Village) Filter
   if (filterState.location) {
     const normalize = (s: string) => s.toLowerCase().replace(/[\s-_]+/g, "");
     const selectedLocs = filterState.location.split(",").map(l => normalize(l.trim()));
-    if (
-      !selectedLocs.includes(normalize(unit.village || ""))
-    ) {
-      return false;
-    }
+    if (!selectedLocs.includes(normalize(unit.village?.name || ""))) return false;
   }
 
   return true;
@@ -218,9 +139,9 @@ export const matchUnit = (
 
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import type { Property } from "../interface";
+import type { IProperty } from "../../app/services/crudproperties";
 
-export const useUnitsFilter = (units: Property[]) => {
+export const useUnitsFilter = (units: IProperty[]) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Parse search params to FilterState

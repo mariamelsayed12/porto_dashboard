@@ -1,5 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
+
+
 export interface IProperty {
   _id: string;
   name: string;
@@ -29,7 +31,9 @@ export interface IProperty {
     locationText: string;
     coverImage: string;
   };
-  amenities:string[]
+  amenities:string[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface IpropertyResponse {
@@ -61,17 +65,35 @@ export const propertyApiSlice = createApi({
   }),
   endpoints: (builder) => ({
     //----------------------------- Get =>get---------------------
-    getProperty: builder.query<IProperty[], { lang: string }>({
-      query: () => {
+    getProperty: builder.query<IpropertyResponse, Record<string, any> | void>({
+      query: (params) => {
+        const queryParams = new URLSearchParams();
+        let hasLimit = false;
+        if (params) {
+          Object.entries(params).forEach(([key, val]) => {
+            if (val !== undefined && val !== null && val !== "") {
+              if (key === "limit") hasLimit = true;
+              if (Array.isArray(val)) {
+                val.forEach((v) => {
+                  queryParams.append(`${key}[]`, v);
+                });
+              } else {
+                queryParams.append(key, val.toString());
+              }
+            }
+          });
+        }
+        if (!hasLimit) {
+          queryParams.append("limit", "1000");
+        }
         return {
-          url: "properties?limit=1000",
+          url: `properties?${queryParams.toString()}`,
         };
       },
-      transformResponse: (response: IpropertyResponse) => response.data,
       providesTags: (result) =>
-        result
+        result?.data
           ? [
-              ...result.map(({ _id }) => ({
+              ...result.data.map(({ _id }) => ({
                 type: "properties" as const,
                 id: _id,
               })),
@@ -82,17 +104,55 @@ export const propertyApiSlice = createApi({
 
     //--------------------- Get single property by ID ---------------------
     getPropertyById: builder.query<IProperty, { id: string; lang: string }>({
-      query: ({ id}) => ({
+      query: ({ id }) => ({
         url: `properties/${id}`,
       }),
 
       transformResponse: (response: ISinglePropertyResponse) => response.data,
 
-      providesTags: (_result, _error, {id}) => [
+      providesTags: (_result, _error, { id }) => [
         { type: "properties", id },
       ],
+    }),
+
+    //--------------------- Create Property ---------------------
+    createProperty: builder.mutation<IProperty, FormData>({
+      query: (body) => ({
+        url: "properties",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: [{ type: "properties", id: "LIST" }],
+    }),
+
+    //--------------------- Update Property ---------------------
+    updateProperty: builder.mutation<IProperty, { id: string; body: FormData }>({
+      query: ({ id, body }) => ({
+        url: `properties/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: "properties", id },
+        { type: "properties", id: "LIST" },
+      ],
+    }),
+
+    //--------------------- Delete Property ---------------------
+    deleteProperty: builder.mutation<{ message: string }, string>({
+      query: (id) => ({
+        url: `properties/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [{ type: "properties", id: "LIST" }],
     }),
   }),
 });
 
-export const { useGetPropertyQuery , useGetPropertyByIdQuery } = propertyApiSlice;
+export const {
+  useGetPropertyQuery,
+  useGetPropertyByIdQuery,
+  useCreatePropertyMutation,
+  useUpdatePropertyMutation,
+  useDeletePropertyMutation,
+} = propertyApiSlice;
