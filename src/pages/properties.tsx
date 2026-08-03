@@ -11,7 +11,7 @@ import DataTable, {
 } from "../components/Ui/DataTable";
 import Pagination from "../components/Ui/Pagination";
 import DeleteModal from "../components/Ui/DeleteModal";
-import CreatePropertyDrawer from "../components/Properties/CreatePropertyDrawer";
+import PropertyFormDrawer from "../components/Properties/PropertyFormDrawer";
 import defaultImage from "../assets/default.png";
 import { truncateText } from "../utils";
 import FilterSortSection, {
@@ -565,11 +565,12 @@ export default function PropertiesPage() {
       )}
 
       {/* ── Create Drawer ────────────────────────────────────────────────── */}
-      <CreatePropertyDrawer
+      <PropertyFormDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onCreate={createProperty}
+        onSubmit={createProperty}
         isLoading={isCreateLoading}
+        mode="create"
       />
 
       {/* ── Delete Modal ─────────────────────────────────────────────────── */}

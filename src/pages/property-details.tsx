@@ -1,7 +1,6 @@
 import { useParams, useNavigate, useOutletContext } from "react-router-dom";
-import { useState, useEffect, useMemo } from "react";
-import { propertyFormFields } from "../data";
-import FormDrawer from "../components/Ui/FormDrawer";
+import { useState, useEffect, useCallback } from "react";
+import PropertyFormDrawer from "../components/Properties/PropertyFormDrawer";
 import DeleteModal from "../components/Ui/DeleteModal";
 import PropertyHeroCard from "../components/Ui/PropertyHeroCard";
 import PropertyInfoCard from "../components/Ui/PropertyInfoCard";
@@ -46,7 +45,7 @@ export default function PropertyDetailsPage() {
     { skip: !id }
   );
 
-  const [updateProperty] = useUpdatePropertyMutation();
+  const [updateProperty, { isLoading: isUpdateLoading }] = useUpdatePropertyMutation();
   const [deleteProperty] = useDeletePropertyMutation();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -85,53 +84,11 @@ export default function PropertyDetailsPage() {
     };
   }, [property, isLoading, error, setBreadcrumbItems, setHeaderActions]);
 
-  // ── Edit form fields pre-filled from property data ────────────────────────
-  const editFormFields = useMemo(() => {
-    if (!property) return [];
-    return propertyFormFields.map((field) => ({
-      ...field,
-      defaultValue:
-        field.name === "name"
-          ? property.name
-          : field.name === "village"
-          ? property.village?.name || ""
-          : field.name === "developer"
-          ? property.village?.name || ""
-          : field.name === "price"
-          ? property.installmentPrice?.toString() ?? ""
-          : field.name === "listingType"
-          ? property.listingType
-          : field.name === "propertyType"
-          ? property.propertyType ?? ""
-          : field.defaultValue,
-    }));
-  }, [property]);
-
   // ── Handlers ──────────────────────────────────────────────────────────────
-  const handleEditSubmit = async (data: Record<string, unknown>) => {
+  const handleEditSubmit = useCallback(async (formData: FormData) => {
     if (!property) return;
-    try {
-      const formData = new FormData();
-      Object.keys(data).forEach((key) => {
-        if (key === "media") {
-          const media = data.media as any;
-          if (media?.file) {
-            formData.append("coverImage", media.file);
-          }
-        } else if (key === "amenities" && Array.isArray(data[key])) {
-          (data[key] as string[]).forEach((val) => formData.append("amenities", val));
-        } else {
-          formData.append(key, String(data[key] ?? ""));
-        }
-      });
-
-      await updateProperty({ id: property._id, body: formData }).unwrap();
-      showSuccessToast("Property details updated successfully.");
-      setIsEditOpen(false);
-    } catch (err: any) {
-      showErrorToast(err?.data?.message || "Failed to update property.");
-    }
-  };
+    await updateProperty({ id: property._id, body: formData }).unwrap();
+  }, [property, updateProperty]);
 
   const handleConfirmDelete = async () => {
     if (!property) return;
@@ -247,14 +204,13 @@ export default function PropertyDetailsPage() {
       </div>
 
       {/* ── Edit Drawer ───────────────────────────────────────────────────── */}
-      <FormDrawer
+      <PropertyFormDrawer
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
-        title="Edit Property"
-        fields={editFormFields}
         onSubmit={handleEditSubmit}
-        submitText="Save Changes"
-        cancelText="Cancel"
+        isLoading={isUpdateLoading}
+        mode="edit"
+        propertyId={property._id}
       />
 
       {/* ── Delete Modal ──────────────────────────────────────────────────── */}

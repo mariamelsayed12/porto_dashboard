@@ -32,6 +32,7 @@ export interface IProperty {
     coverImage: string;
   };
   amenities:string[];
+  availableUnits?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -111,8 +112,9 @@ export const propertyApiSlice = createApi({
 
     //--------------------- Get single property by ID ---------------------
     getPropertyById: builder.query<IProperty, { id: string; lang: string }>({
-      query: ({ id }) => ({
+      query: ({ id, lang }) => ({
         url: `properties/${id}`,
+        headers: lang ? { "Accept-Language": lang } : undefined,
       }),
 
       transformResponse: (response: ISinglePropertyResponse) => response.data,

@@ -118,6 +118,7 @@ export const propertyValidationSchema = yup.object().shape({
   propertyType: yup.string().trim().required("Property type is required"),
   coverImage: yup.mixed().required("Cover image is required").test("fileType", "Only JPEG, PNG, or WEBP images are accepted", (value) => {
     if (!value) return false;
+    if (typeof value === "string") return true;
     if (value instanceof File) {
       return ["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(value.type);
     }
@@ -131,6 +132,7 @@ export const propertyValidationSchema = yup.object().shape({
   images: yup.array().of(
     yup.mixed().test("fileType", "Only JPEG, PNG, or WEBP images are accepted", (value) => {
       if (!value) return false;
+      if (typeof value === "string") return true;
       if (value instanceof File) {
         return ["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(value.type);
       }
