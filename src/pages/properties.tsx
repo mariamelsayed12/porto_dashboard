@@ -376,7 +376,7 @@ export default function PropertiesPage() {
   }, [propertiesResponse]);
 
   const [createProperty] = useCreatePropertyMutation();
-  const [deleteProperty] = useDeletePropertyMutation();
+  const [deleteProperty,{isLoading: deleteLoading}] = useDeletePropertyMutation();
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleViewDetails = useCallback(
@@ -597,6 +597,7 @@ export default function PropertiesPage() {
       {/* ── Delete Modal ─────────────────────────────────────────────────── */}
       <DeleteModal
         isOpen={isDeleteOpen}
+        isLoading={deleteLoading}
         onClose={() => {
           setIsDeleteOpen(false);
           setPropertyToDelete(null);
