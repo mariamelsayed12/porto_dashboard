@@ -168,7 +168,6 @@ export default function PropertyDetailsPage() {
     downPayment: property.downPaymentAmount ? `${property.downPaymentAmount.toLocaleString()} EGP` : undefined,
     monthlyInstallment: property.installmentValue ? `${property.installmentValue.toLocaleString()} EGP` : undefined,
     installmentPeriod: property.installmentPeriod,
-    rentalYield: undefined,
     cashPrice: property.installmentPrice ? `${property.installmentPrice.toLocaleString()} EGP` : undefined,
   };
 

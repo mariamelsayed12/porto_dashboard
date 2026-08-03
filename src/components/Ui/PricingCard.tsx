@@ -23,7 +23,6 @@ interface PricingData {
   downPayment?: string;
   monthlyInstallment?: string;
   installmentPeriod?: string;
-  rentalYield?: string;
   cashPrice?: string;
 }
 
@@ -92,7 +91,6 @@ export default function PricingCard({ pricing, paymentType }: PricingCardProps) 
           <PricingRow label="Down payment" value={pricing.downPayment} />
           <PricingRow label="Monthly installment" value={pricing.monthlyInstallment} />
           <PricingRow label="Installment period" value={pricing.installmentPeriod} />
-          <PricingRow label="Rental yield" value={pricing.rentalYield} />
         </div>
       ) : (
         <div className="flex flex-col gap-4">
@@ -100,7 +98,6 @@ export default function PricingCard({ pricing, paymentType }: PricingCardProps) 
             label="Cash Price"
             value={pricing.cashPrice || pricing.totalPrice}
           />
-          <PricingRow label="Rental yield" value={pricing.rentalYield} />
         </div>
       )}
     </div>
