@@ -3,15 +3,13 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { FiX, FiUpload, FiTrash2, FiPlus, FiAlertCircle } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  useGetVillageQuery,
-} from "../../../app/services/crudVillage";
+import { useGetVillageQuery } from "../../../app/services/crudVillage";
 import { showSuccessToast, showErrorToast } from "../Ui/Toast";
 import Button from "../Ui/Button";
 import Input from "../Ui/Input";
 import MultiSelectDropdown from "../Ui/MultiSelectDropdown";
 import LocationPicker from "../Ui/LocationPicker";
-import { ALLOWED_AMENITIES } from "../../data";
+import { ALLOWED_Village_AMENITIES } from "../../data";
 import { validationSchema } from "../../validation";
 
 interface CreateVillageDrawerProps {
@@ -139,7 +137,9 @@ export default function CreateVillageDrawer({
       showErrorToast("Maximum 5 gallery images allowed");
       return;
     }
-    setValue("galleryImages", [...currentImages, ...files], { shouldValidate: true });
+    setValue("galleryImages", [...currentImages, ...files], {
+      shouldValidate: true,
+    });
   };
 
   const removeGalleryImage = (index: number) => {
@@ -197,7 +197,7 @@ export default function CreateVillageDrawer({
   };
 
   const amenitiesOptions = useMemo(() => {
-    return ALLOWED_AMENITIES.map((item) => ({
+    return ALLOWED_Village_AMENITIES.map((item) => ({
       label: item.en,
       value: item.value,
     }));
@@ -346,9 +346,13 @@ export default function CreateVillageDrawer({
                   Cover Image <span className="text-primary">*</span>
                 </label>
                 <div
-                  onClick={() => !coverPreviewUrl && coverInputRef.current?.click()}
+                  onClick={() =>
+                    !coverPreviewUrl && coverInputRef.current?.click()
+                  }
                   className={`group relative bg-white border border-[#D4D5D8] border-dashed rounded-lg h-[166px] flex flex-col items-center justify-center overflow-hidden transition-all ${
-                    !coverPreviewUrl ? "cursor-pointer hover:border-[#1E8CAB]" : ""
+                    !coverPreviewUrl
+                      ? "cursor-pointer hover:border-[#1E8CAB]"
+                      : ""
                   }`}
                 >
                   {coverPreviewUrl ? (
@@ -384,7 +388,9 @@ export default function CreateVillageDrawer({
                   />
                 </div>
                 {errors.coverImage?.message && (
-                  <span className="text-xs text-red-500 mt-1">{errors.coverImage.message}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.coverImage.message}
+                  </span>
                 )}
               </div>
 
@@ -422,7 +428,9 @@ export default function CreateVillageDrawer({
                       className="border border-[#D4D5D8] border-dashed rounded-lg h-[100px] flex flex-col items-center justify-center cursor-pointer hover:border-[#1E8CAB] transition-all bg-white"
                     >
                       <FiPlus className="w-6 h-6 text-[#747474]" />
-                      <span className="text-[10px] text-text-darker mt-1">Upload Image</span>
+                      <span className="text-[10px] text-text-darker mt-1">
+                        Upload Image
+                      </span>
                     </div>
                   )}
                 </div>
@@ -435,7 +443,9 @@ export default function CreateVillageDrawer({
                   onChange={handleGalleryFileChange}
                 />
                 {errors.galleryImages?.message && (
-                  <span className="text-xs text-red-500 mt-1">{errors.galleryImages.message}</span>
+                  <span className="text-xs text-red-500 mt-1">
+                    {errors.galleryImages.message}
+                  </span>
                 )}
               </div>
 
@@ -458,13 +468,24 @@ export default function CreateVillageDrawer({
                         longitude: watch("longitude") || 0,
                       }}
                       onChange={(newVal: any) => {
-                        setValue("locationText", newVal.locationText, { shouldValidate: true });
-                        setValue("googleMapsUrl", newVal.googleMapsUrl, { shouldValidate: true });
-                        setValue("latitude", newVal.latitude, { shouldValidate: true });
-                        setValue("longitude", newVal.longitude, { shouldValidate: true });
+                        setValue("locationText", newVal.locationText, {
+                          shouldValidate: true,
+                        });
+                        setValue("googleMapsUrl", newVal.googleMapsUrl, {
+                          shouldValidate: true,
+                        });
+                        setValue("latitude", newVal.latitude, {
+                          shouldValidate: true,
+                        });
+                        setValue("longitude", newVal.longitude, {
+                          shouldValidate: true,
+                        });
                       }}
                       options={locationOptions}
-                      error={errors.locationText?.en?.message || errors.locationText?.ar?.message}
+                      error={
+                        errors.locationText?.en?.message ||
+                        errors.locationText?.ar?.message
+                      }
                       isArabic={false}
                     />
                   )}

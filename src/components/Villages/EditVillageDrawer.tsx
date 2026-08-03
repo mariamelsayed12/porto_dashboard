@@ -15,7 +15,7 @@ import Input from "../Ui/Input";
 import MultiSelectDropdown from "../Ui/MultiSelectDropdown";
 import LocationPicker from "../Ui/LocationPicker";
 import Spinner from "../Ui/LoadingSpinner";
-import { ALLOWED_AMENITIES, translations } from "../../data";
+import { ALLOWED_Village_AMENITIES, translations } from "../../data";
 import { validationSchema } from "../../validation";
 
 interface EditVillageDrawerProps {
@@ -25,7 +25,6 @@ interface EditVillageDrawerProps {
   onUpdate: (formData: FormData) => Promise<any>;
   isLoading?: boolean;
 }
-
 
 export default function EditVillageDrawer({
   isOpen,
@@ -41,11 +40,19 @@ export default function EditVillageDrawer({
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: englishVillage, isLoading: isEnLoading, isFetching: isEnFetching } = useGetVillageByIdQuery(
-    village?._id && isOpen ? { id: village._id, lang: "en" } : skipToken
+  const {
+    data: englishVillage,
+    isLoading: isEnLoading,
+    isFetching: isEnFetching,
+  } = useGetVillageByIdQuery(
+    village?._id && isOpen ? { id: village._id, lang: "en" } : skipToken,
   );
-  const { data: arabicVillage, isLoading: isArLoading, isFetching: isArFetching } = useGetVillageByIdQuery(
-    village?._id && isOpen ? { id: village._id, lang: "ar" } : skipToken
+  const {
+    data: arabicVillage,
+    isLoading: isArLoading,
+    isFetching: isArFetching,
+  } = useGetVillageByIdQuery(
+    village?._id && isOpen ? { id: village._id, lang: "ar" } : skipToken,
   );
 
   const { data: villagesEn } = useGetVillageQuery({ lang: "en" });
@@ -95,12 +102,15 @@ export default function EditVillageDrawer({
   useEffect(() => {
     if (isOpen && village) {
       // Only reset the form when we have the correct, non-stale bilingual data
-      const isDataReady = englishVillage?._id === village._id && arabicVillage?._id === village._id;
+      const isDataReady =
+        englishVillage?._id === village._id &&
+        arabicVillage?._id === village._id;
       if (!isDataReady) return;
 
       const nameEn = englishVillage?.name || village.name || "";
       const nameAr = arabicVillage?.name || "";
-      const devEn = englishVillage?.developerName || village.developerName || "";
+      const devEn =
+        englishVillage?.developerName || village.developerName || "";
       const devAr = arabicVillage?.developerName || "";
       const locEn = englishVillage?.locationText || village.locationText || "";
       const locAr = arabicVillage?.locationText || "";
@@ -151,8 +161,15 @@ export default function EditVillageDrawer({
     }
   }, [isOpen, reset]);
 
-  const isDataStale = !englishVillage || !arabicVillage || englishVillage._id !== village?._id || arabicVillage._id !== village?._id;
-  const isInitializing = isOpen && village && (isEnLoading || isArLoading || isEnFetching || isArFetching || isDataStale);
+  const isDataStale =
+    !englishVillage ||
+    !arabicVillage ||
+    englishVillage._id !== village?._id ||
+    arabicVillage._id !== village?._id;
+  const isInitializing =
+    isOpen &&
+    village &&
+    (isEnLoading || isArLoading || isEnFetching || isArFetching || isDataStale);
 
   const coverImage = watch("coverImage");
   const galleryImages = watch("galleryImages") as (File | string)[];
@@ -199,10 +216,16 @@ export default function EditVillageDrawer({
     const files = Array.from(e.target.files || []);
     const currentImages = galleryImages || [];
     if (currentImages.length + files.length > 5) {
-      showErrorToast(formLanguage === "ar" ? "الحد الأقصى لمعرض الصور هو 5 صور" : "Maximum 5 gallery images allowed");
+      showErrorToast(
+        formLanguage === "ar"
+          ? "الحد الأقصى لمعرض الصور هو 5 صور"
+          : "Maximum 5 gallery images allowed",
+      );
       return;
     }
-    setValue("galleryImages", [...currentImages, ...files], { shouldValidate: true });
+    setValue("galleryImages", [...currentImages, ...files], {
+      shouldValidate: true,
+    });
   };
 
   const removeGalleryImage = (index: number) => {
@@ -257,15 +280,20 @@ export default function EditVillageDrawer({
       }
 
       await onUpdate(formData);
-      showSuccessToast(isArabic ? "تم تعديل القرية بنجاح" : "Village updated successfully.");
+      showSuccessToast(
+        isArabic ? "تم تعديل القرية بنجاح" : "Village updated successfully.",
+      );
       onClose();
     } catch (err: any) {
-      showErrorToast(err?.data?.message || (isArabic ? "فشل تعديل القرية" : "Failed to update village."));
+      showErrorToast(
+        err?.data?.message ||
+          (isArabic ? "فشل تعديل القرية" : "Failed to update village."),
+      );
     }
   };
 
   const amenitiesOptions = useMemo(() => {
-    return ALLOWED_AMENITIES.map((item) => ({
+    return ALLOWED_Village_AMENITIES.map((item) => ({
       label: isArabic ? item.ar : item.en,
       value: item.value,
     }));
@@ -308,7 +336,9 @@ export default function EditVillageDrawer({
                     type="button"
                     onClick={() => setFormLanguage("en")}
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                      !isArabic ? "bg-[#1E8CAB] text-white shadow-xs" : "text-text-darker hover:text-text-secondary"
+                      !isArabic
+                        ? "bg-[#1E8CAB] text-white shadow-xs"
+                        : "text-text-darker hover:text-text-secondary"
                     }`}
                   >
                     English
@@ -317,7 +347,9 @@ export default function EditVillageDrawer({
                     type="button"
                     onClick={() => setFormLanguage("ar")}
                     className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                      isArabic ? "bg-[#1E8CAB] text-white shadow-xs" : "text-text-darker hover:text-text-secondary"
+                      isArabic
+                        ? "bg-[#1E8CAB] text-white shadow-xs"
+                        : "text-text-darker hover:text-text-secondary"
                     }`}
                   >
                     العربية
@@ -344,240 +376,266 @@ export default function EditVillageDrawer({
                 onSubmit={handleSubmit(onSubmit)}
                 className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-6"
               >
-              {/* Form errors indicator */}
-              {Object.keys(errors).length > 0 && (
-                <div className="flex items-center gap-2 rounded-lg bg-red-50 p-4 text-sm text-red-600 border border-red-100">
-                  <FiAlertCircle className="w-5 h-5 shrink-0" />
-                  <span>{isArabic ? "يرجى تصحيح أخطاء التحقق أدناه" : "Please correct validation errors below"}</span>
-                </div>
-              )}
+                {/* Form errors indicator */}
+                {Object.keys(errors).length > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg bg-red-50 p-4 text-sm text-red-600 border border-red-100">
+                    <FiAlertCircle className="w-5 h-5 shrink-0" />
+                    <span>
+                      {isArabic
+                        ? "يرجى تصحيح أخطاء التحقق أدناه"
+                        : "Please correct validation errors below"}
+                    </span>
+                  </div>
+                )}
 
-              {/* Village Name - English & Arabic Side-by-Side */}
-              <div className="flex flex-col gap-4 border-b border-[#EDEFF2] pb-5">
-                <span className="text-sm font-semibold text-text-secondary">
-                  {isArabic ? "اسم القرية" : "Village Name"}
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label={t.nameEn}
-                    placeholder="e.g. Porto Golf"
-                    required
-                    {...register("name.en")}
-                    error={errors.name?.en?.message}
-                  />
-                  <Input
-                    label={t.nameAr}
-                    placeholder="مثال: بورتو جولف"
-                    required
-                    dir="rtl"
-                    {...register("name.ar")}
-                    error={errors.name?.ar?.message}
-                  />
-                </div>
-              </div>
-
-              {/* Developer Name - English & Arabic Side-by-Side */}
-              <div className="flex flex-col gap-4 border-b border-[#EDEFF2] pb-5">
-                <span className="text-sm font-semibold text-text-secondary">
-                  {isArabic ? "اسم المطور" : "Developer"}
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input
-                    label={t.developerEn}
-                    placeholder="e.g. Porto Developments"
-                    required
-                    {...register("developerName.en")}
-                    error={errors.developerName?.en?.message}
-                  />
-                  <Input
-                    label={t.developerAr}
-                    placeholder="مثال: عامر جروب"
-                    required
-                    dir="rtl"
-                    {...register("developerName.ar")}
-                    error={errors.developerName?.ar?.message}
-                  />
-                </div>
-              </div>
-
-             
-              {/* Price and Yield */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-[#EDEFF2] pb-5">
-                <Input
-                  label={t.startingPrice}
-                  type="number"
-                  placeholder={t.placeholderPrice}
-                  required
-                  {...register("startingPrice")}
-                  error={errors.startingPrice?.message}
-                />
-                <Input
-                  label={t.rentalYield}
-                  type="number"
-                  step="any"
-                  placeholder={t.placeholderYield}
-                  required
-                  {...register("rentalYield")}
-                  error={errors.rentalYield?.message}
-                />
-              </div>
-
-
-              {/* Amenities Multi-select */}
-              <div className="border-b border-[#EDEFF2] pb-5">
-                <Controller
-                  control={control}
-                  name="amenities"
-                  render={({ field: { value, onChange } }) => (
-                    <MultiSelectDropdown
-                      label={t.amenities}
-                      placeholder={isArabic ? "اختر المرافق والخدمات" : "Select amenities"}
-                      options={amenitiesOptions}
-                      value={value || []}
-                      onChange={onChange}
-                      error={errors.amenities?.message}
+                {/* Village Name - English & Arabic Side-by-Side */}
+                <div className="flex flex-col gap-4 border-b border-[#EDEFF2] pb-5">
+                  <span className="text-sm font-semibold text-text-secondary">
+                    {isArabic ? "اسم القرية" : "Village Name"}
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label={t.nameEn}
+                      placeholder="e.g. Porto Golf"
+                      required
+                      {...register("name.en")}
+                      error={errors.name?.en?.message}
                     />
-                  )}
-                />
-              </div>
+                    <Input
+                      label={t.nameAr}
+                      placeholder="مثال: بورتو جولف"
+                      required
+                      dir="rtl"
+                      {...register("name.ar")}
+                      error={errors.name?.ar?.message}
+                    />
+                  </div>
+                </div>
 
-              {/* Cover Image Upload */}
-              <div className="flex flex-col gap-2 border-b border-[#EDEFF2] pb-5">
-                <label className="text-sm font-medium text-text-secondary">
-                  {t.coverImage} <span className="text-primary">*</span>
-                </label>
-                <div
-                  onClick={() => !coverPreviewUrl && coverInputRef.current?.click()}
-                  className={`group relative bg-white border border-[#D4D5D8] border-dashed rounded-lg h-[166px] flex flex-col items-center justify-center overflow-hidden transition-all ${
-                    !coverPreviewUrl ? "cursor-pointer hover:border-[#1E8CAB]" : ""
-                  }`}
-                >
-                  {coverPreviewUrl ? (
-                    <>
-                      <img
-                        src={coverPreviewUrl}
-                        alt="Cover preview"
-                        className="w-full h-full object-cover"
+                {/* Developer Name - English & Arabic Side-by-Side */}
+                <div className="flex flex-col gap-4 border-b border-[#EDEFF2] pb-5">
+                  <span className="text-sm font-semibold text-text-secondary">
+                    {isArabic ? "اسم المطور" : "Developer"}
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input
+                      label={t.developerEn}
+                      placeholder="e.g. Porto Developments"
+                      required
+                      {...register("developerName.en")}
+                      error={errors.developerName?.en?.message}
+                    />
+                    <Input
+                      label={t.developerAr}
+                      placeholder="مثال: عامر جروب"
+                      required
+                      dir="rtl"
+                      {...register("developerName.ar")}
+                      error={errors.developerName?.ar?.message}
+                    />
+                  </div>
+                </div>
+
+                {/* Price and Yield */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-[#EDEFF2] pb-5">
+                  <Input
+                    label={t.startingPrice}
+                    type="number"
+                    placeholder={t.placeholderPrice}
+                    required
+                    {...register("startingPrice")}
+                    error={errors.startingPrice?.message}
+                  />
+                  <Input
+                    label={t.rentalYield}
+                    type="number"
+                    step="any"
+                    placeholder={t.placeholderYield}
+                    required
+                    {...register("rentalYield")}
+                    error={errors.rentalYield?.message}
+                  />
+                </div>
+
+                {/* Amenities Multi-select */}
+                <div className="border-b border-[#EDEFF2] pb-5">
+                  <Controller
+                    control={control}
+                    name="amenities"
+                    render={({ field: { value, onChange } }) => (
+                      <MultiSelectDropdown
+                        label={t.amenities}
+                        placeholder={
+                          isArabic
+                            ? "اختر المرافق والخدمات"
+                            : "Select amenities"
+                        }
+                        options={amenitiesOptions}
+                        value={value || []}
+                        onChange={onChange}
+                        error={errors.amenities?.message}
                       />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                    )}
+                  />
+                </div>
+
+                {/* Cover Image Upload */}
+                <div className="flex flex-col gap-2 border-b border-[#EDEFF2] pb-5">
+                  <label className="text-sm font-medium text-text-secondary">
+                    {t.coverImage} <span className="text-primary">*</span>
+                  </label>
+                  <div
+                    onClick={() =>
+                      !coverPreviewUrl && coverInputRef.current?.click()
+                    }
+                    className={`group relative bg-white border border-[#D4D5D8] border-dashed rounded-lg h-[166px] flex flex-col items-center justify-center overflow-hidden transition-all ${
+                      !coverPreviewUrl
+                        ? "cursor-pointer hover:border-[#1E8CAB]"
+                        : ""
+                    }`}
+                  >
+                    {coverPreviewUrl ? (
+                      <>
+                        <img
+                          src={coverPreviewUrl}
+                          alt="Cover preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-2 transition-opacity">
+                          <Button
+                            type="button"
+                            variant="create"
+                            className="h-9 px-4 !bg-[#1E8CAB]"
+                            onClick={() => coverInputRef.current?.click()}
+                          >
+                            {t.replace}
+                          </Button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-text-darker py-4">
+                        <FiUpload className="w-8 h-8 text-[#747474]" />
+                        <span className="text-xs font-normal">
+                          {t.uploadNew}
+                        </span>
+                      </div>
+                    )}
+                    <input
+                      ref={coverInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handleCoverFileChange}
+                    />
+                  </div>
+                  {errors.coverImage?.message && (
+                    <span className="text-xs text-red-500 mt-1">
+                      {errors.coverImage.message}
+                    </span>
+                  )}
+                </div>
+
+                {/* Gallery Images Upload */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-text-secondary">
+                    {t.galleryImages}
+                  </label>
+                  <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-3">
+                    {galleryPreviewUrls.map((url, idx) => (
+                      <div
+                        key={idx}
+                        className="group relative h-[100px] bg-white border border-[#D4D5D8] rounded-lg overflow-hidden shrink-0"
+                      >
+                        <img
+                          src={url}
+                          alt={`Gallery ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
                         <Button
                           type="button"
-                          variant="create"
-                          className="h-9 px-4 !bg-[#1E8CAB]"
-                          onClick={() => coverInputRef.current?.click()}
+                          onClick={() => removeGalleryImage(idx)}
+                          variant="icon"
+                          className="absolute inset-0 !bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity !w-full !h-full !rounded-none"
                         >
-                          {t.replace}
+                          <FiTrash2 className="w-5 h-5" />
                         </Button>
                       </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-text-darker py-4">
-                      <FiUpload className="w-8 h-8 text-[#747474]" />
-                      <span className="text-xs font-normal">{t.uploadNew}</span>
-                    </div>
-                  )}
+                    ))}
+
+                    {/* Add Grid button if < 5 */}
+                    {galleryPreviewUrls.length < 5 && (
+                      <div
+                        onClick={() => galleryInputRef.current?.click()}
+                        className="border border-[#D4D5D8] border-dashed rounded-lg h-[100px] flex flex-col items-center justify-center cursor-pointer hover:border-[#1E8CAB] transition-all bg-white"
+                      >
+                        <FiPlus className="w-6 h-6 text-[#747474]" />
+                        <span className="text-[10px] text-text-darker mt-1">
+                          {t.uploadNew}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   <input
-                    ref={coverInputRef}
+                    ref={galleryInputRef}
                     type="file"
+                    multiple
                     accept="image/jpeg,image/png,image/webp"
                     className="hidden"
-                    onChange={handleCoverFileChange}
+                    onChange={handleGalleryFileChange}
+                  />
+                  {errors.galleryImages?.message && (
+                    <span className="text-xs text-red-500 mt-1">
+                      {errors.galleryImages.message}
+                    </span>
+                  )}
+                </div>
+
+                {/* Submit Button invisible helper */}
+                <button type="submit" className="hidden" />
+                {/* Location Selector (Bilingual) */}
+                <div className="border-b border-[#EDEFF2] pb-5">
+                  <Controller
+                    control={control}
+                    name="locationText"
+                    render={({ field: { value: locationTextVal } }) => (
+                      <LocationPicker
+                        label={isArabic ? "الموقع" : "Location"}
+                        required
+                        value={{
+                          locationText: {
+                            en: locationTextVal?.en || "",
+                            ar: locationTextVal?.ar || "",
+                          },
+                          googleMapsUrl: watch("googleMapsUrl") || "",
+                          latitude: watch("latitude") || 0,
+                          longitude: watch("longitude") || 0,
+                        }}
+                        onChange={(newVal: any) => {
+                          setValue("locationText", newVal.locationText, {
+                            shouldValidate: true,
+                          });
+                          setValue("googleMapsUrl", newVal.googleMapsUrl, {
+                            shouldValidate: true,
+                          });
+                          setValue("latitude", newVal.latitude, {
+                            shouldValidate: true,
+                          });
+                          setValue("longitude", newVal.longitude, {
+                            shouldValidate: true,
+                          });
+                        }}
+                        options={locationOptions}
+                        error={
+                          errors.locationText?.en?.message ||
+                          errors.locationText?.ar?.message
+                        }
+                        isArabic={isArabic}
+                      />
+                    )}
                   />
                 </div>
-                {errors.coverImage?.message && (
-                  <span className="text-xs text-red-500 mt-1">{errors.coverImage.message}</span>
-                )}
-              </div>
-
-              {/* Gallery Images Upload */}
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium text-text-secondary">
-                  {t.galleryImages}
-                </label>
-                <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 gap-3">
-                  {galleryPreviewUrls.map((url, idx) => (
-                    <div
-                      key={idx}
-                      className="group relative h-[100px] bg-white border border-[#D4D5D8] rounded-lg overflow-hidden shrink-0"
-                    >
-                      <img
-                        src={url}
-                        alt={`Gallery ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <Button
-                        type="button"
-                        onClick={() => removeGalleryImage(idx)}
-                        variant="icon"
-                        className="absolute inset-0 !bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity !w-full !h-full !rounded-none"
-                      >
-                        <FiTrash2 className="w-5 h-5" />
-                      </Button>
-                    </div>
-                  ))}
-
-                  {/* Add Grid button if < 5 */}
-                  {galleryPreviewUrls.length < 5 && (
-                    <div
-                      onClick={() => galleryInputRef.current?.click()}
-                      className="border border-[#D4D5D8] border-dashed rounded-lg h-[100px] flex flex-col items-center justify-center cursor-pointer hover:border-[#1E8CAB] transition-all bg-white"
-                    >
-                      <FiPlus className="w-6 h-6 text-[#747474]" />
-                      <span className="text-[10px] text-text-darker mt-1">{t.uploadNew}</span>
-                    </div>
-                  )}
-                </div>
-                <input
-                  ref={galleryInputRef}
-                  type="file"
-                  multiple
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={handleGalleryFileChange}
-                />
-                {errors.galleryImages?.message && (
-                  <span className="text-xs text-red-500 mt-1">{errors.galleryImages.message}</span>
-                )}
-              </div>
-
-              {/* Submit Button invisible helper */}
-              <button type="submit" className="hidden" />
-               {/* Location Selector (Bilingual) */}
-              <div className="border-b border-[#EDEFF2] pb-5">
-                <Controller
-                  control={control}
-                  name="locationText"
-                  render={({ field: { value: locationTextVal } }) => (
-                    <LocationPicker
-                      label={isArabic ? "الموقع" : "Location"}
-                      required
-                      value={{
-                        locationText: {
-                          en: locationTextVal?.en || "",
-                          ar: locationTextVal?.ar || "",
-                        },
-                        googleMapsUrl: watch("googleMapsUrl") || "",
-                        latitude: watch("latitude") || 0,
-                        longitude: watch("longitude") || 0,
-                      }}
-                      onChange={(newVal: any) => {
-                        setValue("locationText", newVal.locationText, { shouldValidate: true });
-                        setValue("googleMapsUrl", newVal.googleMapsUrl, { shouldValidate: true });
-                        setValue("latitude", newVal.latitude, { shouldValidate: true });
-                        setValue("longitude", newVal.longitude, { shouldValidate: true });
-                      }}
-                      options={locationOptions}
-                      error={errors.locationText?.en?.message || errors.locationText?.ar?.message}
-                      isArabic={isArabic}
-                    />
-                  )}
-                />
-              </div>
-
-            </form>
+              </form>
             )}
-
-            
 
             {/* Footer Actions */}
             <div className="flex justify-end items-center gap-4 px-6 py-5 border-t border-[#C0C4C8] bg-[#F5F9FA]">

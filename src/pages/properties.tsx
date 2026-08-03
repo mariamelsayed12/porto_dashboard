@@ -5,14 +5,13 @@ import {
   useOutletContext,
 } from "react-router-dom";
 import { FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
-import { propertyFormFields } from "../data";
 import DataTable, {
   type ColumnDef,
   type ActionDef,
 } from "../components/Ui/DataTable";
 import Pagination from "../components/Ui/Pagination";
 import DeleteModal from "../components/Ui/DeleteModal";
-import FormDrawer from "../components/Ui/FormDrawer";
+import CreatePropertyDrawer from "../components/Properties/CreatePropertyDrawer";
 import defaultImage from "../assets/default.png";
 import { truncateText } from "../utils";
 import FilterSortSection, {
@@ -122,7 +121,17 @@ const propertiesColumns: ColumnDef<IProperty>[] = [
     key: "deliveryDate",
     label: "Delivery date",
     width: "w-[16%]",
-    render: (v) => <span className="whitespace-nowrap">{v as string}</span>,
+    render: (v) => {
+      const val = v as string;
+      if (!val) return <span className="whitespace-nowrap">—</span>;
+      if (val === "Ready to Move") {
+        return <span className="whitespace-nowrap">{val}</span>;
+      }
+      if (val.includes("T")) {
+        return <span className="whitespace-nowrap">{val.split("T")[0]}</span>;
+      }
+      return <span className="whitespace-nowrap">{val}</span>;
+    },
   },
 ];
 
@@ -375,7 +384,7 @@ export default function PropertiesPage() {
     return propertiesResponse?.paginationResult?.limit || 10;
   }, [propertiesResponse]);
 
-  const [createProperty] = useCreatePropertyMutation();
+  const [createProperty, { isLoading: isCreateLoading }] = useCreatePropertyMutation();
   const [deleteProperty,{isLoading: deleteLoading}] = useDeletePropertyMutation();
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -406,35 +415,6 @@ export default function PropertiesPage() {
     }
   }, [propertyToDelete, deleteProperty, propertiesResponse?.results, limit]);
 
-  const handleCreateSubmit = useCallback(
-    async (data: Record<string, unknown>) => {
-      try {
-        const formData = new FormData();
-        Object.keys(data).forEach((key) => {
-          if (key === "media") {
-            const media = data.media as any;
-            if (media?.file) {
-              formData.append("coverImage", media.file);
-            }
-          } else if (key === "amenities" && Array.isArray(data[key])) {
-            (data[key] as string[]).forEach((val) =>
-              formData.append("amenities", val),
-            );
-          } else {
-            formData.append(key, String(data[key] ?? ""));
-          }
-        });
-
-        await createProperty(formData).unwrap();
-        showSuccessToast("Property created successfully.");
-        setIsCreateOpen(false);
-        setCurrentPage(1);
-      } catch (err: any) {
-        showErrorToast(err?.data?.message || "Failed to create property.");
-      }
-    },
-    [createProperty, setIsCreateOpen],
-  );
 
   // ── Action column definitions ──────────────────────────────────────────────
   const tableActions: ActionDef<IProperty>[] = useMemo(
@@ -585,13 +565,11 @@ export default function PropertiesPage() {
       )}
 
       {/* ── Create Drawer ────────────────────────────────────────────────── */}
-      <FormDrawer
+      <CreatePropertyDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onSubmit={handleCreateSubmit}
-        title="Add New Property"
-        submitText="Create Property"
-        fields={propertyFormFields}
+        onCreate={createProperty}
+        isLoading={isCreateLoading}
       />
 
       {/* ── Delete Modal ─────────────────────────────────────────────────── */}

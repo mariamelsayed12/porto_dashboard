@@ -2,7 +2,6 @@ import type { FieldConfig } from "../components/Ui/FormDrawer";
 import type { Village } from "../interface/index";
 import portoGolfImg from "../assets/default.png";
 
-
 export const villageFormFields: FieldConfig[] = [
   {
     name: "name",
@@ -112,7 +111,7 @@ export const mockVillages: Village[] = [
     image: portoGolfImg,
   },
   {
-    id:"5",
+    id: "5",
     name: "Porto October",
     developer: "Amer group",
     startingPrice: "1.5M",
@@ -120,7 +119,7 @@ export const mockVillages: Village[] = [
     image: portoGolfImg,
   },
   {
-    id:"6",
+    id: "6",
     name: "Porto South",
     developer: "Amer group",
     startingPrice: "2.2M",
@@ -217,8 +216,7 @@ export const propertyFormFields: FieldConfig[] = [
   },
 ];
 
-
-export const ALLOWED_AMENITIES = [
+export const ALLOWED_Village_AMENITIES = [
   { value: "Pools", en: "Pools", ar: "حمامات سباحة" },
   { value: "Marina", en: "Marina", ar: "مارينا" },
   { value: "Cafes", en: "Cafes", ar: "مقاهي" },
@@ -236,6 +234,27 @@ export const ALLOWED_AMENITIES = [
   { value: "Kids Area", en: "Kids Area", ar: "منطقة أطفال" },
 ];
 
+export const ALLOWED_PROPERTY_AMENITIES = [
+  { value: "Private Pool", en: "Private Pool", ar: "حمامات سباحة خاصة" },
+  { value: "Private Garden", en: "Private Garden", ar: "حديقة خاصة" },
+  { value: "Balcony", en: "Balcony", ar: "شرفة" },
+  { value: "Sea View", en: "Sea View", ar: "إطلالة على البحر" },
+  { value: "Lake View", en: "Lake View", ar: "إطلالة على البحيرة" },
+  {
+    value: "Main Street View",
+    en: "Main Street View",
+    ar: "إطلالة على الشارع الرئيسي",
+  },
+  { value: "Smart Home", en: "Smart Home", ar: "منزل ذكي" },
+  { value: "Central A/C", en: "Central A/C", ar: "تكييف مركزي" },
+  { value: "Kitchen Appliances", en: "Kitchen Appliances", ar: "أجهزة المطبخ" },
+  { value: "Walk-in Closet", en: "Walk-in Closet", ar: "غرفة ملابس" },
+  { value: "Security", en: "Security", ar: "أمن وحراسة" },
+  { value: "Covered Parking", en: "Covered Parking", ar: "موقف سيارات مغطى" },
+  { value: "Maids Room", en: "Maids Room", ar: "غرفة خادمة" },
+  { value: "Pets Allowed", en: "Pets Allowed", ar: "مسموح بالحيوانات الأليفة" },
+  { value: "Barbecue Area", en: "Barbecue Area", ar: "منطقة شواء" },
+];
 
 export const translations = {
   en: {
@@ -293,9 +312,3 @@ export const translations = {
     placeholderLng: "أدخل خط الطول",
   },
 };
-
-
-
-
-
-
