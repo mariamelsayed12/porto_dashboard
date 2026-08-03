@@ -3,6 +3,8 @@ import { FiLogOut } from "react-icons/fi";
 import logoUrl from "../../assets/LogoDashboard2.svg";
 import { axiosInstance } from "../../config/axios.config";
 import { showErrorToast, showSuccessToast } from "../Ui/Toast";
+import Button from "../Ui/Button";
+import { useState } from "react";
 
 
 // Inline SVGs for dynamic styling with tailwind
@@ -46,9 +48,11 @@ export default function Sidebar({ onClose }: SidebarProps) {
      { name: "login", path: "/login", Icon: SettingsIcon },
   ];
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
 
   const handleLogout = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       const result = await axiosInstance.post(
@@ -61,14 +65,17 @@ export default function Sidebar({ onClose }: SidebarProps) {
       if (result.status === 200) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("loggedInUser");
+        setLoading(false);
         showSuccessToast("Logged out successfully");
         navigate("/login");
       } else {
+        setLoading(false);
         showErrorToast("Failed to logout");
       }
     } catch (err: any) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("loggedInUser");
+      setLoading(false);
       showSuccessToast("Logged out successfully");
       navigate("/login");
     }
@@ -109,16 +116,18 @@ export default function Sidebar({ onClose }: SidebarProps) {
       </nav>
 
       {/* Sidebar Footer: Logout Area */}
-      <div className="border-t border-border shrink-0 py-6">
-        <button
+      <div className="border-t hover:bg-red-50 border-border shrink-0 py-3">
+        <Button
+          disabled={loading}
           onClick={handleLogout}
+          variant="icon"
           className="w-full flex flex-col items-center justify-center gap-1.5 py-4 text-text-darker hover:bg-red-50 hover:text-red-600 border-l-2 border-transparent transition-all"
         >
-          <FiLogOut className="w-6 h-6 shrink-0 rotate-180" />
-          <span className="text-[14px] font-normal leading-none text-center">
+          <FiLogOut className={`w-6 h-6 shrink-0 ${loading ? "animate-spin" : "rotate-180"}`} />
+          <span className="text-[14px] hover:none font-normal leading-none text-center">
             logout
           </span>
-        </button>
+        </Button>
       </div>
     </aside>
   );
