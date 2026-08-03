@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   FiMenu,
   FiPlus,
@@ -12,6 +12,8 @@ import Breadcrumb from "../Ui/BreadCrumb";
 import type { BreadcrumbItem } from "../Ui/BreadCrumb";
 import { IoLockClosedOutline } from "react-icons/io5";
 import { IoIosLogOut } from "react-icons/io";
+import { axiosInstance } from "../../config/axios.config";
+import { showErrorToast, showSuccessToast } from "../Ui/Toast";
 
 interface HeaderActionConfig {
   showActions: boolean;
@@ -54,6 +56,43 @@ export default function Header({
   };
 
   const currentTitle = getPageTitle(location.pathname);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const user= JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+  console.log(user);
+  
+
+  const handleLogout = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("accessToken");
+        const result = await axiosInstance.post(
+          "/admin/logout",
+          {},
+          {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          }
+        );
+        if (result.status === 200) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("loggedInUser");
+          setLoading(false);
+          setProfileDropdownOpen(false);
+          showSuccessToast("Logged out successfully");
+          navigate("/login");
+        } else {
+          setLoading(false);
+          showErrorToast("Failed to logout");
+        }
+      } catch (err: any) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("loggedInUser");
+        setLoading(false);
+        setProfileDropdownOpen(false);
+        showSuccessToast("Logged out successfully");
+        navigate("/login");
+      }
+    };
 
   return (
     <header className="h-[72px] bg-white border-b border-border shadow-xs px-4 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-30">
@@ -114,17 +153,7 @@ export default function Header({
               </Button>
             )}
 
-            {/* Overview / Overview Create Button */}
-            {/* {currentTitle === "Overview" && (
-              <Button
-                variant="create"
-                onClick={onCreateClick}
-                leftIcon={<FiPlus size={20} />}
-                className="px-3 md:px-4"
-              >
-                <span>Create Property</span>
-              </Button>
-            )} */}
+           
 
             {location.pathname === "/properties" && (
               <Button
@@ -157,7 +186,7 @@ export default function Header({
             {/* User Text Stack (Hidden on tablet/mobile) */}
             <div className="hidden md:flex flex-col text-left justify-center w-[134px]">
               <span className="font-medium text-[14px] text-text-secondary leading-tight truncate group-hover:text-primary transition-colors">
-                Mohamed Samy
+               {user?.data?.user?.name || "User"}
               </span>
               <span className="font-normal text-[12px] text-text-darker leading-none mt-0.5">
                 Admin
@@ -176,30 +205,21 @@ export default function Header({
           {/* Simple Dropdown Menu */}
           {profileDropdownOpen && (
             <div className="absolute right-0 mt-2 w-[222px] bg-white rounded-md border border-border shadow-md py-1 z-50">
+              
               <a
-                href="#profile"
-                className="flex items-center gap-2 px-4 py-2 text-[14px] text-text-secondary hover:bg-light-primary hover:text-primary transition-colors"
-                onClick={() => setProfileDropdownOpen(false)}
-              >
-                <IoLockClosedOutline size={24} />
-                Change Password
-              </a>
-              {/* <a
-                href="#settings"
+                href="/settings"
                 className="block px-4 py-2 text-[14px] text-text-secondary hover:bg-light-primary hover:text-primary transition-colors"
                 onClick={() => setProfileDropdownOpen(false)}
               >
                 Account Settings
-              </a> */}
+              </a>
               <hr className="my-1 border-border" />
               <button
-                onClick={() => {
-                  console.log("Logout clicked");
-                  setProfileDropdownOpen(false);
-                }}
-                className="w-full flex items-center gap-2 px-4 py-2 text-[14px] text-red-600 hover:bg-red-50 transition-colors"
+                disabled={loading}
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-4 py-2 text-[14px] text-red-600 hover:bg-red-50 transition-colors text-left"
               >
-                <IoIosLogOut size={24} />
+                <IoIosLogOut size={24} className={`w-6 h-6 shrink-0 ${loading ? "animate-spin" : "rotate-180"}`} />
                 Sign out
               </button>
             </div>

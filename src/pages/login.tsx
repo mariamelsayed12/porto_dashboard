@@ -71,11 +71,14 @@ export default function LoginPage() {
           errorMessage = errorData.message || errorData.error || errorData.msg || "Invalid email or password.";
         }
       } catch (err) {
+         setLoading(false);
         // fallback to default error message
       }
       showErrorToast(errorMessage);
+       setLoading(false);
     }
   } catch (error) {
+    setLoading(false);
     showErrorToast("Network error. Please check your internet connection.");
   }
 
