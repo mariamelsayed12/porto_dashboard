@@ -193,7 +193,7 @@ export default function PropertyDetailsPage() {
       <div className="flex flex-col gap-6 w-full lg:w-[411px] shrink-0">
 
         {/* Pricing card */}
-        <PricingCard pricing={pricingData} />
+        <PricingCard pricing={pricingData} paymentType={property.paymentModel} />
 
         {/* Gallery card */}
         <PropertyGalleryCard

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // ─── PricingRow ────────────────────────────────────────────────────────────────
 
@@ -29,12 +29,22 @@ interface PricingData {
 
 interface PricingCardProps {
   pricing: PricingData;
+  paymentType?: string;
 }
 
 // ─── PricingCard ──────────────────────────────────────────────────────────────
 
-export default function PricingCard({ pricing }: PricingCardProps) {
-  const [mode, setMode] = useState<"installment" | "cash">("installment");
+export default function PricingCard({ pricing, paymentType }: PricingCardProps) {
+  const type = (paymentType || "both").toLowerCase();
+  const isBoth = type.includes("both");
+  const isCash = type.includes("cash") && !isBoth;
+
+  const initialMode = isCash ? "cash" : "installment";
+  const [activeMode, setActiveMode] = useState<"installment" | "cash">(initialMode);
+
+  useEffect(() => {
+    setActiveMode(isCash ? "cash" : "installment");
+  }, [paymentType, isCash]);
 
   return (
     <div className="bg-white border border-border rounded-md p-6 flex flex-col gap-4 w-full">
@@ -46,35 +56,37 @@ export default function PricingCard({ pricing }: PricingCardProps) {
         </p>
 
         {/* Installment / Cash switcher */}
-        <div className="flex items-center border border-border rounded-md overflow-hidden h-8">
-          <button
-            onClick={() => setMode("installment")}
-            className={`h-8 px-3 font-poppins font-medium text-[16px] transition-colors duration-150 whitespace-nowrap ${
-              mode === "installment"
-                ? "bg-light-gray text-text-secondary"
-                : "bg-white text-text-secondary hover:bg-light-gray"
-            }`}
-          >
-            Installment
-          </button>
-          <button
-            onClick={() => setMode("cash")}
-            className={`h-8 px-3 font-poppins font-medium text-[16px] transition-colors duration-150 whitespace-nowrap ${
-              mode === "cash"
-                ? "bg-light-gray text-text-secondary"
-                : "bg-white text-text-secondary hover:bg-light-gray"
-            }`}
-          >
-            Cash
-          </button>
-        </div>
+        {isBoth && (
+          <div className="flex items-center border border-border rounded-md overflow-hidden h-8">
+            <button
+              onClick={() => setActiveMode("installment")}
+              className={`h-8 px-3 font-poppins font-medium text-[16px] transition-colors duration-150 whitespace-nowrap ${
+                activeMode === "installment"
+                  ? "bg-light-gray text-text-secondary"
+                  : "bg-white text-text-secondary hover:bg-light-gray"
+              }`}
+            >
+              Installment
+            </button>
+            <button
+              onClick={() => setActiveMode("cash")}
+              className={`h-8 px-3 font-poppins font-medium text-[16px] transition-colors duration-150 whitespace-nowrap ${
+                activeMode === "cash"
+                  ? "bg-light-gray text-text-secondary"
+                  : "bg-white text-text-secondary hover:bg-light-gray"
+              }`}
+            >
+              Cash
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Divider */}
       <div className="w-full h-px bg-border" />
 
       {/* Pricing rows */}
-      {mode === "installment" ? (
+      {activeMode === "installment" ? (
         <div className="flex flex-col gap-4">
           <PricingRow label="Total Price" value={pricing.totalPrice} />
           <PricingRow label="Down payment" value={pricing.downPayment} />
