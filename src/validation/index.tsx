@@ -154,3 +154,57 @@ export const propertyValidationSchema = yup.object().shape({
   installmentValue: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
   amenities: yup.array().of(yup.string().required()).optional().default([]),
 });
+
+
+
+// Validation Schema using Yup
+export const settingsSchema = yup.object().shape({
+  phoneCountry: yup.object().required() as any,
+  phoneNumber: yup
+    .string()
+    .trim()
+    .required("Phone number is required")
+    .matches(/^\d+$/, "Phone number must contain only digits"),
+  whatsappCountry: yup.object().required() as any,
+  whatsappNumber: yup
+    .string()
+    .trim()
+    .required("Whatsapp number is required")
+    .matches(/^\d+$/, "Whatsapp number must contain only digits"),
+  companyEmail: yup
+    .string()
+    .trim()
+    .required("Company email is required")
+    .email("Invalid email format"),
+  companyLocation: yup.string().trim().required("Company location is required"),
+  tiktokLink: yup
+    .string()
+    .trim()
+    .nullable()
+    .notRequired()
+    .test(
+      "is-url",
+      "Must be a valid URL",
+      (value) => !value || /^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)
+    ),
+  facebookLink: yup
+    .string()
+    .trim()
+    .nullable()
+    .notRequired()
+    .test(
+      "is-url",
+      "Must be a valid URL",
+      (value) => !value || /^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)
+    ),
+  instagramLink: yup
+    .string()
+    .trim()
+    .nullable()
+    .notRequired()
+    .test(
+      "is-url",
+      "Must be a valid URL",
+      (value) => !value || /^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)
+    ),
+});

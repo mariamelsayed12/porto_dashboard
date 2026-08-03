@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiSave, FiEdit2 } from "react-icons/fi";
 import { Controller } from "react-hook-form";
-import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import Button from "../components/Ui/Button";
@@ -9,7 +8,9 @@ import Input from "../components/Ui/Input";
 import PhoneInput from "../components/Settings/PhoneInput";
 import { type CountryOption, countryOptions } from "../components/Settings/CountryCodeDropdown";
 import { useViewEditForm } from "../hooks/useViewEditForm";
-import { showSuccessToast } from "../components/Ui/Toast";
+import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
+import { settingsSchema } from "../validation";
+import { axiosInstance } from "../config/axios.config";
 
 interface SettingsState {
   phoneCountry: CountryOption;
@@ -23,99 +24,129 @@ interface SettingsState {
   instagramLink: string;
 }
 
-const INITIAL_SETTINGS: SettingsState = {
-  phoneCountry: countryOptions[0], // Egypt (+20)
-  phoneNumber: "1001234567",
-  whatsappCountry: countryOptions[0], // Egypt (+20)
-  whatsappNumber: "1001234567",
-  companyEmail: "contact@porto.com",
-  companyLocation: "Fifth Settlement, New Cairo, Egypt",
-  tiktokLink: "https://tiktok.com/@porto.developments",
-  facebookLink: "https://facebook.com/porto.developments",
-  instagramLink: "https://instagram.com/porto.developments",
+const parsePhoneNumber = (fullPhone: string) => {
+  if (!fullPhone) return { country: countryOptions[0], number: "" };
+  const matchedCountry = countryOptions.find((c) => fullPhone.startsWith(c.code));
+  if (matchedCountry) {
+    return {
+      country: matchedCountry,
+      number: fullPhone.slice(matchedCountry.code.length),
+    };
+  }
+  return { country: countryOptions[0], number: fullPhone };
 };
 
-// Validation Schema using Yup
-const settingsSchema = yup.object().shape({
-  phoneCountry: yup.object().required() as any,
-  phoneNumber: yup
-    .string()
-    .trim()
-    .required("Phone number is required")
-    .matches(/^\d+$/, "Phone number must contain only digits"),
-  whatsappCountry: yup.object().required() as any,
-  whatsappNumber: yup
-    .string()
-    .trim()
-    .required("Whatsapp number is required")
-    .matches(/^\d+$/, "Whatsapp number must contain only digits"),
-  companyEmail: yup
-    .string()
-    .trim()
-    .required("Company email is required")
-    .email("Invalid email format"),
-  companyLocation: yup.string().trim().required("Company location is required"),
-  tiktokLink: yup
-    .string()
-    .trim()
-    .nullable()
-    .notRequired()
-    .test(
-      "is-url",
-      "Must be a valid URL",
-      (value) => !value || /^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)
-    ),
-  facebookLink: yup
-    .string()
-    .trim()
-    .nullable()
-    .notRequired()
-    .test(
-      "is-url",
-      "Must be a valid URL",
-      (value) => !value || /^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)
-    ),
-  instagramLink: yup
-    .string()
-    .trim()
-    .nullable()
-    .notRequired()
-    .test(
-      "is-url",
-      "Must be a valid URL",
-      (value) => !value || /^https?:\/\/[^\s$.?#].[^\s]*$/.test(value)
-    ),
-});
+const INITIAL_SETTINGS: SettingsState = {
+  phoneCountry: countryOptions[0], // Egypt (+20)
+  phoneNumber: "",
+  whatsappCountry: countryOptions[0], // Egypt (+20)
+  whatsappNumber: "",
+  companyEmail: "",
+  companyLocation: "",
+  tiktokLink: "",
+  facebookLink: "",
+  instagramLink: "",
+};
+
+const getProfileSettings = (profile: any): SettingsState => {
+  const parsedPhone = parsePhoneNumber(profile?.phone || "");
+  const parsedWhatsapp = parsePhoneNumber(profile?.whatsapp || "");
+
+  return {
+    phoneCountry: parsedPhone.country,
+    phoneNumber: parsedPhone.number || "",
+    whatsappCountry: parsedWhatsapp.country,
+    whatsappNumber: parsedWhatsapp.number || "",
+    companyEmail: profile?.email || "",
+    companyLocation: profile?.companyLocation || "",
+    tiktokLink: profile?.tiktok || "",
+    facebookLink: profile?.facebook || "",
+    instagramLink: profile?.instagram || "",
+  };
+};
 
 export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
 
+  // Profile React state initialized from localStorage
+  const [profile, setProfile] = useState(() => {
+    const user = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+    return user?.data?.user || null;
+  });
+
+  const dynamicInitialSettings = getProfileSettings(profile);
+
   const handleSaveSettings = async (data: SettingsState) => {
     setIsSaving(true);
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    localStorage.setItem("porto_company_settings", JSON.stringify(data));
-    setIsSaving(false);
-    showSuccessToast("Settings saved successfully.");
+    try {
+      const token = localStorage.getItem("accessToken");
+      
+      const payload = {
+        email: data.companyEmail,
+        phone: `${data.phoneCountry.code}${data.phoneNumber}`,
+        whatsapp: `${data.whatsappCountry.code}${data.whatsappNumber}`,
+        companyLocation: data.companyLocation,
+        tiktok: data.tiktokLink,
+        facebook: data.facebookLink,
+        instagram: data.instagramLink,
+      };
+
+      const res = await axiosInstance.patch(
+        "/admin/profile",
+        payload,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
+      );
+
+      if (res.status === 200) {
+        const responseData = res.data;
+        const updatedUserFields = responseData?.data?.user || responseData?.data || responseData?.user || payload;
+        
+        // Update localStorage
+        const currentUser = JSON.parse(localStorage.getItem("loggedInUser") || "{}");
+        const updatedUser = {
+          ...currentUser,
+          data: {
+            ...currentUser.data,
+            user: {
+              ...currentUser.data?.user,
+              ...updatedUserFields,
+            }
+          }
+        };
+        localStorage.setItem("loggedInUser", JSON.stringify(updatedUser));
+        
+        // Update local React state to trigger UI update
+        setProfile(updatedUser.data.user);
+        
+        // Dispatch custom event to sync with Header/other components in real-time
+        window.dispatchEvent(new Event("user-profile-updated"));
+
+        showSuccessToast("Settings saved successfully.");
+      } else {
+        showErrorToast("Failed to save settings.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg = err?.response?.data?.message || err?.message || "Failed to save settings.";
+      showErrorToast(errorMsg);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const { isEditMode, enableEdit, cancelEdit, form, handleSave } = useViewEditForm<SettingsState>({
-    defaultValues: INITIAL_SETTINGS,
+    defaultValues: dynamicInitialSettings,
     resolver: yupResolver(settingsSchema) as any,
     onSave: handleSaveSettings,
   });
 
-  // Load from local storage on mount
+  // Synchronize form with localStorage profile on mount or state changes
   useEffect(() => {
-    const saved = localStorage.getItem("porto_company_settings");
-    if (saved) {
-      try {
-        form.reset(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to parse saved settings", e);
-      }
-    }
-  }, [form]);
+    form.reset(getProfileSettings(profile));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, form]);
 
   return (
     <div className="w-full">

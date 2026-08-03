@@ -6,11 +6,10 @@ import {
   FiTrash2,
   FiEdit3,
 } from "react-icons/fi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Button from "../Ui/Button";
 import Breadcrumb from "../Ui/BreadCrumb";
 import type { BreadcrumbItem } from "../Ui/BreadCrumb";
-import { IoLockClosedOutline } from "react-icons/io5";
 import { IoIosLogOut } from "react-icons/io";
 import { axiosInstance } from "../../config/axios.config";
 import { showErrorToast, showSuccessToast } from "../Ui/Toast";
@@ -58,8 +57,15 @@ export default function Header({
   const currentTitle = getPageTitle(location.pathname);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const user= JSON.parse(localStorage.getItem("loggedInUser") || "{}");
-  console.log(user);
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("loggedInUser") || "{}"));
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setUser(JSON.parse(localStorage.getItem("loggedInUser") || "{}"));
+    };
+    window.addEventListener("user-profile-updated", handleUpdate);
+    return () => window.removeEventListener("user-profile-updated", handleUpdate);
+  }, []);
   
 
   const handleLogout = async () => {
