@@ -1,6 +1,8 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
 import logoUrl from "../../assets/LogoDashboard2.svg";
+import { axiosInstance } from "../../config/axios.config";
+import { showErrorToast, showSuccessToast } from "../Ui/Toast";
 
 
 // Inline SVGs for dynamic styling with tailwind
@@ -43,6 +45,34 @@ export default function Sidebar({ onClose }: SidebarProps) {
     { name: "Settings", path: "/settings", Icon: SettingsIcon },
      { name: "login", path: "/login", Icon: SettingsIcon },
   ];
+  const navigate = useNavigate();
+
+
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      const result = await axiosInstance.post(
+        "/admin/logout",
+        {},
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }
+      );
+      if (result.status === 200) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("loggedInUser");
+        showSuccessToast("Logged out successfully");
+        navigate("/login");
+      } else {
+        showErrorToast("Failed to logout");
+      }
+    } catch (err: any) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("loggedInUser");
+      showSuccessToast("Logged out successfully");
+      navigate("/login");
+    }
+  };
 
   return (
     <aside className="w-[94px] h-full bg-white border-r border-border flex flex-col justify-between">
@@ -81,7 +111,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
       {/* Sidebar Footer: Logout Area */}
       <div className="border-t border-border shrink-0 py-6">
         <button
-          onClick={() => console.log("Logout triggered")}
+          onClick={handleLogout}
           className="w-full flex flex-col items-center justify-center gap-1.5 py-4 text-text-darker hover:bg-red-50 hover:text-red-600 border-l-2 border-transparent transition-all"
         >
           <FiLogOut className="w-6 h-6 shrink-0 rotate-180" />
