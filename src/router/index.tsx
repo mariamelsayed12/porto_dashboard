@@ -7,24 +7,56 @@ import PropertiesPage from "../pages/properties";
 import PropertyDetailsPage from "../pages/property-details";
 import SettingsPage from "../pages/settings";
 import LoginPage from "../pages/login";
-import ResetPasswordPage from "../pages/reset-password";
+import ProtectedRoute from "../auth/ProtectedRout";
+
+
 
 const router = createBrowserRouter(
     createRoutesFromElements(
     <>
     {/* home layout */}
     <Route path="/" element={<RootLayout/>} >
-        <Route index element={<HomePage/>} />
-        <Route path="villages" element={<VillagesPage/>} />
-        <Route path="villages/:id" element={<VillageDetailsPage/>} />
-        <Route path="properties" element={<PropertiesPage/>} />
-        <Route path="properties/:id" element={<PropertyDetailsPage/>} />
-        <Route path="settings" element={<SettingsPage/>} />
+        <Route index element={
+            <ProtectedRoute redirectPath="/login">
+            <HomePage/>
+            </ProtectedRoute>
+        }  
+        />
+        <Route path="villages" element={
+            <ProtectedRoute redirectPath="/login">
+            <VillagesPage/>
+            </ProtectedRoute>
+        }
+        />
+        <Route path="villages/:id" element={
+            <ProtectedRoute redirectPath="/login">
+            <VillageDetailsPage/>
+            </ProtectedRoute>
+        }
+        />
+        <Route path="properties" element={
+            <ProtectedRoute redirectPath="/login">
+            <PropertiesPage/>
+            </ProtectedRoute>
+        }
+        />
+        <Route path="properties/:id" element={
+            <ProtectedRoute redirectPath="/login">
+            <PropertyDetailsPage/>
+            </ProtectedRoute>
+        }
+        />
+        <Route path="settings" element={
+            <ProtectedRoute redirectPath="/login">
+            <SettingsPage/>
+            </ProtectedRoute>
+        }
+        />
     </Route>
     
     {/* login route */}
     <Route path="/login" element={<LoginPage />} />
-    <Route path="/reset-password" element={<ResetPasswordPage />} />
+    {/* <Route path="/reset-password" element={<ResetPasswordPage />} /> */}
     </>
 ))
 

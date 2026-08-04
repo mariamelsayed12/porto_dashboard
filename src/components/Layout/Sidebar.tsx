@@ -45,7 +45,6 @@ export default function Sidebar({ onClose }: SidebarProps) {
     { name: "Villages", path: "/villages", Icon: LocationIcon },
     { name: "Properties", path: "/properties", Icon: PropertiesIcon },
     { name: "Settings", path: "/settings", Icon: SettingsIcon },
-     { name: "login", path: "/login", Icon: SettingsIcon },
   ];
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);

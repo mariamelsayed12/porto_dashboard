@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 
 interface IProps {
-    isAllowed: boolean;
+    isAllowed?: boolean;
     redirectPath: string;
     children: ReactNode;
     data?: unknown;
@@ -13,7 +13,15 @@ const ProtectedRoute = ({
     children,
     data,
 }: IProps) => {
-    if (!isAllowed) return <Navigate to={redirectPath} replace state={data} />;
+    // Dynamically retrieve token from localStorage on render
+    const token = localStorage.getItem("accessToken");
+    const loggedInUserStr = localStorage.getItem("loggedInUser");
+    const loggedInUser = loggedInUserStr ? JSON.parse(loggedInUserStr) : null;
+    const isAuthenticated = !!token || !!loggedInUser?.token;
+
+    const allowed = isAllowed !== undefined ? isAllowed : isAuthenticated;
+
+    if (!allowed) return <Navigate to={redirectPath} replace state={data} />;
     return children;
 };
 
