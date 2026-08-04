@@ -55,6 +55,15 @@ export default function Header({
   };
 
   const currentTitle = getPageTitle(location.pathname);
+  
+  const getInitials = (fullName: string) => {
+    if (!fullName) return "U";
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length === 0) return "U";
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  };
+
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem("loggedInUser") || "{}"));
@@ -186,7 +195,7 @@ export default function Header({
           >
             {/* Avatar Circle */}
             <div className="w-10 h-10 rounded-full bg-[#00236f] flex items-center justify-center text-white font-bold text-[12px] font-sans shrink-0 border border-slate-100 shadow-xs">
-              MS
+              {getInitials(user?.data?.user?.name || "User")}
             </div>
 
             {/* User Text Stack (Hidden on tablet/mobile) */}
