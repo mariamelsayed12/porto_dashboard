@@ -13,7 +13,7 @@ import BeachIcon from "../icons/BeachIcon";
 import { useGetDashboardOverviewQuery } from "../../app/services/DashboardOverview";
 import PropertyDistributionChart from "../components/Ui/PropertyDistributionChart";
 
-// Mock Data for Table
+
 // const latestProperties = [
 //   {
 //     id: 1,

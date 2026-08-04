@@ -21,6 +21,7 @@ export interface ActionDef<T> {
 export interface ActionDropdownProps<T> {
   row: T;
   actions: ActionDef<T>[];
+  preferUp?: boolean;
 }
 
 

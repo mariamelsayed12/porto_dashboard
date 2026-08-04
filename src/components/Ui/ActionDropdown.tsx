@@ -8,8 +8,10 @@ import ActionDropdownItem from "./ActionDropdownItem";
 const ActionDropdown = <T,>({
   row,
   actions,
+  preferUp,
 }: ActionDropdownProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [dropdownPosition, setDropdownPosition] = useState<"down" | "up">("down");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +42,24 @@ const ActionDropdown = <T,>({
     };
 
   }, []);
+
+  // Determine dropdown orientation based on preferUp or viewport space below the button
+  useEffect(() => {
+    if (isOpen) {
+      if (preferUp) {
+        setDropdownPosition("up");
+      } else if (dropdownRef.current) {
+        const rect = dropdownRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        
+        if (spaceBelow < 160) {
+          setDropdownPosition("up");
+        } else {
+          setDropdownPosition("down");
+        }
+      }
+    }
+  }, [isOpen, preferUp]);
 
 
 
@@ -78,7 +98,7 @@ const ActionDropdown = <T,>({
             initial={{
               opacity: 0,
               scale: 0.95,
-              y: -5,
+              y: dropdownPosition === "up" ? 5 : -5,
             }}
 
             animate={{
@@ -90,18 +110,17 @@ const ActionDropdown = <T,>({
             exit={{
               opacity: 0,
               scale: 0.95,
-              y: -5,
+              y: dropdownPosition === "up" ? 5 : -5,
             }}
 
             transition={{
               duration: 0.15,
             }}
 
-            className="
+            className={`
               absolute
               right-0
-              top-full
-              mt-2
+              ${dropdownPosition === "up" ? "bottom-full mb-2" : "top-full mt-2"}
               min-w-[180px]
               bg-white
               border
@@ -111,7 +130,7 @@ const ActionDropdown = <T,>({
               z-50
               overflow-hidden
               py-1
-            "
+            `}
           >
 
             {actions.map((action) => (

@@ -139,7 +139,7 @@ export default function DataTable<TRow extends { id?: string | number; _id?: str
 
             {/* Data rows */}
             {!isLoading &&
-              data.map((row) => (
+              data.map((row, index) => (
                 <tr
                   key={row.id ?? row._id}
                   // onClick={() => onRowClick?.(row)}
@@ -181,8 +181,9 @@ export default function DataTable<TRow extends { id?: string | number; _id?: str
                         {actions && (
                            <td className="px-4 py-3">
                             <ActionDropdown
-                             row={row}
-                                   actions={actions}
+                              row={row}
+                              actions={actions}
+                              preferUp={index >= data.length - 2}
                             />
                            </td>
                         )}
