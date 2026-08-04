@@ -4,13 +4,14 @@ import './index.css'
 import App from './App.tsx'
 import { Provider } from 'react-redux'
 import store from '../app/store.ts'
+import InternetConnectionProvider from './provider/InternetConnectionServicesProvider.tsx'
 
 createRoot(document.getElementById('root')!).render(
-      <Provider store={store}>
-
-  <StrictMode>
-    <App />
-  </StrictMode>
-      </Provider>
-
+  <Provider store={store}>
+    <StrictMode>
+      <InternetConnectionProvider>
+        <App />
+      </InternetConnectionProvider>
+    </StrictMode>
+  </Provider>
 )

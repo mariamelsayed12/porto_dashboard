@@ -3,6 +3,7 @@ import { useDispatch } from "react-redux";
 import {  VillageApiSlice } from "./services/crudVillage";
 import { propertyApiSlice } from "./services/crudproperties";
 import { DashboardOverviewApiSlice } from "./services/DashboardOverview";
+import networkReducer from "./feature/NetworkSlice";
 
 
 export const store = configureStore({
@@ -10,7 +11,7 @@ export const store = configureStore({
     [VillageApiSlice.reducerPath]: VillageApiSlice.reducer,
     [propertyApiSlice.reducerPath]: propertyApiSlice.reducer,
     [DashboardOverviewApiSlice.reducerPath]: DashboardOverviewApiSlice.reducer,
-
+    network: networkReducer,
   },
 
   middleware: (getDefaultMiddleware) =>
