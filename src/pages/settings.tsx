@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { FiSave, FiEdit2 } from "react-icons/fi";
 import { Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-
 import Button from "../components/Ui/Button";
 import Input from "../components/Ui/Input";
 import PhoneInput from "../components/Settings/PhoneInput";
@@ -82,7 +81,6 @@ export default function SettingsPage() {
       const token = localStorage.getItem("accessToken");
       
       const payload = {
-        email: data.companyEmail,
         phone: `${data.phoneCountry.code}${data.phoneNumber}`,
         whatsapp: `${data.whatsappCountry.code}${data.whatsappNumber}`,
         companyLocation: data.companyLocation,
@@ -126,11 +124,13 @@ export default function SettingsPage() {
         showSuccessToast("Settings saved successfully.");
       } else {
         showErrorToast("Failed to save settings.");
+        throw new Error("Failed to save settings.");
       }
     } catch (err: any) {
       console.error(err);
       const errorMsg = err?.response?.data?.message || err?.message || "Failed to save settings.";
       showErrorToast(errorMsg);
+      throw err;
     } finally {
       setIsSaving(false);
     }
@@ -209,7 +209,7 @@ export default function SettingsPage() {
                 placeholder="Input text"
                 {...form.register("companyEmail")}
                 error={form.formState.errors.companyEmail?.message}
-                disabled={!isEditMode}
+                disabled={true}
                 variant="modal"
                 size="md"
               />
