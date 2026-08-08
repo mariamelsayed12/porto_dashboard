@@ -21,6 +21,11 @@ interface PropertyFormDrawerProps {
   mode: "create" | "edit";
   propertyId?: string;
 }
+const STATUS_OPTIONS_BY_LISTING_TYPE: Record<string, string[]> = {
+  Developer: ["Available", "Sold Out", "Not Available"],
+  Resale: ["Available", "Sold Out", "Not Available"],
+  Rent: ["Available", "Not Available", "Available Soon"],
+};
 
 export default function PropertyFormDrawer({
   isOpen,
@@ -121,6 +126,22 @@ export default function PropertyFormDrawer({
   const watchCoverImage = watch("coverImage") as File | string | undefined;
   const watchImages = watch("images") as (File | string)[] || [];
   const watchDeliveryDate = watch("deliveryDate");
+  const watchStatus = watch("status");
+
+  const activeStatusOptions = useMemo(() => {
+    return STATUS_OPTIONS_BY_LISTING_TYPE[watchListingType] || STATUS_OPTIONS_BY_LISTING_TYPE.Developer;
+  }, [watchListingType]);
+
+  // Automatically clear/reset the status if it becomes invalid for the selected listingType
+  useEffect(() => {
+    if (!isOpen) return;
+    if (watchStatus) {
+      const validStatuses = STATUS_OPTIONS_BY_LISTING_TYPE[watchListingType] || [];
+      if (!validStatuses.includes(watchStatus)) {
+        setValue("status", "" as any, { shouldValidate: true });
+      }
+    }
+  }, [watchListingType, watchStatus, setValue, isOpen]);
 
   // Local state for image preview URLs
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
@@ -562,10 +583,12 @@ export default function PropertyFormDrawer({
                           errors.status ? "border-red-500" : "border-[#747474] hover:border-[#464646]"
                         }`}
                       >
-                        <option value="Available">Available</option>
-                        <option value="Sold Out">Sold Out</option>
-                        <option value="Available Soon">Available Soon</option>
-                        <option value="Not Available">Not Available</option>
+                        <option value="" disabled>Select status</option>
+                        {activeStatusOptions.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
                       </select>
                       <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary w-5 h-5 shrink-0 pointer-events-none" />
                     </div>
