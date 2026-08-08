@@ -17,58 +17,6 @@ import PropertyFormDrawer from "../components/Properties/PropertyFormDrawer";
 import { useUpdatePropertyMutation } from "../../app/services/crudproperties";
 
 
-// const latestProperties = [
-//   {
-//     id: 1,
-//     creationDate: "04/11/2026",
-//     name: "Challet in golden bay",
-//     village: "Porto Golf",
-//     listingType: "Developer",
-//     status: "Available",
-//   },
-//   {
-//     id: 2,
-//     creationDate: "04/11/2026",
-//     name: "Challet in golden bay",
-//     village: "Porto Golf",
-//     listingType: "Developer",
-//     status: "Available",
-//   },
-//   {
-//     id: 3,
-//     creationDate: "04/11/2026",
-//     name: "Challet in golden bay",
-//     village: "Porto Golf",
-//     listingType: "Developer",
-//     status: "Available",
-//   },
-//   {
-//     id: 4,
-//     creationDate: "04/11/2026",
-//     name: "Challet in golden bay",
-//     village: "Porto Golf",
-//     listingType: "Developer",
-//     status: "Available",
-//   },
-//   {
-//     id: 5,
-//     creationDate: "04/11/2026",
-//     name: "Challet in golden bay",
-//     village: "Porto Golf",
-//     listingType: "Developer",
-//     status: "Available",
-//   },
-// ];
-
-// Mock Data for Chart
-// const chartData = [
-//   { village: "village 1", count: 18 },
-//   { village: "village 2", count: 25 },
-//   { village: "village 3", count: 32 },
-//   { village: "village 4", count: 20 },
-//   { village: "village 5", count: 42 },
-//   { village: "village 6", count: 15 },
-// ];
 
 export default function HomePage() {
   const { data: dashboardData ,isLoading } = useGetDashboardOverviewQuery();

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { FiX, FiUpload, FiTrash2, FiPlus, FiAlertCircle } from "react-icons/fi";
+import { FiX, FiUpload, FiTrash2, FiPlus, FiAlertCircle, FiChevronDown } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useGetVillageQuery } from "../../../app/services/crudVillage";
 import { useGetPropertyByIdQuery } from "../../../app/services/crudproperties";
@@ -478,7 +478,7 @@ export default function PropertyFormDrawer({
                         <span className={currentVillageName ? "text-text-secondary" : "text-text-naturalGray"}>
                           {currentVillageName || "Select a village"}
                         </span>
-                        <span className="text-text-naturalGray">▼</span>
+                        <FiChevronDown className="text-text-secondary w-5 h-5 shrink-0" />
                       </div>
 
                       {isVillageOpen && (
@@ -555,17 +555,20 @@ export default function PropertyFormDrawer({
                     <label className="text-sm font-medium text-text-darker select-none">
                       Property Status <span className="text-primary ml-1">*</span>
                     </label>
-                    <select
-                      {...register("status")}
-                      className={`h-12 w-full rounded-sm border bg-white px-3 text-base text-text-secondary outline-none transition-all duration-200 focus:border-primary ${
-                        errors.status ? "border-red-500" : "border-[#747474] hover:border-[#464646]"
-                      }`}
-                    >
-                      <option value="Available">Available</option>
-                      <option value="Sold Out">Sold Out</option>
-                      <option value="Available Soon">Available Soon</option>
-                      <option value="Not Available">Not Available</option>
-                    </select>
+                    <div className="relative w-full">
+                      <select
+                        {...register("status")}
+                        className={`h-12 w-full appearance-none rounded-sm border bg-white px-3 pr-10 text-base text-text-secondary outline-none transition-all duration-200 focus:border-primary ${
+                          errors.status ? "border-red-500" : "border-[#747474] hover:border-[#464646]"
+                        }`}
+                      >
+                        <option value="Available">Available</option>
+                        <option value="Sold Out">Sold Out</option>
+                        <option value="Available Soon">Available Soon</option>
+                        <option value="Not Available">Not Available</option>
+                      </select>
+                      <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary w-5 h-5 shrink-0 pointer-events-none" />
+                    </div>
                     {errors.status?.message && (
                       <span className="text-xs text-red-500">{errors.status.message}</span>
                     )}
