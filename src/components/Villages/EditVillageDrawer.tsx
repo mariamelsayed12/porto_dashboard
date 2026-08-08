@@ -98,7 +98,6 @@ export default function EditVillageDrawer({
     },
   });
 
-  // Populate data when drawer opens or village details load
   useEffect(() => {
     if (isOpen && village) {
       // Only reset the form when we have the correct, non-stale bilingual data
@@ -132,9 +131,9 @@ export default function EditVillageDrawer({
         rentalYield: village.rentalYield || 0,
         coverImage: village.coverImage || "",
         galleryImages: village.galleryImages || [],
-        googleMapsUrl: village.googleMapsUrl || "",
-        latitude: village.latitude || null,
-        longitude: village.longitude || null,
+        googleMapsUrl: englishVillage?.googleMapsUrl || arabicVillage?.googleMapsUrl || village.googleMapsUrl || "",
+        latitude: englishVillage?.latitude ?? arabicVillage?.latitude ?? village.latitude ?? null,
+        longitude: englishVillage?.longitude ?? arabicVillage?.longitude ?? village.longitude ?? null,
         amenities: village.amenities || [],
       });
     }

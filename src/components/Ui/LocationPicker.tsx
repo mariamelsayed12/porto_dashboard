@@ -2,20 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { FiSearch } from "react-icons/fi";
 import Input from "./Input";
 import Spinner from "./LoadingSpinner";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-
-// Resolve Leaflet default marker icon paths in Vite
-import markerIcon from "leaflet/dist/images/marker-icon.png";
-import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconUrl: markerIcon,
-  iconRetinaUrl: markerIcon2x,
-  shadowUrl: markerShadow,
-});
+import GoogleMap from "./GoogleMap";
 
 export interface LocationValue {
   locationText: {
@@ -127,9 +114,6 @@ export default function LocationPicker({
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<L.Map | null>(null);
-  const markerInstance = useRef<L.Marker | null>(null);
 
   // Extract location fields from whatever structure was passed as value
   let displayAddressEn = "";
@@ -171,109 +155,7 @@ export default function LocationPicker({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isArabic, displayAddressEn, displayAddressAr]);
 
-  // 3. Initialize Leaflet Map once
-  useEffect(() => {
-    if (!mapRef.current) return;
 
-    const initialLat = lat ?? 30.0444;
-    const initialLng = lng ?? 31.2357;
-    const hasCoords = lat !== null && lng !== null;
-
-    const map = L.map(mapRef.current, {
-      zoomControl: true,
-      attributionControl: false,
-    }).setView([initialLat, initialLng], hasCoords ? 14 : 6);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19,
-    }).addTo(map);
-
-    let marker: L.Marker | null = null;
-    if (hasCoords) {
-      marker = L.marker([initialLat, initialLng]).addTo(map);
-      markerInstance.current = marker;
-    }
-
-    mapInstance.current = map;
-
-    // Use ResizeObserver to automatically invalidate map size when container dimensions change
-    let resizeObserver: ResizeObserver | null = null;
-    if (window.ResizeObserver && mapRef.current) {
-      resizeObserver = new ResizeObserver(() => {
-        if (mapInstance.current) {
-          mapInstance.current.invalidateSize();
-        }
-      });
-      resizeObserver.observe(mapRef.current);
-    }
-
-    // Use IntersectionObserver to invalidate map size when it becomes visible in the viewport
-    let intersectionObserver: IntersectionObserver | null = null;
-    if (window.IntersectionObserver && mapRef.current) {
-      intersectionObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && mapInstance.current) {
-            setTimeout(() => {
-              mapInstance.current?.invalidateSize();
-            }, 100);
-          }
-        });
-      }, { threshold: 0.1 });
-      intersectionObserver.observe(mapRef.current);
-    }
-
-    // Multi-stage timeouts to guarantee tile loading even if animations or network calls lag
-    const timeouts = [200, 500, 1000, 2000].map(delay =>
-      setTimeout(() => {
-        if (mapInstance.current) {
-          mapInstance.current.invalidateSize();
-        }
-      }, delay)
-    );
-
-    return () => {
-      timeouts.forEach(clearTimeout);
-      if (resizeObserver) {
-        resizeObserver.disconnect();
-      }
-      if (intersectionObserver) {
-        intersectionObserver.disconnect();
-      }
-      if (mapInstance.current) {
-        mapInstance.current.remove();
-        mapInstance.current = null;
-        markerInstance.current = null;
-      }
-    };
-  }, []);
-
-  // 4. Update map center and marker when coords change from parent/outside
-  useEffect(() => {
-    if (!mapInstance.current) return;
-
-    if (lat !== null && lng !== null) {
-      const center = L.latLng(lat, lng);
-      
-      // Force Leaflet to recalculate container size when coordinates are set/updated from parent (e.g. when asynchronous data loads in Edit mode)
-      mapInstance.current.invalidateSize();
-
-      if (markerInstance.current) {
-        markerInstance.current.setLatLng(center);
-      } else {
-        markerInstance.current = L.marker(center).addTo(mapInstance.current);
-      }
-      
-      const currentCenter = mapInstance.current.getCenter();
-      if (currentCenter.distanceTo(center) > 100) {
-        mapInstance.current.setView(center, 14);
-      }
-    } else {
-      if (markerInstance.current) {
-        markerInstance.current.remove();
-        markerInstance.current = null;
-      }
-    }
-  }, [lat, lng]);
 
   const fetchGeocode = async (url: string) => {
     const res = await fetch(url);
@@ -327,10 +209,6 @@ export default function LocationPicker({
   const handleSelectSuggestion = async (suggestion: any) => {
     const selectedLat = parseFloat(suggestion.lat);
     const selectedLng = parseFloat(suggestion.lon);
-
-    if (mapInstance.current) {
-      mapInstance.current.flyTo([selectedLat, selectedLng], 14);
-    }
 
     setIsLoadingSuggestions(true);
     setIsOpen(false);
@@ -458,9 +336,11 @@ export default function LocationPicker({
       </div>
 
       {/* Map View Container */}
-      <div className="relative h-[194px] w-full rounded-xl overflow-hidden border border-border z-0">
-        <div ref={mapRef} className="w-full h-full" />
-      </div>
+      <GoogleMap
+        coordinates={{ lat: lat ?? 30.0444, lng: lng ?? 31.2357 }}
+        title="Location"
+        className="relative h-[194px] w-full rounded-xl overflow-hidden border border-border z-0"
+      />
     </div>
   );
 }
