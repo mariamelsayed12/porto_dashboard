@@ -14,9 +14,9 @@ import Button from "../Ui/Button";
 import Input from "../Ui/Input";
 import MultiSelectDropdown from "../Ui/MultiSelectDropdown";
 import LocationPicker from "../Ui/LocationPicker";
-import Spinner from "../Ui/LoadingSpinner";
 import { ALLOWED_Village_AMENITIES, translations } from "../../data";
 import { validationSchema } from "../../validation";
+import { PropertyFormDrawerSkeleton } from "../Properties/formSkeleton";
 
 interface EditVillageDrawerProps {
   isOpen: boolean;
@@ -368,9 +368,7 @@ export default function EditVillageDrawer({
 
             {/* Scrollable Form Content */}
             {isInitializing ? (
-              <div className="flex-1 flex items-center justify-center py-20 text-[#1E8CAB]">
-                <Spinner />
-              </div>
+              <PropertyFormDrawerSkeleton/>
             ) : (
               <form
                 onSubmit={handleSubmit(onSubmit)}

@@ -9,9 +9,9 @@ import { showSuccessToast, showErrorToast } from "../Ui/Toast";
 import Button from "../Ui/Button";
 import Input from "../Ui/Input";
 import MultiSelectDropdown from "../Ui/MultiSelectDropdown";
-import LoadingSpinner from "../Ui/LoadingSpinner";
 import { ALLOWED_PROPERTY_AMENITIES, PROPERTY_TYPES } from "../../data";
 import { propertyValidationSchema } from "../../validation";
+import { PropertyFormDrawerSkeleton } from "./formSkeleton";
 
 interface PropertyFormDrawerProps {
   isOpen: boolean;
@@ -440,12 +440,7 @@ export default function PropertyFormDrawer({
 
             {/* Form Content / Initializing loader */}
             {isInitializing ? (
-              <div className="flex-1 flex flex-col items-center justify-center bg-[#F5F9FA] gap-4">
-                <LoadingSpinner />
-                <span className="text-text-secondary font-poppins text-sm">
-                  Loading property data...
-                </span>
-              </div>
+              <PropertyFormDrawerSkeleton/>
             ) : (
               <>
                 {/* Scrollable Form Content */}
