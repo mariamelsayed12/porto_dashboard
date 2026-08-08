@@ -123,7 +123,8 @@ export default function FilterSortSection({
               variant="filter"
               singleSelect={true}
               showChevron={false}
-              icon={<ArrowUpDown className="size-5 text-current shrink-0" />}
+              icon={<ArrowUpDown className="size-5 text-primary  shrink-0" />}
+              textColor="text-primary"
             />
           </div>
         </div>

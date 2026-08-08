@@ -222,16 +222,26 @@ export default function PropertiesPage() {
   const mapPropertyTypeToApi = useCallback((type: string): string[] => {
     const t = type.toLowerCase();
     if (t === "chalet" || t === "chalets") {
-      return ["Luxury Chalet"];
+      return ["Luxury Chalet", "Chalet"];
     }
     if (t === "villa" || t === "villas") {
-      return ["Standalone Villa", "Water Villa Lagoon View"];
+      return ["Standalone Villa", "Water Villa Lagoon View", "Villa"];
     }
     if (t === "apartment" || t === "apartments") {
-      return ["Studio Apartment", "Modern Apartment", "Penthouse with Private Pool", "Duplex Garden Unit"];
+      return [
+        "Studio Apartment",
+        "Modern Apartment",
+        "Penthouse with Private Pool",
+        "Duplex Garden Unit",
+        "Apartment",
+        "Duplex",
+        "Penthouse",
+        "Studio",
+        "Ground Floor"
+      ];
     }
     if (t === "twin house" || t === "twinhouse" || t === "townhouse" || t === "town house") {
-      return ["Twin House", "Townhouse Corner"];
+      return ["Twin House", "Townhouse Corner", "Town House"];
     }
     return [type];
   }, []);

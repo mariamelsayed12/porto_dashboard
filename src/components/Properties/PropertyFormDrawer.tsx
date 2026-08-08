@@ -10,7 +10,7 @@ import Button from "../Ui/Button";
 import Input from "../Ui/Input";
 import MultiSelectDropdown from "../Ui/MultiSelectDropdown";
 import LoadingSpinner from "../Ui/LoadingSpinner";
-import { ALLOWED_PROPERTY_AMENITIES } from "../../data";
+import { ALLOWED_PROPERTY_AMENITIES, PROPERTY_TYPES } from "../../data";
 import { propertyValidationSchema } from "../../validation";
 
 interface PropertyFormDrawerProps {
@@ -635,13 +635,30 @@ export default function PropertyFormDrawer({
                       {...register("orientation")}
                       error={errors.orientation?.message}
                     />
-                    <Input
-                      label="Property Type"
-                      placeholder="e.g. Standalone Villa"
-                      required
-                      {...register("propertyType")}
-                      error={errors.propertyType?.message}
-                    />
+                    <div className="flex flex-col gap-1.5 w-full">
+                      <label className="text-sm font-medium text-text-darker select-none">
+                        Property Type <span className="text-primary ml-1">*</span>
+                      </label>
+                      <div className="relative w-full">
+                        <select
+                          {...register("propertyType")}
+                          className={`h-12 w-full appearance-none rounded-sm border bg-white px-3 pr-10 text-base text-text-secondary outline-none transition-all duration-200 focus:border-primary ${
+                            errors.propertyType ? "border-red-500" : "border-[#747474] hover:border-[#464646]"
+                          }`}
+                        >
+                          <option value="" disabled>Select property type</option>
+                          {PROPERTY_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                        <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary w-5 h-5 shrink-0 pointer-events-none" />
+                      </div>
+                      {errors.propertyType?.message && (
+                        <span className="text-xs text-red-500">{errors.propertyType.message}</span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Featured Selection Chips */}

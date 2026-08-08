@@ -312,3 +312,16 @@ export const translations = {
     placeholderLng: "أدخل خط الطول",
   },
 };
+
+export const PROPERTY_TYPES = [
+  "Chalet",
+  "Villa",
+  "Twin House",
+  "Town House",
+  "Standalone Villa",
+  "Apartment",
+  "Duplex",
+  "Penthouse",
+  "Studio",
+  "Ground Floor",
+];

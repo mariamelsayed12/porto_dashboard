@@ -45,12 +45,32 @@ export const matchUnit = (
     for (const targetType of selectedTypes) {
       if (isChalet(targetType)) {
         if (isChalet(unitType)) matchesType = true;
-      } else if (targetType === "twin house" || targetType === "twinhouse") {
-        if (unitType === "twin house" || unitType === "townhouse" || unitType === "town house" || unitType === "twinhouse" || unitType === "townhouse") {
+      } else if (targetType === "villa" || targetType === "villas") {
+        if (unitType === "villa" || unitType === "standalone villa" || unitType === "water villa lagoon view") {
+          matchesType = true;
+        }
+      } else if (targetType === "twin house" || targetType === "twinhouse" || targetType === "townhouse" || targetType === "town house") {
+        if (
+          unitType === "twin house" ||
+          unitType === "townhouse" ||
+          unitType === "town house" ||
+          unitType === "twinhouse" ||
+          unitType === "townhouse corner"
+        ) {
           matchesType = true;
         }
       } else if (targetType === "apartment") {
-        if (unitType === "apartment" || unitType === "studio" || unitType === "penthouse") {
+        if (
+          unitType === "apartment" ||
+          unitType === "studio" ||
+          unitType === "penthouse" ||
+          unitType === "duplex" ||
+          unitType === "ground floor" ||
+          unitType === "studio apartment" ||
+          unitType === "modern apartment" ||
+          unitType === "penthouse with private pool" ||
+          unitType === "duplex garden unit"
+        ) {
           matchesType = true;
         }
       } else {

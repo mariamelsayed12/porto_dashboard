@@ -20,6 +20,7 @@ interface MultiSelectDropdownProps {
   singleSelect?: boolean;
   icon?: React.ReactNode;
   showChevron?: boolean;
+  textColor?: string;
 }
 
 export default function MultiSelectDropdown({
@@ -34,6 +35,7 @@ export default function MultiSelectDropdown({
   singleSelect = false,
   icon,
   showChevron = true,
+  textColor,
 }: MultiSelectDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -129,7 +131,7 @@ export default function MultiSelectDropdown({
         onClick={() => setIsOpen(!isOpen)}
         className={
           isFilterVariant
-            ? `flex h-10 items-center justify-center gap-2 rounded-[12px] border border-[#d4d5d8] bg-white px-4 py-2 text-base font-normal text-[#141414] hover:text-primary hover:border-primary transition-all duration-200 cursor-pointer ${
+            ? `flex h-10 items-center justify-center gap-2 rounded-[12px] border border-[#d4d5d8] bg-white px-4 py-2 text-base font-normal ${textColor || "text-[#141414]"} hover:text-primary hover:border-primary transition-all duration-200 cursor-pointer ${
                 isOpen ? "border-primary text-primary" : ""
               }`
             : `flex h-12 w-full items-center justify-between rounded-lg border bg-white px-3 text-base text-text-secondary outline-none transition-all duration-200 ${
