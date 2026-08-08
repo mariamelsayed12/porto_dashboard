@@ -37,7 +37,7 @@ export default function VillageCard({
         <div className="flex flex-col gap-[12px] items-start w-full">
           {/* Name / Developer — same row */}
           <div className="flex items-center justify-between w-full gap-2">
-            <p className="font-medium text-[19px] text-[#141414] leading-none truncate">
+            <p className="font-medium text-[19px] text-[#141414] leading-snug truncate">
               {name}
             </p>
             <p className="text-[16px] text-[#464646] leading-none shrink-0">
@@ -48,7 +48,7 @@ export default function VillageCard({
           {/* Stats — same row, justify-between */}
           <div className="flex items-center justify-between w-full">
             {/* Starting price */}
-            <div className="flex flex-col gap-[4px] items-start">
+            <div className="flex flex-col gap-[12px] items-start">
               <p className="text-[16px] text-[#464646] leading-none">
                 Starting price
               </p>
@@ -59,7 +59,7 @@ export default function VillageCard({
 
             {/* Rental Yield */}
             {rentalYield !== undefined && (
-              <div className="flex flex-col gap-[4px] items-start">
+              <div className="flex flex-col gap-[12px] items-start">
                 <p className="text-[16px] text-[#464646] leading-none">
                   Rental Yield
                 </p>
@@ -79,11 +79,11 @@ export default function VillageCard({
           <Button
             variant={"icon"}
             onClick={() => onDelete?.(_id)}
-            className="flex items-center justify-center p-[8px] rounded-[12px] size-[36px] shrink-0 text-[#D7110E] hover:bg-red-50 transition-colors active:scale-95"
+            className="flex items-center justify-center p-[8px] rounded-[12px] size-[36px] shrink-0 text-[#D7110E] hover:bg-red-50 hover:text-red-500 transition-colors active:scale-95"
             title="Delete Village"
             aria-label="Delete village"
           >
-            <FiTrash2 className="w-[24px] h-[24px]" />
+            <FiTrash2 className=" hover:text-red-500  w-[24px] h-[24px]" />
           </Button>
 
           {/* Edit button */}

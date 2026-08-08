@@ -19,7 +19,7 @@ export default function PropertyDetailChip({
       <p className="font-poppins font-normal text-[16px] text-text-darker leading-none">
         {label}
       </p>
-      <p className="font-poppins font-medium text-[19px] text-text-secondary leading-none">
+      <p className="font-poppins font-medium text-[19px] text-text-secondary leading-snug">
         {value ?? "—"}
       </p>
     </div>

@@ -23,6 +23,7 @@ import { useUnitsFilter } from "../hooks/useUnitsFilter";
 import {
   useGetPropertyQuery,
   useCreatePropertyMutation,
+  useUpdatePropertyMutation,
   useDeletePropertyMutation,
   type IProperty,
 } from "../../app/services/crudproperties";
@@ -386,12 +387,28 @@ export default function PropertiesPage() {
 
   const [createProperty, { isLoading: isCreateLoading }] = useCreatePropertyMutation();
   const [deleteProperty,{isLoading: deleteLoading}] = useDeletePropertyMutation();
+  const [updateProperty, { isLoading: isUpdateLoading }] = useUpdatePropertyMutation();
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [propertyToEdit, setPropertyToEdit] = useState<IProperty | null>(null);
 
   // ── Actions ────────────────────────────────────────────────────────────────
   const handleViewDetails = useCallback(
     (property: IProperty) => navigate(`/properties/${property._id}`),
     [navigate],
   );
+
+  const handleOpenEdit = useCallback((property: IProperty) => {
+    setPropertyToEdit(property);
+    setIsEditOpen(true);
+  }, []);
+
+  const handleEditSubmit = useCallback(async (formData: FormData) => {
+    if (!propertyToEdit) return;
+    await updateProperty({ id: propertyToEdit._id, body: formData }).unwrap();
+    setIsEditOpen(false);
+    setPropertyToEdit(null);
+  }, [propertyToEdit, updateProperty]);
 
   const handleOpenDelete = useCallback((property: IProperty) => {
     setPropertyToDelete(property);
@@ -429,7 +446,7 @@ export default function PropertiesPage() {
         key: "edit",
         label: "Edit",
         icon: <FiEdit2 size={16} />,
-        onClick: (row) => navigate(`/properties/${row._id}`),
+        onClick: handleOpenEdit,
       },
       {
         key: "delete",
@@ -439,7 +456,7 @@ export default function PropertiesPage() {
         className: "text-red-600  ",
       },
     ],
-    [handleViewDetails, handleOpenDelete, navigate],
+    [handleViewDetails, handleOpenDelete, handleOpenEdit],
   );
 
   // Filter config object for the filter bar dropdowns
@@ -571,6 +588,19 @@ export default function PropertiesPage() {
         onSubmit={createProperty}
         isLoading={isCreateLoading}
         mode="create"
+      />
+
+      {/* ── Edit Drawer ───────────────────────────────────────────────────── */}
+      <PropertyFormDrawer
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setPropertyToEdit(null);
+        }}
+        onSubmit={handleEditSubmit}
+        isLoading={isUpdateLoading}
+        mode="edit"
+        propertyId={propertyToEdit?._id}
       />
 
       {/* ── Delete Modal ─────────────────────────────────────────────────── */}

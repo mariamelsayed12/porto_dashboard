@@ -24,7 +24,6 @@ interface HeaderActionConfig {
   editLabel?: string;
 }
 
-
 interface LayoutContextType {
   isCreateOpen: boolean;
   setIsCreateOpen: (open: boolean) => void;
@@ -62,10 +61,7 @@ export default function VillageDetailsPage() {
     data: village,
     isLoading: isDetailLoading,
     isError: isDetailError,
-  } = useGetVillageByIdQuery(
-    { id: resolvedId },
-    { skip: !resolvedId }
-  );
+  } = useGetVillageByIdQuery({ id: resolvedId }, { skip: !resolvedId });
 
   const isLoading = isObjectId
     ? isDetailLoading
@@ -190,7 +186,7 @@ export default function VillageDetailsPage() {
             {/* Header metadata */}
             <div className="flex flex-col gap-[8px] items-start w-full">
               <div className="flex items-center justify-between w-full gap-4 flex-wrap">
-                <h2 className="font-poppins font-medium text-[23px] text-[#141414] leading-none">
+                <h2 className="font-poppins font-medium text-[23px] text-[#141414] leading-snug">
                   {village.name}
                 </h2>
               </div>

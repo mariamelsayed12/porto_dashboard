@@ -54,9 +54,11 @@ export default function DeleteModal({
           >
             <div className="flex flex-col gap-6 items-start w-full">
               {/* Title / Question */}
-              <h3 className="w-full text-center text-[#141414] text-[19px] font-medium leading-normal whitespace-pre-wrap">
-                {title}
-              </h3>
+              <div className="flex items-center justify-center w-full">
+                <h3 className="w-[320px] text-center text-[#141414] text-[19px] font-medium leading-normal whitespace-pre-wrap">
+                  {title}
+                </h3>
+              </div>
 
               {/* Optional Entity Details Preview Card */}
               {(entityName || entitySubText || entityImage) && (

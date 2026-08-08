@@ -29,6 +29,7 @@ interface LatestProperty {
 interface LatestPropertiesTableProps {
   properties: LatestProperty[];
   isLoading?: boolean;
+  onEdit?: (property: LatestProperty) => void;
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -106,7 +107,7 @@ const columns: ColumnDef<any>[] = [
   },
 ];
 
-export default function LatestPropertiesTable({ properties, isLoading }: LatestPropertiesTableProps) {
+export default function LatestPropertiesTable({ properties, isLoading, onEdit }: LatestPropertiesTableProps) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -152,7 +153,13 @@ export default function LatestPropertiesTable({ properties, isLoading }: LatestP
         key: "edit",
         label: "Edit",
         icon: <FiEdit2 size={16} />,
-        onClick: (row) => navigate(`/properties/${row._id}`),
+        onClick: (row) => {
+          if (onEdit) {
+            onEdit(row);
+          } else {
+            navigate(`/properties/${row._id}`);
+          }
+        },
       },
       {
         key: "delete",
@@ -162,7 +169,7 @@ export default function LatestPropertiesTable({ properties, isLoading }: LatestP
         className: "text-red-600",
       },
     ],
-    [handleViewDetails, handleOpenDelete, navigate]
+    [handleViewDetails, handleOpenDelete, navigate, onEdit]
   );
 
   if (isLoading) {

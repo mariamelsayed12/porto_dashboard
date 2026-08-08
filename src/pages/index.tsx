@@ -1,17 +1,20 @@
+import { useState, useCallback } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { FiMapPin } from "react-icons/fi";
 import QuickAction from "../components/Ui/QuickAction";
 import KpiCard from "../components/Ui/KpiCard";
 import LatestPropertiesTable from "../components/Ui/LatestPropertiesTable";
-// import PropertyDistributionChart from "../components/Ui/PropertyDistributionChart";
 import HomeIcon from "../icons/homeicon";
 import TrueHomeIcon from "../icons/TrueHomeIcon";
 import XHomeIcon from "../icons/XHomeIcon";
 import SearchIcon from "../icons/SearchIcon";
 import AddPropertyIcon from "../icons/AddPropertyIcon";
 import BeachIcon from "../icons/BeachIcon";
-import { useGetDashboardOverviewQuery } from "../../app/services/DashboardOverview";
+import { useGetDashboardOverviewQuery, DashboardOverviewApiSlice } from "../../app/services/DashboardOverview";
 import PropertyDistributionChart from "../components/Ui/PropertyDistributionChart";
+import PropertyFormDrawer from "../components/Properties/PropertyFormDrawer";
+import { useUpdatePropertyMutation } from "../../app/services/crudproperties";
 
 
 // const latestProperties = [
@@ -70,9 +73,22 @@ import PropertyDistributionChart from "../components/Ui/PropertyDistributionChar
 export default function HomePage() {
   const { data: dashboardData ,isLoading } = useGetDashboardOverviewQuery();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { setIsCreateOpen } = useOutletContext<{
     setIsCreateOpen: (open: boolean) => void;
   }>();
+
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [propertyToEdit, setPropertyToEdit] = useState<any | null>(null);
+  const [updateProperty, { isLoading: isUpdateLoading }] = useUpdatePropertyMutation();
+
+  const handleEditSubmit = useCallback(async (formData: FormData) => {
+    if (!propertyToEdit) return;
+    await updateProperty({ id: propertyToEdit._id, body: formData }).unwrap();
+    dispatch(DashboardOverviewApiSlice.util.invalidateTags(["DashboardOverview"]));
+    setIsEditOpen(false);
+    setPropertyToEdit(null);
+  }, [propertyToEdit, updateProperty, dispatch]);
 
   return (
     <div className="w-full flex flex-col gap-8 md:gap-10">
@@ -150,6 +166,10 @@ export default function HomePage() {
           <LatestPropertiesTable
             properties={dashboardData?.latestProperties ?? []}
             isLoading={isLoading}
+            onEdit={(property) => {
+              setPropertyToEdit(property);
+              setIsEditOpen(true);
+            }}
           />
         </div>
 
@@ -161,6 +181,19 @@ export default function HomePage() {
           />
         </div>
       </section>
+
+      {/* ── Edit Drawer ───────────────────────────────────────────────────── */}
+      <PropertyFormDrawer
+        isOpen={isEditOpen}
+        onClose={() => {
+          setIsEditOpen(false);
+          setPropertyToEdit(null);
+        }}
+        onSubmit={handleEditSubmit}
+        isLoading={isUpdateLoading}
+        mode="edit"
+        propertyId={propertyToEdit?._id}
+      />
     </div>
   );
 }
