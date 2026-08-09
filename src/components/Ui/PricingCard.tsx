@@ -24,19 +24,23 @@ interface PricingData {
   monthlyInstallment?: string;
   installmentPeriod?: string;
   cashPrice?: string;
+  insurance?: string;
+  monthlyRent?: string;
 }
 
 interface PricingCardProps {
   pricing: PricingData;
   paymentType?: string;
+  listingType?: string;
 }
 
 // ─── PricingCard ──────────────────────────────────────────────────────────────
 
-export default function PricingCard({ pricing, paymentType }: PricingCardProps) {
+export default function PricingCard({ pricing, paymentType, listingType }: PricingCardProps) {
+  const isRent = listingType?.toLowerCase() === "rent";
   const type = (paymentType || "both").toLowerCase();
-  const isBoth = type.includes("both");
-  const isCash = type.includes("cash") && !isBoth;
+  const isBoth = !isRent && type.includes("both");
+  const isCash = !isRent && type.includes("cash") && !isBoth;
 
   const initialMode = isCash ? "cash" : "installment";
   const [activeMode, setActiveMode] = useState<"installment" | "cash">(initialMode);
@@ -85,7 +89,12 @@ export default function PricingCard({ pricing, paymentType }: PricingCardProps) 
       <div className="w-full h-px bg-border" />
 
       {/* Pricing rows */}
-      {activeMode === "installment" ? (
+      {isRent ? (
+        <div className="flex flex-col gap-4">
+          <PricingRow label="Monthly Rent" value={pricing.monthlyRent} />
+          <PricingRow label="Insurance" value={pricing.insurance} />
+        </div>
+      ) : activeMode === "installment" ? (
         <div className="flex flex-col gap-4">
           <PricingRow label="Total Price" value={pricing.totalPrice} />
           <PricingRow label="Down payment" value={pricing.downPayment} />

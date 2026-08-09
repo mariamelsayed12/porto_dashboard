@@ -168,7 +168,9 @@ export default function PropertyDetailsPage() {
     downPayment: property.downPaymentAmount ? `${property.downPaymentAmount.toLocaleString()} EGP` : undefined,
     monthlyInstallment: property.installmentValue ? `${property.installmentValue.toLocaleString()} EGP` : undefined,
     installmentPeriod: property.installmentPeriod,
-    cashPrice: property.installmentPrice ? `${property.installmentPrice.toLocaleString()} EGP` : undefined,
+    cashPrice: property.cashPrice ? `${property.cashPrice.toLocaleString()} EGP` : undefined,
+    insurance: property.insurance ? `${property.insurance.toLocaleString()} EGP` : undefined,
+    monthlyRent: "Contact for Price",
   };
 
   // ─── Page Layout ────────────────────────────────────────────────────────────
@@ -192,7 +194,7 @@ export default function PropertyDetailsPage() {
       <div className="flex flex-col gap-6 w-full lg:w-[411px] shrink-0">
 
         {/* Pricing card */}
-        <PricingCard pricing={pricingData} paymentType={property.paymentModel} />
+        <PricingCard pricing={pricingData} paymentType={property.paymentModel} listingType={property.listingType} />
 
         {/* Gallery card */}
         <PropertyGalleryCard

@@ -106,11 +106,27 @@ const propertiesColumns: ColumnDef<IProperty>[] = [
           </span>
         );
       }
-      const priceVal = row.paymentModel?.toLowerCase() === "cash" ? row.cashPrice : row.installmentPrice;
+      if (row.paymentModel?.toLowerCase() === "cash") {
+        return (
+          <span className="font-medium text-text-secondary whitespace-nowrap">
+            {row.cashPrice !== undefined && row.cashPrice !== null
+              ? `${(row.cashPrice as number).toLocaleString()} EGP`
+              : "—"}
+          </span>
+        );
+      }
+      if (row.paymentModel?.toLowerCase() === "both") {
+        return (
+          <span className="font-medium text-text-secondary flex flex-col leading-tight whitespace-nowrap">
+            <span>{row.installmentPrice ? `${row.installmentPrice.toLocaleString()} EGP` : "—"}</span>
+            <span className="text-[11px] text-text-darker">{row.cashPrice ? `Cash: ${row.cashPrice.toLocaleString()} EGP` : ""}</span>
+          </span>
+        );
+      }
       return (
         <span className="font-medium text-text-secondary whitespace-nowrap">
-          {priceVal !== undefined && priceVal !== null
-            ? `${(priceVal as number).toLocaleString()} EGP`
+          {row.installmentPrice !== undefined && row.installmentPrice !== null
+            ? `${(row.installmentPrice as number).toLocaleString()} EGP`
             : "—"}
         </span>
       );
@@ -328,11 +344,15 @@ export default function PropertiesPage() {
       params["area[lte]"] = parseFloat(filtersState.areaTo);
     }
 
+    const isRentOnly = selectedListing.length === 1 && selectedListing[0].toLowerCase() === "rent";
+
     if (filtersState.priceFrom) {
-      params["installmentPrice[gte]"] = parseFloat(filtersState.priceFrom);
+      const key = isRentOnly ? "insurance[gte]" : "installmentPrice[gte]";
+      params[key] = parseFloat(filtersState.priceFrom);
     }
     if (filtersState.priceTo) {
-      params["installmentPrice[lte]"] = parseFloat(filtersState.priceTo);
+      const key = isRentOnly ? "insurance[lte]" : "installmentPrice[lte]";
+      params[key] = parseFloat(filtersState.priceTo);
     }
 
     if (filtersState.downPayment) {
@@ -361,9 +381,11 @@ export default function PropertiesPage() {
     if (activeSort) {
       if (activeSort === "newest") params.sort = "-createdAt";
       else if (activeSort === "oldest") params.sort = "createdAt";
-      else if (activeSort === "min-price") params.sort = "installmentPrice";
-      else if (activeSort === "max-price") params.sort = "-installmentPrice";
-      else if (activeSort === "sooner-delivery") params.sort = "deliveryDate";
+      else if (activeSort === "min-price") {
+        params.sort = isRentOnly ? "insurance" : "installmentPrice";
+      } else if (activeSort === "max-price") {
+        params.sort = isRentOnly ? "-insurance" : "-installmentPrice";
+      } else if (activeSort === "sooner-delivery") params.sort = "deliveryDate";
       else if (activeSort === "late-delivery") params.sort = "-deliveryDate";
     }
 

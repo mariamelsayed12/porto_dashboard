@@ -115,6 +115,7 @@ export default function PropertyFormDrawer({
       downPaymentAmount: undefined,
       installmentPeriod: "",
       installmentValue: undefined,
+      monthlyRent: undefined,
       amenities: [],
     },
   });
@@ -217,6 +218,7 @@ export default function PropertyFormDrawer({
           downPaymentAmount: propertyEn.downPaymentAmount || undefined,
           installmentPeriod: propertyEn.installmentPeriod || "",
           installmentValue: propertyEn.installmentValue || undefined,
+          monthlyRent: undefined,
           amenities: propertyEn.amenities || [],
         } as any);
         setCoverPreviewUrl(propertyEn.coverImage || null);
@@ -247,6 +249,7 @@ export default function PropertyFormDrawer({
           downPaymentAmount: undefined,
           installmentPeriod: "",
           installmentValue: undefined,
+          monthlyRent: undefined,
           amenities: [],
         } as any);
         setCoverPreviewUrl(null);
@@ -820,13 +823,19 @@ export default function PropertyFormDrawer({
                     </div>
                   </div>
 
-                  {/* Rent Pricing (Insurance) */}
+                  {/* Rent Pricing (Monthly Rent & Insurance) */}
                   {watchListingType === "Rent" && (
                     <div className="flex flex-col gap-4 border-b border-[#D4D5D8] pb-5">
                       <span className="text-sm font-semibold text-text-secondary font-poppins">
                         Rental Pricing Details
                       </span>
-                      <div className="flex flex-col gap-1.5">
+                      <div className="grid grid-cols-2 gap-4">
+                        <Input
+                          label="Monthly Rent (EGP)"
+                          type="number"
+                          placeholder="e.g. 15000 (Contact for Price)"
+                          {...register("monthlyRent")}
+                        />
                         <Input
                           label="Insurance (EGP)"
                           type="number"

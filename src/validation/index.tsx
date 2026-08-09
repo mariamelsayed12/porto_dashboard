@@ -109,7 +109,11 @@ export const propertyValidationSchema = yup.object().shape({
   village: yup.string().required("Village is required"),
   listingType: yup.string().oneOf(["Developer", "Resale", "Rent"], "Invalid listing type").required("Required"),
   status: yup.string().oneOf(["Available", "Sold Out", "Available Soon", "Not Available"], "Invalid status").required("Required"),
-  paymentModel: yup.string().oneOf(["Cash", "Installments", "Both"], "Invalid payment model").required("Required"),
+  paymentModel: yup.string().when("listingType", {
+    is: (val: string) => val && val.toLowerCase() !== "rent",
+    then: (schema) => schema.oneOf(["Cash", "Installments", "Both"], "Invalid payment model").required("Required"),
+    otherwise: (schema) => schema.nullable().optional(),
+  }),
   area: yup.number().typeError("Must be a positive number").positive("Must be greater than 0").required("Required"),
   bedrooms: yup.number().typeError("Must be a non-negative integer").integer("Must be an integer").min(0, "Cannot be negative").required("Required"),
   bathrooms: yup.number().typeError("Must be a non-negative integer").integer("Must be an integer").min(0, "Cannot be negative").required("Required"),
@@ -147,13 +151,78 @@ export const propertyValidationSchema = yup.object().shape({
   isFeatured: yup.string().oneOf(["Yes", "No"]).optional().default("No"),
   deliveryDate: yup.string().optional().nullable(),
   availableUnits: yup.number().typeError("Must be an integer >= 0").integer("Must be an integer").min(0, "Cannot be negative").optional().default(1),
-  installmentPrice: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
-  cashPrice: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
-  insurance: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
-  downPaymentPercentage: yup.number().typeError("Must be a number").min(0, "Cannot be negative").max(100, "Cannot exceed 100").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
-  downPaymentAmount: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
-  installmentPeriod: yup.string().optional().default(""),
-  installmentValue: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
+  installmentPrice: yup.number()
+    .typeError("Must be a number")
+    .min(0, "Cannot be negative")
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .when(["listingType", "paymentModel"], {
+      is: (listingType: string, paymentModel: string) =>
+        listingType !== "Rent" && (paymentModel === "Installments" || paymentModel === "Both"),
+      then: (schema) => schema.required("Installment price is required"),
+      otherwise: (schema) => schema.nullable().optional(),
+    }),
+  cashPrice: yup.number()
+    .typeError("Must be a number")
+    .min(0, "Cannot be negative")
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .when(["listingType", "paymentModel"], {
+      is: (listingType: string, paymentModel: string) =>
+        listingType !== "Rent" && (paymentModel === "Cash" || paymentModel === "Both"),
+      then: (schema) => schema.required("Cash price is required"),
+      otherwise: (schema) => schema.nullable().optional(),
+    }),
+  insurance: yup.number()
+    .typeError("Must be a number")
+    .min(0, "Cannot be negative")
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .when("listingType", {
+      is: "Rent",
+      then: (schema) => schema.required("Insurance is required"),
+      otherwise: (schema) => schema.nullable().optional(),
+    }),
+  downPaymentPercentage: yup.number()
+    .typeError("Must be a number")
+    .min(0, "Cannot be negative")
+    .max(100, "Cannot exceed 100")
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .when(["listingType", "paymentModel"], {
+      is: (listingType: string, paymentModel: string) =>
+        listingType !== "Rent" && (paymentModel === "Installments" || paymentModel === "Both"),
+      then: (schema) => schema.required("Required"),
+      otherwise: (schema) => schema.nullable().optional(),
+    }),
+  downPaymentAmount: yup.number()
+    .typeError("Must be a number")
+    .min(0, "Cannot be negative")
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .when(["listingType", "paymentModel"], {
+      is: (listingType: string, paymentModel: string) =>
+        listingType !== "Rent" && (paymentModel === "Installments" || paymentModel === "Both"),
+      then: (schema) => schema.required("Required"),
+      otherwise: (schema) => schema.nullable().optional(),
+    }),
+  installmentPeriod: yup.string().transform((value, originalValue) => originalValue === "" ? "" : value).when(["listingType", "paymentModel"], {
+    is: (listingType: string, paymentModel: string) =>
+      listingType !== "Rent" && (paymentModel === "Installments" || paymentModel === "Both"),
+    then: (schema) => schema.required("Required"),
+    otherwise: (schema) => schema.optional().default(""),
+  }),
+  installmentValue: yup.number()
+    .typeError("Must be a number")
+    .min(0, "Cannot be negative")
+    .transform((value, originalValue) => originalValue === "" ? null : value)
+    .when(["listingType", "paymentModel"], {
+      is: (listingType: string, paymentModel: string) =>
+        listingType !== "Rent" && (paymentModel === "Installments" || paymentModel === "Both"),
+      then: (schema) => schema.required("Required"),
+      otherwise: (schema) => schema.nullable().optional(),
+    }),
+  monthlyRent: yup.number()
+    .typeError("Must be a number")
+    .min(0, "Cannot be negative")
+    .optional()
+    .nullable()
+    .transform((value, originalValue) => originalValue === "" ? null : value),
   amenities: yup.array().of(yup.string().required()).optional().default([]),
 });
 
