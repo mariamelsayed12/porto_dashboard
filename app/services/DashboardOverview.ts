@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithReauth } from "./baseQuery";
 
 export interface IDashboardOverview {
   totalVillages: number;
@@ -43,16 +44,7 @@ export interface IDashboardOverviewResponse {
 export const DashboardOverviewApiSlice = createApi({
   reducerPath: "ApiDashboardOverview",
   tagTypes: ["DashboardOverview"],
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL,
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   endpoints: (builder) => ({
     //----------------------------- Get =>get---------------------
     getDashboardOverview: builder.query<IDashboardOverview,void>({

@@ -148,6 +148,8 @@ export const propertyValidationSchema = yup.object().shape({
   deliveryDate: yup.string().optional().nullable(),
   availableUnits: yup.number().typeError("Must be an integer >= 0").integer("Must be an integer").min(0, "Cannot be negative").optional().default(1),
   installmentPrice: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
+  cashPrice: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
+  insurance: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
   downPaymentPercentage: yup.number().typeError("Must be a number").min(0, "Cannot be negative").max(100, "Cannot exceed 100").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
   downPaymentAmount: yup.number().typeError("Must be a number").min(0, "Cannot be negative").optional().nullable().transform((value, originalValue) => originalValue === "" ? null : value),
   installmentPeriod: yup.string().optional().default(""),

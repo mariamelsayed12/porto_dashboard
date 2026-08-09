@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithReauth } from "./baseQuery";
 
 
 
@@ -18,6 +19,8 @@ export interface IProperty {
   paymentModel: string;
   propertyType:string;
   installmentPrice: number;
+  cashPrice:number;
+  insurance:number;
   downPaymentPercentage: number;
   downPaymentAmount: number;
   installmentPeriod: string;
@@ -61,16 +64,7 @@ export interface ISinglePropertyResponse {
 export const propertyApiSlice = createApi({
   reducerPath: "ApiProperty",
   tagTypes: ["properties"],
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL,
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   endpoints: (builder) => ({
     //----------------------------- Get =>get---------------------
     getProperty: builder.query<IpropertyResponse, Record<string, any> | void>({

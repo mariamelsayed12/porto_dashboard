@@ -96,13 +96,25 @@ const propertiesColumns: ColumnDef<IProperty>[] = [
     key: "installmentPrice",
     label: "Price",
     width: "w-[13%]",
-    render: (v) => (
-      <span className="font-medium text-text-secondary whitespace-nowrap">
-        {v !== undefined && v !== null
-          ? `${(v as number).toLocaleString()} EGP`
-          : "—"}
-      </span>
-    ),
+    render: (_, row) => {
+      if (row.listingType?.toLowerCase() === "rent") {
+        return (
+          <span className="font-medium text-text-secondary whitespace-nowrap">
+            {row.insurance !== undefined && row.insurance !== null
+              ? `Ins: ${(row.insurance as number).toLocaleString()} EGP`
+              : "Contact for Price"}
+          </span>
+        );
+      }
+      const priceVal = row.paymentModel?.toLowerCase() === "cash" ? row.cashPrice : row.installmentPrice;
+      return (
+        <span className="font-medium text-text-secondary whitespace-nowrap">
+          {priceVal !== undefined && priceVal !== null
+            ? `${(priceVal as number).toLocaleString()} EGP`
+            : "—"}
+        </span>
+      );
+    },
   },
   {
     key: "status",

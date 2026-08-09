@@ -109,6 +109,8 @@ export default function PropertyFormDrawer({
       deliveryDate: "",
       availableUnits: 1,
       installmentPrice: undefined,
+      cashPrice: undefined,
+      insurance: undefined,
       downPaymentPercentage: undefined,
       downPaymentAmount: undefined,
       installmentPeriod: "",
@@ -209,6 +211,8 @@ export default function PropertyFormDrawer({
           deliveryDate: propertyEn.deliveryDate || "",
           availableUnits: propertyEn.availableUnits || 1,
           installmentPrice: propertyEn.installmentPrice || undefined,
+          cashPrice: propertyEn.cashPrice || undefined,
+          insurance: propertyEn.insurance || undefined,
           downPaymentPercentage: propertyEn.downPaymentPercentage || undefined,
           downPaymentAmount: propertyEn.downPaymentAmount || undefined,
           installmentPeriod: propertyEn.installmentPeriod || "",
@@ -237,6 +241,8 @@ export default function PropertyFormDrawer({
           deliveryDate: "",
           availableUnits: 1,
           installmentPrice: undefined,
+          cashPrice: undefined,
+          insurance: undefined,
           downPaymentPercentage: undefined,
           downPaymentAmount: undefined,
           installmentPeriod: "",
@@ -349,6 +355,22 @@ export default function PropertyFormDrawer({
         data.installmentPrice !== ""
       ) {
         formData.append("installmentPrice", String(data.installmentPrice));
+      }
+
+      if (
+        data.cashPrice !== undefined &&
+        data.cashPrice !== null &&
+        data.cashPrice !== ""
+      ) {
+        formData.append("cashPrice", String(data.cashPrice));
+      }
+
+      if (
+        data.insurance !== undefined &&
+        data.insurance !== null &&
+        data.insurance !== ""
+      ) {
+        formData.append("insurance", String(data.insurance));
       }
 
       if (
@@ -798,82 +820,123 @@ export default function PropertyFormDrawer({
                     </div>
                   </div>
 
-                  {/* Payment Model Selection Chips */}
-                  <div className="flex flex-col gap-2 border-b border-[#D4D5D8] pb-5">
-                    <label className="text-sm font-medium text-text-darker select-none">
-                      Payment Model <span className="text-primary ml-1">*</span>
-                    </label>
-                    <div className="flex flex-wrap gap-3">
-                      {["Cash", "Installments", "Both"].map((model) => {
-                        const isSelected = watchPaymentModel === model;
-                        return (
-                          <button
-                            key={model}
-                            type="button"
-                            onClick={() => setValue("paymentModel", model as any, { shouldValidate: true })}
-                            className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-all ${
-                              isSelected
-                                ? "bg-[#B9DBE5] border-primary text-[#141414]"
-                                : "bg-white border-[#D4D5D8] text-text-darker hover:border-gray-400"
-                            }`}
-                          >
-                            {model === "Both" ? "Cash & Installment" : model}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {errors.paymentModel?.message && (
-                      <span className="text-xs text-red-500">{errors.paymentModel.message}</span>
-                    )}
-                  </div>
-
-                  {/* Installment Pricing Details */}
-                  {(watchPaymentModel === "Installments" || watchPaymentModel === "Both") && (
+                  {/* Rent Pricing (Insurance) */}
+                  {watchListingType === "Rent" && (
                     <div className="flex flex-col gap-4 border-b border-[#D4D5D8] pb-5">
                       <span className="text-sm font-semibold text-text-secondary font-poppins">
-                        Installment Pricing Details
+                        Rental Pricing Details
                       </span>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Input
-                          label="Installment Price (EGP)"
-                          type="number"
-                          placeholder="e.g. 5000000"
-                          {...register("installmentPrice")}
-                          error={errors.installmentPrice?.message}
-                        />
-                        <Input
-                          label="Installment Value (EGP)"
-                          type="number"
-                          placeholder="e.g. 20000"
-                          {...register("installmentValue")}
-                          error={errors.installmentValue?.message}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Input
-                          label="Down Payment %"
-                          type="number"
-                          placeholder="e.g. 10"
-                          {...register("downPaymentPercentage")}
-                          error={errors.downPaymentPercentage?.message}
-                        />
-                        <Input
-                          label="Down Payment (EGP)"
-                          type="number"
-                          placeholder="e.g. 500000"
-                          {...register("downPaymentAmount")}
-                          error={errors.downPaymentAmount?.message}
-                        />
-                      </div>
                       <div className="flex flex-col gap-1.5">
                         <Input
-                          label="Installment Period"
-                          placeholder="e.g. 7 Years, Monthly, Quarterly"
-                          {...register("installmentPeriod")}
-                          error={errors.installmentPeriod?.message}
+                          label="Insurance (EGP)"
+                          type="number"
+                          placeholder="e.g. 50000"
+                          {...register("insurance")}
+                          error={errors.insurance?.message}
                         />
                       </div>
                     </div>
+                  )}
+
+                  {/* Buy/Sale Pricing Models */}
+                  {watchListingType !== "Rent" && (
+                    <>
+                      {/* Payment Model Selection Chips */}
+                      <div className="flex flex-col gap-2 border-b border-[#D4D5D8] pb-5">
+                        <label className="text-sm font-medium text-text-darker select-none">
+                          Payment Model <span className="text-primary ml-1">*</span>
+                        </label>
+                        <div className="flex flex-wrap gap-3">
+                          {["Cash", "Installments", "Both"].map((model) => {
+                            const isSelected = watchPaymentModel === model;
+                            return (
+                              <button
+                                key={model}
+                                type="button"
+                                onClick={() => setValue("paymentModel", model as any, { shouldValidate: true })}
+                                className={`rounded-full px-4 py-1.5 text-sm font-medium border transition-all ${
+                                  isSelected
+                                    ? "bg-[#B9DBE5] border-primary text-[#141414]"
+                                    : "bg-white border-[#D4D5D8] text-text-darker hover:border-gray-400"
+                                }`}
+                              >
+                                {model === "Both" ? "Cash & Installment" : model}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {errors.paymentModel?.message && (
+                          <span className="text-xs text-red-500">{errors.paymentModel.message}</span>
+                        )}
+                      </div>
+
+                      {/* Cash Pricing Details */}
+                      {(watchPaymentModel === "Cash" || watchPaymentModel === "Both") && (
+                        <div className="flex flex-col gap-4 border-b border-[#D4D5D8] pb-5">
+                          <span className="text-sm font-semibold text-text-secondary font-poppins">
+                            Cash Pricing Details
+                          </span>
+                          <div className="flex flex-col gap-1.5">
+                            <Input
+                              label="Cash Price (EGP)"
+                              type="number"
+                              placeholder="e.g. 4500000"
+                              {...register("cashPrice")}
+                              error={errors.cashPrice?.message}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Installment Pricing Details */}
+                      {(watchPaymentModel === "Installments" || watchPaymentModel === "Both") && (
+                        <div className="flex flex-col gap-4 border-b border-[#D4D5D8] pb-5">
+                          <span className="text-sm font-semibold text-text-secondary font-poppins">
+                            Installment Pricing Details
+                          </span>
+                          <div className="grid grid-cols-2 gap-4">
+                            <Input
+                              label="Installment Price (EGP)"
+                              type="number"
+                              placeholder="e.g. 5000000"
+                              {...register("installmentPrice")}
+                              error={errors.installmentPrice?.message}
+                            />
+                            <Input
+                              label="Installment Value (EGP)"
+                              type="number"
+                              placeholder="e.g. 20000"
+                              {...register("installmentValue")}
+                              error={errors.installmentValue?.message}
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <Input
+                              label="Down Payment %"
+                              type="number"
+                              placeholder="e.g. 10"
+                              {...register("downPaymentPercentage")}
+                              error={errors.downPaymentPercentage?.message}
+                            />
+                            <Input
+                              label="Down Payment (EGP)"
+                              type="number"
+                              placeholder="e.g. 500000"
+                              {...register("downPaymentAmount")}
+                              error={errors.downPaymentAmount?.message}
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <Input
+                              label="Installment Period"
+                              placeholder="e.g. 7 Years, Monthly, Quarterly"
+                              {...register("installmentPeriod")}
+                              error={errors.installmentPeriod?.message}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {/* Amenities Multi-select */}

@@ -1,4 +1,5 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { baseQueryWithReauth } from "./baseQuery";
 
 export interface IVillage {
   _id: string;
@@ -40,16 +41,7 @@ export interface ISingleVillageResponse {
 export const VillageApiSlice = createApi({
   reducerPath: "ApiVillage",
   tagTypes: ["Village"],
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL,
-    prepareHeaders: (headers) => {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   endpoints: (builder) => ({
     //----------------------------- Get =>get---------------------
     getVillage: builder.query<IVillage[], { lang?: string } | void>({
