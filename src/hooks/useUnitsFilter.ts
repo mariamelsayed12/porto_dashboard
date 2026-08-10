@@ -114,7 +114,7 @@ export const matchUnit = (
   // 5. Price Range Filter
   const getPrice = (u: any) => {
     if (u.listingType?.toLowerCase() === "rent") {
-      return u.insurance || 0;
+      return u.cashPrice || 0;
     }
     if (u.paymentModel?.toLowerCase() === "cash") {
       return u.cashPrice || 0;

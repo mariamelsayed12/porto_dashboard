@@ -116,7 +116,6 @@ export default function PropertyFormDrawer({
       downPaymentAmount: undefined,
       installmentPeriod: "",
       installmentValue: undefined,
-      monthlyRent: undefined,
       amenities: [],
     },
   });
@@ -219,7 +218,6 @@ export default function PropertyFormDrawer({
           downPaymentAmount: propertyEn.downPaymentAmount || undefined,
           installmentPeriod: propertyEn.installmentPeriod || "",
           installmentValue: propertyEn.installmentValue || undefined,
-          monthlyRent: undefined,
           amenities: propertyEn.amenities || [],
         } as any);
         setCoverPreviewUrl(propertyEn.coverImage || null);
@@ -250,7 +248,6 @@ export default function PropertyFormDrawer({
           downPaymentAmount: undefined,
           installmentPeriod: "",
           installmentValue: undefined,
-          monthlyRent: undefined,
           amenities: [],
         } as any);
         setCoverPreviewUrl(null);
@@ -317,7 +314,7 @@ export default function PropertyFormDrawer({
       formData.append("village", data.village);
       formData.append("listingType", data.listingType);
       formData.append("status", data.status);
-      formData.append("paymentModel", data.paymentModel);
+      formData.append("paymentModel", data.paymentModel ||"Cash");
       formData.append("area", String(data.area));
       formData.append("bedrooms", String(data.bedrooms));
       formData.append("bathrooms", String(data.bathrooms));
@@ -420,10 +417,17 @@ export default function PropertyFormDrawer({
       );
       onClose();
     } catch (err: any) {
-      showErrorToast(
-        err?.data?.message ||
-          (mode === "edit" ? "Failed to update property." : "Failed to create property.")
-      );
+      let errorMsg = mode === "edit" ? "Failed to update property." : "Failed to create property.";
+      if (err?.data?.message) {
+        if (Array.isArray(err.data.message)) {
+          errorMsg = err.data.message.join(", ");
+        } else {
+          errorMsg = err.data.message;
+        }
+      } else if (err?.message) {
+        errorMsg = err.message;
+      }
+      showErrorToast(errorMsg);
     }
   };
 
@@ -818,8 +822,9 @@ export default function PropertyFormDrawer({
                         <Input
                           label="Monthly Rent (EGP)"
                           type="number"
-                          placeholder="e.g. 15000 (Contact for Price)"
-                          {...register("monthlyRent")}
+                          placeholder="e.g. 15000"
+                          {...register("cashPrice")}
+                          error={errors.cashPrice?.message}
                         />
                         <Input
                           label="Insurance (EGP)"

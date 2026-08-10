@@ -170,7 +170,7 @@ export default function PropertyDetailsPage() {
     installmentPeriod: property.installmentPeriod,
     cashPrice: property.cashPrice ? `${property.cashPrice.toLocaleString()} EGP` : undefined,
     insurance: property.insurance ? `${property.insurance.toLocaleString()} EGP` : undefined,
-    monthlyRent: "Contact for Price",
+    monthlyRent: property.cashPrice ? `${property.cashPrice.toLocaleString()} EGP` : undefined,
   };
 
   // ─── Page Layout ────────────────────────────────────────────────────────────

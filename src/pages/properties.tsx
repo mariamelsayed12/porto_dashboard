@@ -99,10 +99,9 @@ const propertiesColumns: ColumnDef<IProperty>[] = [
     render: (_, row) => {
       if (row.listingType?.toLowerCase() === "rent") {
         return (
-          <span className="font-medium text-text-secondary whitespace-nowrap">
-            {row.insurance !== undefined && row.insurance !== null
-              ? `Ins: ${(row.insurance as number).toLocaleString()} EGP`
-              : "Contact for Price"}
+          <span className="font-medium text-text-secondary flex flex-col leading-tight whitespace-nowrap">
+            <span>{row.cashPrice !== undefined && row.cashPrice !== null ? `${(row.cashPrice as number).toLocaleString()} EGP / mo` : "—"}</span>
+            <span className="text-[11px] text-text-darker">{row.insurance !== undefined && row.insurance !== null ? `Ins: ${(row.insurance as number).toLocaleString()} EGP` : ""}</span>
           </span>
         );
       }
@@ -347,11 +346,11 @@ export default function PropertiesPage() {
     const isRentOnly = selectedListing.length === 1 && selectedListing[0].toLowerCase() === "rent";
 
     if (filtersState.priceFrom) {
-      const key = isRentOnly ? "insurance[gte]" : "installmentPrice[gte]";
+      const key = isRentOnly ? "cashPrice[gte]" : "installmentPrice[gte]";
       params[key] = parseFloat(filtersState.priceFrom);
     }
     if (filtersState.priceTo) {
-      const key = isRentOnly ? "insurance[lte]" : "installmentPrice[lte]";
+      const key = isRentOnly ? "cashPrice[lte]" : "installmentPrice[lte]";
       params[key] = parseFloat(filtersState.priceTo);
     }
 
@@ -382,9 +381,9 @@ export default function PropertiesPage() {
       if (activeSort === "newest") params.sort = "-createdAt";
       else if (activeSort === "oldest") params.sort = "createdAt";
       else if (activeSort === "min-price") {
-        params.sort = isRentOnly ? "insurance" : "installmentPrice";
+        params.sort = isRentOnly ? "cashPrice" : "installmentPrice";
       } else if (activeSort === "max-price") {
-        params.sort = isRentOnly ? "-insurance" : "-installmentPrice";
+        params.sort = isRentOnly ? "-cashPrice" : "-installmentPrice";
       } else if (activeSort === "sooner-delivery") params.sort = "deliveryDate";
       else if (activeSort === "late-delivery") params.sort = "-deliveryDate";
     }
@@ -446,6 +445,11 @@ export default function PropertiesPage() {
     setPropertyToEdit(property);
     setIsEditOpen(true);
   }, []);
+
+  const handleCreateSubmit = useCallback(async (formData: FormData) => {
+    await createProperty(formData).unwrap();
+    setIsCreateOpen(false);
+  }, [createProperty, setIsCreateOpen]);
 
   const handleEditSubmit = useCallback(async (formData: FormData) => {
     if (!propertyToEdit) return;
@@ -629,7 +633,7 @@ export default function PropertiesPage() {
       <PropertyFormDrawer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
-        onSubmit={createProperty}
+        onSubmit={handleCreateSubmit}
         isLoading={isCreateLoading}
         mode="create"
       />

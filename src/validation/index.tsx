@@ -167,8 +167,8 @@ export const propertyValidationSchema = yup.object().shape({
     .transform((value, originalValue) => originalValue === "" ? null : value)
     .when(["listingType", "paymentModel"], {
       is: (listingType: string, paymentModel: string) =>
-        listingType !== "Rent" && (paymentModel === "Cash" || paymentModel === "Both"),
-      then: (schema) => schema.required("Cash price is required"),
+        listingType === "Rent" || (listingType !== "Rent" && (paymentModel === "Cash" || paymentModel === "Both")),
+      then: (schema) => schema.required("Price is required"),
       otherwise: (schema) => schema.nullable().optional(),
     }),
   insurance: yup.number()
@@ -217,12 +217,6 @@ export const propertyValidationSchema = yup.object().shape({
       then: (schema) => schema.required("Required"),
       otherwise: (schema) => schema.nullable().optional(),
     }),
-  monthlyRent: yup.number()
-    .typeError("Must be a number")
-    .min(0, "Cannot be negative")
-    .optional()
-    .nullable()
-    .transform((value, originalValue) => originalValue === "" ? null : value),
   amenities: yup.array().of(yup.string().required()).optional().default([]),
 });
 
