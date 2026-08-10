@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { FiChevronDown, FiCheck } from "react-icons/fi";
+import InputErrorMessage from "./InputErrorMessage";
 
 interface Option {
   label: string;
@@ -256,9 +257,7 @@ export default function MultiSelectDropdown({
 
       {/* Error Message (only for form variant) */}
       {error && !isFilterVariant && (
-        <span className="text-xs text-red-500 flex items-center gap-1 mt-0.5">
-          {error}
-        </span>
+        <InputErrorMessage msg={error} className="mt-0.5" />
       )}
     </div>
   );

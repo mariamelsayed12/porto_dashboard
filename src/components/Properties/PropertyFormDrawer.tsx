@@ -12,6 +12,7 @@ import MultiSelectDropdown from "../Ui/MultiSelectDropdown";
 import { ALLOWED_PROPERTY_AMENITIES, PROPERTY_TYPES } from "../../data";
 import { propertyValidationSchema } from "../../validation";
 import { PropertyFormDrawerSkeleton } from "./formSkeleton";
+import InputErrorMessage from "../Ui/InputErrorMessage";
 
 interface PropertyFormDrawerProps {
   isOpen: boolean;
@@ -557,9 +558,7 @@ export default function PropertyFormDrawer({
                         </div>
                       )}
                     </div>
-                    {errors.village?.message && (
-                      <span className="text-xs text-red-500">{errors.village.message}</span>
-                    )}
+                    <InputErrorMessage msg={errors.village?.message} />
                   </div>
 
                   {/* Listing Type Chips */}
@@ -586,9 +585,7 @@ export default function PropertyFormDrawer({
                         );
                       })}
                     </div>
-                    {errors.listingType?.message && (
-                      <span className="text-xs text-red-500">{errors.listingType.message}</span>
-                    )}
+                    <InputErrorMessage msg={errors.listingType?.message} />
                   </div>
 
                   {/* Property Status Select */}
@@ -612,9 +609,7 @@ export default function PropertyFormDrawer({
                       </select>
                       <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary w-5 h-5 shrink-0 pointer-events-none" />
                     </div>
-                    {errors.status?.message && (
-                      <span className="text-xs text-red-500">{errors.status.message}</span>
-                    )}
+                    <InputErrorMessage msg={errors.status?.message} />
                   </div>
 
                   {/* Finishing Status Chips */}
@@ -641,9 +636,7 @@ export default function PropertyFormDrawer({
                         );
                       })}
                     </div>
-                    {errors.finishingStatus?.message && (
-                      <span className="text-xs text-red-500">{errors.finishingStatus.message}</span>
-                    )}
+                    <InputErrorMessage msg={errors.finishingStatus?.message} />
                   </div>
 
                   {/* Orientation & Property Type inputs side-by-side */}
@@ -675,9 +668,7 @@ export default function PropertyFormDrawer({
                         </select>
                         <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary w-5 h-5 shrink-0 pointer-events-none" />
                       </div>
-                      {errors.propertyType?.message && (
-                        <span className="text-xs text-red-500">{errors.propertyType.message}</span>
-                      )}
+                      <InputErrorMessage msg={errors.propertyType?.message} />
                     </div>
                   </div>
 
@@ -705,9 +696,7 @@ export default function PropertyFormDrawer({
                         );
                       })}
                     </div>
-                    {errors.isFeatured?.message && (
-                      <span className="text-xs text-red-500">{errors.isFeatured.message}</span>
-                    )}
+                    <InputErrorMessage msg={errors.isFeatured?.message} />
                   </div>
 
                   {/* Specifications: Area, Bedrooms, Bathrooms, Available Units */}
@@ -799,9 +788,7 @@ export default function PropertyFormDrawer({
                             errors.description?.en ? "border-red-500" : "border-[#747474] hover:border-[#464646]"
                           }`}
                         />
-                        {errors.description?.en?.message && (
-                          <span className="text-xs text-red-500">{errors.description.en.message}</span>
-                        )}
+                        <InputErrorMessage msg={errors.description?.en?.message} />
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-sm font-medium text-text-darker select-none">
@@ -816,9 +803,7 @@ export default function PropertyFormDrawer({
                             errors.description?.ar ? "border-red-500" : "border-[#747474] hover:border-[#464646]"
                           }`}
                         />
-                        {errors.description?.ar?.message && (
-                          <span className="text-xs text-red-500">{errors.description.ar.message}</span>
-                        )}
+                        <InputErrorMessage msg={errors.description?.ar?.message} />
                       </div>
                     </div>
                   </div>
@@ -874,9 +859,7 @@ export default function PropertyFormDrawer({
                             );
                           })}
                         </div>
-                        {errors.paymentModel?.message && (
-                          <span className="text-xs text-red-500">{errors.paymentModel.message}</span>
-                        )}
+                        <InputErrorMessage msg={errors.paymentModel?.message} />
                       </div>
 
                       {/* Cash Pricing Details */}
@@ -1015,9 +998,7 @@ export default function PropertyFormDrawer({
                             className="hidden"
                           />
                         </div>
-                        {errors.coverImage?.message && (
-                          <span className="text-xs text-red-500">{errors.coverImage.message as string}</span>
-                        )}
+                        <InputErrorMessage msg={errors.coverImage?.message as string} />
                       </div>
 
                       {/* Gallery upload */}
@@ -1068,13 +1049,16 @@ export default function PropertyFormDrawer({
                             className="hidden"
                           />
                         </div>
-                        {errors.images && (
-                          <span className="text-xs text-red-500 mt-1 block">
-                            {Array.isArray(errors.images)
-                              ? (errors.images.find((e: any) => e?.message)?.message || "Invalid gallery image")
-                              : (errors.images.message as string)}
-                          </span>
-                        )}
+                        <InputErrorMessage
+                          msg={
+                            errors.images
+                              ? (Array.isArray(errors.images)
+                                ? (errors.images.find((e: any) => e?.message)?.message || "Invalid gallery image")
+                                : (errors.images.message as string))
+                              : undefined
+                          }
+                          className="mt-1"
+                        />
                       </div>
                     </div>
                   </div>

@@ -37,7 +37,7 @@ export const validationSchema = yup.object().shape({
     .required("Required"),
   rentalYield: yup
     .number()
-    .typeError("Must be a number >= 0")
+    .typeError("Must be a positive number")
     .min(0, "Must be at least 0")
     .required("Required"),
   coverImage: yup
