@@ -112,10 +112,10 @@ export default function Header({
   return (
     <header className="h-[72px] bg-white border-b border-border shadow-xs px-4 md:px-8 flex items-center justify-between shrink-0 sticky top-0 z-30">
       {/* Left side: Hamburger + Page Title / Breadcrumbs */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
         <button
           onClick={onMenuToggle}
-          className="lg:hidden text-text-darker hover:text-primary p-1.5 rounded-md hover:bg-light-gray transition-colors"
+          className="lg:hidden text-text-darker hover:text-primary p-1.5 rounded-md hover:bg-light-gray transition-colors shrink-0"
           aria-label="Toggle menu"
         >
           <FiMenu size={24} />
@@ -124,34 +124,34 @@ export default function Header({
         {breadcrumbItems && breadcrumbItems.length > 0 ? (
           <Breadcrumb items={breadcrumbItems} />
         ) : (
-          <h1 className="font-semibold text-[23px] text-text-secondary leading-none">
+          <h1 className="font-semibold text-[18px] sm:text-[23px] text-text-secondary leading-none truncate" title={currentTitle}>
             {currentTitle}
           </h1>
         )}
       </div>
 
       {/* Right side: Action Buttons + User Profile */}
-      <div className="flex items-center gap-4 md:gap-5">
+      <div className="flex items-center gap-2 sm:gap-4 md:gap-5 shrink-0">
         {/* If generic details actions are present, render them */}
         {headerActions && headerActions.showActions ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {/* Delete button (red trash bin) */}
             <Button
               variant="icon"
               onClick={headerActions.onDelete}
-              className="flex items-center justify-center p-2 rounded-xl text-[#D7110E] hover:bg-red-50 transition-colors w-10 h-10 select-none active:scale-95"
+              className="flex items-center justify-center p-1.5 sm:p-2 rounded-xl text-[#D7110E] hover:bg-red-50 transition-colors w-8 h-8 sm:w-10 sm:h-10 select-none active:scale-95 shrink-0"
               aria-label="Delete entity"
             >
-              <FiTrash2 size={24} />
+              <FiTrash2 className="size-[20px] sm:size-[24px]" />
             </Button>
             {/* Edit button */}
             <Button
               variant="create"
               onClick={headerActions.onEdit}
-              leftIcon={<FiEdit3 size={18} />}
-              className="px-4 h-[36px] bg-[#1E8CAB] hover:bg-[#156D85] text-white"
+              leftIcon={<FiEdit3 className="size-[14px] sm:size-[18px]" />}
+              className="px-2.5 sm:px-4 h-[32px] sm:h-[36px] bg-[#1E8CAB] hover:bg-[#156D85] text-white text-xs sm:text-sm rounded-lg sm:rounded-xl shrink-0"
             >
-              {headerActions.editLabel || "Edit"}
+              <span className="hidden xs:inline">{headerActions.editLabel || "Edit"}</span>
             </Button>
           </div>
         ) : (
@@ -161,24 +161,24 @@ export default function Header({
               <Button
                 variant="create"
                 onClick={onCreateClick}
-                leftIcon={<FiPlus size={20} />}
-                className="px-3 md:px-4"
+                leftIcon={<FiPlus className="size-[16px] sm:size-[20px]" />}
+                className="px-2.5 sm:px-4 h-[32px] sm:h-[36px] text-xs sm:text-sm rounded-lg sm:rounded-xl shrink-0"
               >
-                <span>Create Village</span>
+                <span className="hidden xs:inline">Create Village</span>
+                <span className="xs:hidden">Create</span>
               </Button>
             )}
-
-           
 
             {location.pathname === "/properties" && (
               <Button
                 variant="create"
-                leftIcon={<FiPlus size={16} />}
+                leftIcon={<FiPlus className="size-[14px] sm:size-[16px]" />}
                 onClick={onCreateClick}
                 id="create-property-btn"
-                className="self-end xl:self-auto h-10 px-6 rounded-[12px]"
+                className="self-end xl:self-auto h-[32px] sm:h-10 px-3 sm:px-6 rounded-lg sm:rounded-[12px] text-xs sm:text-sm shrink-0"
               >
-                Add Property
+                <span className="hidden xs:inline">Add Property</span>
+                <span className="xs:hidden">Add</span>
               </Button>
             )}
           </>
@@ -188,13 +188,13 @@ export default function Header({
         <div className="hidden xs:block w-px h-8 bg-border" />
 
         {/* Profile Card */}
-        <div className="relative">
+        <div className="relative shrink-0">
           <div
             onClick={() => setProfileDropdownOpen((prev) => !prev)}
-            className="flex items-center gap-2 md:gap-3 cursor-pointer select-none group py-1.5 rounded-lg hover:bg-slate-50 transition-colors"
+            className="flex items-center gap-2 md:gap-3 cursor-pointer select-none group py-1.5 rounded-lg hover:bg-slate-50 transition-colors shrink-0"
           >
             {/* Avatar Circle */}
-            <div className="w-10 h-10 rounded-full bg-[#00236f] flex items-center justify-center text-white font-bold text-[12px] font-sans shrink-0 border border-slate-100 shadow-xs">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#00236f] flex items-center justify-center text-white font-bold text-[10px] sm:text-[12px] font-sans shrink-0 border border-slate-100 shadow-xs">
               {getInitials(user?.data?.user?.name || "User")}
             </div>
 
@@ -211,7 +211,7 @@ export default function Header({
             {/* Chevron (Hidden on small mobile) */}
             <FiChevronDown
               size={18}
-              className={`text-text-darker transition-transform duration-200 ${
+              className={`hidden xs:block text-text-darker transition-transform duration-200 ${
                 profileDropdownOpen ? "rotate-180" : ""
               } group-hover:text-text-secondary`}
             />
