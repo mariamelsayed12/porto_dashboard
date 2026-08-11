@@ -36,34 +36,34 @@ export default function VillageCard({
         {/* Text block: Name row + Stats row */}
         <div className="flex flex-col gap-[12px] items-start w-full">
           {/* Name / Developer — same row */}
-          <div className="flex items-center justify-between w-full gap-2">
-            <p className="font-medium text-[19px] text-[#141414] leading-snug truncate">
+          <div className="flex flex-wrap sm:flex-nowrap items-center justify-between w-full gap-2">
+            <p className="font-medium text-[17px] sm:text-[19px] text-[#141414] leading-snug truncate">
               {name}
             </p>
-            <p className="text-[16px] text-[#464646] leading-none shrink-0">
+            <p className="text-[14px] sm:text-[16px] text-[#464646] leading-none shrink-0 truncate max-w-[120px] sm:max-w-none">
               {developerName}
             </p>
           </div>
 
           {/* Stats — same row, justify-between */}
-          <div className="flex items-center justify-between w-full">
+          <div className="flex flex-wrap items-center justify-between w-full gap-y-2 gap-x-4">
             {/* Starting price */}
-            <div className="flex flex-col gap-[12px] items-start">
-              <p className="text-[16px] text-[#464646] leading-none">
+            <div className="flex flex-col gap-[4px] sm:gap-[12px] items-start">
+              <p className="text-[14px] sm:text-[16px] text-[#464646] leading-none">
                 Starting price
               </p>
-              <p className="font-medium text-[19px] text-[#141414] leading-none">
+              <p className="font-medium text-[16px] sm:text-[19px] text-[#141414] leading-none">
                 {startingPrice ? `${startingPrice.toLocaleString()} EGP` : "N/A"}
               </p>
             </div>
 
             {/* Rental Yield */}
             {rentalYield !== undefined && (
-              <div className="flex flex-col gap-[12px] items-start">
-                <p className="text-[16px] text-[#464646] leading-none">
+              <div className="flex flex-col gap-[4px] sm:gap-[12px] items-start">
+                <p className="text-[14px] sm:text-[16px] text-[#464646] leading-none">
                   Rental Yield
                 </p>
-                <p className="font-medium text-[19px] text-[#141414] leading-none">
+                <p className="font-medium text-[16px] sm:text-[19px] text-[#141414] leading-none">
                   {rentalYield}%
                 </p>
               </div>
@@ -73,7 +73,7 @@ export default function VillageCard({
       </div>
 
       {/* Actions Row */}
-      <div className="flex gap-[20px] items-center w-full justify-between">
+      <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:gap-4 items-center w-full justify-between">
         <div className="flex gap-[8px] items-center">
           {/* Delete button */}
           <Button
@@ -101,8 +101,9 @@ export default function VillageCard({
         {/* View Details button */}
         <Button
           variant="outlinePrimary"
-          rightIcon={<FiArrowUpRight className="w-[20px] h-[20px] shrink-0" />}
+          rightIcon={<FiArrowUpRight className="w-[18px] h-[18px] sm:w-[20px] sm:h-[20px] shrink-0" />}
           onClick={() => onViewDetails?.(slug || _id)}
+          className="w-full sm:w-auto flex-1 sm:flex-none h-[36px] px-3 sm:px-4 text-xs sm:text-base justify-center"
         >
           View Details
         </Button>

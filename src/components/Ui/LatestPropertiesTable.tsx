@@ -186,7 +186,7 @@ export default function LatestPropertiesTable({ properties, isLoading, onEdit }:
       </div>
 
       {/* Table Section */}
-      <div className="w-full">
+      <div className="w-full overflow-x-auto">
         <DataTable<any>
           columns={columns}
           data={properties}

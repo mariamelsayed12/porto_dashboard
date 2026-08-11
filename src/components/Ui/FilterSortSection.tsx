@@ -62,12 +62,12 @@ export default function FilterSortSection({
 
   return (
     <div 
-      className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] p-3 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full shadow-[0_2px_8px_rgba(73,95,104,0.04)]"
+      className="bg-white border border-[#d4d5d8] border-solid rounded-[12px] p-3 flex flex-col lg:flex-row lg:items-center justify-between gap-4 w-full shadow-[0_2px_8px_rgba(73,95,104,0.04)]"
       data-name="filter bar"
     >
       {/* Left: Search Bar */}
       <div 
-        className="border border-[#d4d5d8] border-solid flex gap-2 h-10 items-center px-3 py-2 rounded-[12px] w-full md:w-[300px] lg:w-[338px] shrink-0 focus-within:border-primary transition-colors bg-white"
+        className="border border-[#d4d5d8] border-solid flex gap-2 h-10 items-center px-3 py-2 rounded-[12px] w-full lg:w-[300px] xl:w-[338px] shrink-0 focus-within:border-primary transition-colors bg-white"
         data-name="search bar"
       >
         <FiSearch className="text-text-darker h-6 w-6 shrink-0 size-5" />
@@ -81,10 +81,10 @@ export default function FilterSortSection({
       </div>
 
       {/* Right: Filters & Sort Group */}
-      <div className="flex flex-row items-center justify-between md:justify-end gap-4 lg:gap-6 w-full md:w-auto">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between lg:justify-end gap-4 lg:gap-6 w-full lg:w-auto">
         {/* Desktop-only individual filter dropdowns */}
         {filters.length > 0 && (
-          <div className="hidden lg:flex items-center gap-4 shrink-0">
+          <div className="hidden xl:flex items-center gap-4 shrink-0">
             {filters.map((filter) => (
               <MultiSelectDropdown
                 key={filter.id}
@@ -100,13 +100,13 @@ export default function FilterSortSection({
         )}
 
         {/* Action group: More Filters & Sort */}
-        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+        <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-end">
           {/* More Filters Button */}
           {onMoreFiltersClick && (
             <button
               type="button"
               onClick={onMoreFiltersClick}
-              className="flex-1 md:flex-initial flex h-10 items-center justify-center gap-2 border border-[#d4d5d8] rounded-[12px] bg-white px-4 py-2 text-base font-medium text-primary hover:text-[#156d85] hover:border-primary transition-all duration-200 cursor-pointer"
+              className="flex-1 lg:flex-initial flex h-10 items-center justify-center gap-2 border border-[#d4d5d8] rounded-[12px] bg-white px-4 py-2 text-base font-medium text-primary hover:text-[#156d85] hover:border-primary transition-all duration-200 cursor-pointer"
             >
               <span>More Filters</span>
               <SlidersHorizontal className="size-5 text-current shrink-0" />
@@ -114,7 +114,7 @@ export default function FilterSortSection({
           )}
 
           {/* Sort Dropdown */}
-          <div className="flex-1 md:flex-initial">
+          <div className="flex-1 lg:flex-initial">
             <MultiSelectDropdown
               placeholder={sortPlaceholder}
               options={sortOptions}
