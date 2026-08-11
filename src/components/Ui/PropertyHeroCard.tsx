@@ -70,22 +70,22 @@ export default function PropertyHeroCard({ property, fallbackImage }: PropertyHe
         {/* Detail chip grid */}
         <div className="flex flex-col gap-4 w-full">
           {/* Row 1: Village | Type */}
-          <div className="flex gap-4">
-            <PropertyDetailChip label="Village" value={property.village?.name} className="flex-1 min-w-0" />
-            <PropertyDetailChip label="Type" value={property.listingType} className="flex-1 min-w-0" />
+          <div className="flex flex-wrap gap-4">
+            <PropertyDetailChip label="Village" value={property.village?.name} className="flex-1 min-w-[120px]" />
+            <PropertyDetailChip label="Type" value={property.listingType} className="flex-1 min-w-[120px]" />
           </div>
 
           {/* Row 2: Finishing | Orientation */}
-          <div className="flex gap-4">
-            <PropertyDetailChip label="Finishing" value={property.finishingStatus} className="flex-1 min-w-0" />
-            <PropertyDetailChip label="Orientation" value={property.orientation} className="flex-1 min-w-0" />
+          <div className="flex flex-wrap gap-4">
+            <PropertyDetailChip label="Finishing" value={property.finishingStatus} className="flex-1 min-w-[120px]" />
+            <PropertyDetailChip label="Orientation" value={property.orientation} className="flex-1 min-w-[120px]" />
           </div>
 
           {/* Row 3: Area | Bedrooms | Bathrooms */}
-          <div className="flex gap-4">
-            <PropertyDetailChip label="Area (sq.m)" value={property.area} className="flex-1 min-w-0" />
-            <PropertyDetailChip label="Bedrooms" value={property.bedrooms} className="flex-1 min-w-0" />
-            <PropertyDetailChip label="Bathrooms" value={property.bathrooms} className="flex-1 min-w-0" />
+          <div className="flex flex-wrap gap-4">
+            <PropertyDetailChip label="Area (sq.m)" value={property.area} className="flex-1 min-w-[120px]" />
+            <PropertyDetailChip label="Bedrooms" value={property.bedrooms} className="flex-1 min-w-[120px]" />
+            <PropertyDetailChip label="Bathrooms" value={property.bathrooms} className="flex-1 min-w-[120px]" />
           </div>
         </div>
       </div>
