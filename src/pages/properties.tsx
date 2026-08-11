@@ -19,7 +19,7 @@ import FilterSortSection, {
 } from "../components/Ui/FilterSortSection";
 import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
 import FilterDrawer from "../components/Ui/filterCcomponents/FilterDrawer";
-import { useUnitsFilter } from "../hooks/useUnitsFilter";
+import { useUnitsFilter, getPriceForProperty } from "../hooks/useUnitsFilter";
 import {
   useGetPropertyQuery,
   useCreatePropertyMutation,
@@ -27,7 +27,6 @@ import {
   useDeletePropertyMutation,
   type IProperty,
 } from "../../app/services/crudproperties";
-import { useGetVillageQuery } from "../../app/services/crudVillage";
 
 // ─── Status badge helper ──────────────────────────────────────────────────────
 
@@ -187,14 +186,8 @@ export default function PropertiesPage() {
   // More Filters drawer
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
-  // ── Extended Drawer Filters Hook ───────────────────────────────────────────
-  const {
-    filters,
-    tempFilters,
-    setTempFilters,
-    applyFilters,
-    resetFilters,
-  } = useUnitsFilter([]);
+  // Fetch properties data (all, up to limit 1000)
+  const { data: propertiesResponse, isLoading } = useGetPropertyQuery();
 
   // ── Filter values from URL ─────────────────────────────────────────────────
   const selectedListing = useMemo(() => {
@@ -245,188 +238,118 @@ export default function PropertiesPage() {
     setCurrentPage(1);
   };
 
-  // Helper mapping function for Property Types
-  const mapPropertyTypeToApi = useCallback((type: string): string[] => {
-    const t = type.toLowerCase();
-    if (t === "chalet" || t === "chalets") {
-      return ["Luxury Chalet", "Chalet"];
-    }
-    if (t === "villa" || t === "villas") {
-      return ["Standalone Villa", "Water Villa Lagoon View", "Villa"];
-    }
-    if (t === "apartment" || t === "apartments") {
-      return [
-        "Studio Apartment",
-        "Modern Apartment",
-        "Penthouse with Private Pool",
-        "Duplex Garden Unit",
-        "Apartment",
-        "Duplex",
-        "Penthouse",
-        "Studio",
-        "Ground Floor"
-      ];
-    }
-    if (t === "twin house" || t === "twinhouse" || t === "townhouse" || t === "town house") {
-      return ["Twin House", "Townhouse Corner", "Town House"];
-    }
-    return [type];
-  }, []);
+  const topFilteredProperties = useMemo(() => {
+    const rawProperties = propertiesResponse?.data || [];
+    return rawProperties.filter((p) => {
+      // Search query filter
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchesKeyword =
+          p.name?.toLowerCase().includes(q) ||
+          p.description?.toLowerCase().includes(q) ||
+          p.village?.name?.toLowerCase().includes(q) ||
+          p.propertyType?.toLowerCase().includes(q);
+        if (!matchesKeyword) return false;
+      }
 
-  // Fetch villages to resolve name to ID
-  const { data: villagesList } = useGetVillageQuery();
+      // Listing Type filter
+      if (selectedListing.length > 0) {
+        const matchesListing = selectedListing.some(
+          (l) => l.toLowerCase() === p.listingType?.toLowerCase()
+        );
+        if (!matchesListing) return false;
+      }
 
-  // Helper to build query parameters for backend API
-  const buildQueryParams = useCallback((
-    filtersState: typeof filters,
-    extraParams?: { page?: number; limit?: number }
-  ) => {
-    const params: Record<string, any> = {
-      ...extraParams
+      // Status filter
+      if (selectedStatus.length > 0) {
+        const matchesStatus = selectedStatus.some(
+          (s) => s.toLowerCase() === p.status?.toLowerCase()
+        );
+        if (!matchesStatus) return false;
+      }
+
+      // Top Property Type filter (this filters by property type selection from top bar)
+      if (selectedPropertyType.length > 0) {
+        const selectedTypes = selectedPropertyType.map(t => t.toLowerCase());
+        const unitType = (p.propertyType || "").toLowerCase();
+        const matchesType = selectedTypes.some(targetType => {
+          const isChalet = (t: string) => t === "chalet" || t === "challet" || t === "chalets" || t === "challets";
+          if (isChalet(targetType)) {
+            return isChalet(unitType);
+          }
+          if (targetType === "twin house" || targetType === "twinhouse" || targetType === "townhouse" || targetType === "town house") {
+            return (
+              unitType.includes("twin") ||
+              unitType.includes("town")
+            );
+          }
+          return unitType === targetType || unitType.includes(targetType);
+        });
+        if (!matchesType) return false;
+      }
+
+      return true;
+    });
+  }, [propertiesResponse?.data, searchQuery, selectedListing, selectedStatus, selectedPropertyType]);
+
+  // ── Extended Drawer Filters Hook ───────────────────────────────────────────
+  const {
+    tempFilters,
+    setTempFilters,
+    applyFilters,
+    resetFilters,
+    filteredUnits,
+    tempFilteredCount,
+  } = useUnitsFilter(topFilteredProperties);
+
+  // Sort the filtered units client-side
+  const sortedProperties = useMemo(() => {
+    const list = [...filteredUnits];
+
+    const getDeliveryYear = (unit: IProperty) => {
+      if (!unit.deliveryDate) return 9999;
+      if (unit.deliveryDate.toLowerCase() === "ready to move" || unit.deliveryDate.toLowerCase() === "ready") {
+        return 0;
+      }
+      if (unit.deliveryDate.includes("-")) {
+        return parseInt(unit.deliveryDate.split("-")[0], 10) || 9999;
+      }
+      return parseInt(unit.deliveryDate, 10) || 9999;
     };
 
-    if (searchQuery) {
-      params.keyword = searchQuery;
-    }
-
-    if (selectedListing.length > 0) {
-      params.listingType = selectedListing;
-    }
-
-    if (selectedStatus.length > 0) {
-      params.status = selectedStatus;
-    }
-
-    const propTypesToUse: string[] = [];
-    if (filtersState.propertyType) {
-      propTypesToUse.push(...mapPropertyTypeToApi(filtersState.propertyType));
-    }
-    if (selectedPropertyType.length > 0) {
-      selectedPropertyType.forEach(t => {
-        propTypesToUse.push(...mapPropertyTypeToApi(t));
-      });
-    }
-    if (propTypesToUse.length > 0) {
-      params.propertyType = Array.from(new Set(propTypesToUse));
-    }
-
-    const loc = filtersState.location;
-    if (loc && villagesList) {
-      const found = villagesList.find(
-        (v) => v.name.toLowerCase() === loc.toLowerCase()
-      );
-      if (found) {
-        params.village = found._id;
+    list.sort((a, b) => {
+      switch (activeSort) {
+        case "newest":
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        case "oldest":
+          return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+        case "min-price":
+          return getPriceForProperty(a) - getPriceForProperty(b);
+        case "max-price":
+          return getPriceForProperty(b) - getPriceForProperty(a);
+        case "sooner-delivery":
+          return getDeliveryYear(a) - getDeliveryYear(b);
+        case "late-delivery":
+          return getDeliveryYear(b) - getDeliveryYear(a);
+        default:
+          return 0;
       }
-    }
+    });
 
-    if (filtersState.bedrooms) {
-      if (filtersState.bedrooms === "5+") {
-        params["bedrooms[gte]"] = 5;
-      } else {
-        params.bedrooms = parseInt(filtersState.bedrooms, 10);
-      }
-    }
+    return list;
+  }, [filteredUnits, activeSort]);
 
-    if (filtersState.bathrooms) {
-      if (filtersState.bathrooms === "3+") {
-        params["bathrooms[gte]"] = 3;
-      } else {
-        params["bathrooms[gte]"] = parseFloat(filtersState.bathrooms);
-      }
-    }
+  const limit = 10;
 
-    if (filtersState.areaFrom) {
-      params["area[gte]"] = parseFloat(filtersState.areaFrom);
-    }
-    if (filtersState.areaTo) {
-      params["area[lte]"] = parseFloat(filtersState.areaTo);
-    }
-
-    const isRentOnly = selectedListing.length === 1 && selectedListing[0].toLowerCase() === "rent";
-
-    if (filtersState.priceFrom) {
-      const key = isRentOnly ? "cashPrice[gte]" : "installmentPrice[gte]";
-      params[key] = parseFloat(filtersState.priceFrom);
-    }
-    if (filtersState.priceTo) {
-      const key = isRentOnly ? "cashPrice[lte]" : "installmentPrice[lte]";
-      params[key] = parseFloat(filtersState.priceTo);
-    }
-
-    if (filtersState.downPayment) {
-      params["downPaymentAmount[lte]"] = parseFloat(filtersState.downPayment);
-    }
-    if (filtersState.monthlyInstallment) {
-      params["installmentValue[lte]"] = parseFloat(filtersState.monthlyInstallment);
-    }
-
-    if (filtersState.deliveryDate) {
-      if (filtersState.deliveryDate.toLowerCase() === "ready") {
-        params.deliveryDate = "Ready to Move";
-      } else {
-        params.deliveryDate = `${filtersState.deliveryDate}-12-30`;
-      }
-    }
-
-    if (filtersState.finishing) {
-      const finishVal = filtersState.finishing
-        .split(" ")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-        .join(" ");
-      params.finishingStatus = finishVal;
-    }
-
-    if (activeSort) {
-      if (activeSort === "newest") params.sort = "-createdAt";
-      else if (activeSort === "oldest") params.sort = "createdAt";
-      else if (activeSort === "min-price") {
-        params.sort = isRentOnly ? "cashPrice" : "installmentPrice";
-      } else if (activeSort === "max-price") {
-        params.sort = isRentOnly ? "-cashPrice" : "-installmentPrice";
-      } else if (activeSort === "sooner-delivery") params.sort = "deliveryDate";
-      else if (activeSort === "late-delivery") params.sort = "-deliveryDate";
-    }
-
-    return params;
-  }, [
-    searchQuery,
-    selectedListing,
-    selectedStatus,
-    selectedPropertyType,
-    villagesList,
-    activeSort,
-    mapPropertyTypeToApi,
-  ]);
-
-  // Construct main query parameters
-  const queryParams = useMemo(() => {
-    return buildQueryParams(filters, { page: currentPage, limit: 10 });
-  }, [filters, currentPage, buildQueryParams]);
-
-  // Construct temp query parameters for drawer count
-  const tempQueryParams = useMemo(() => {
-    return buildQueryParams(tempFilters, { limit: 1 });
-  }, [tempFilters, buildQueryParams]);
-
-  // Fetch paginated properties data
-  const { data: propertiesResponse, isLoading } = useGetPropertyQuery(queryParams);
-
-  // Fetch count of matching items for the drawer
-  const { data: tempPropertiesResponse } = useGetPropertyQuery(
-    tempQueryParams,
-    { skip: !isFilterDrawerOpen }
-  );
-
-  const activeTempFilteredCount = tempPropertiesResponse?.results || 0;
+  const paginatedProperties = useMemo(() => {
+    return sortedProperties.slice((currentPage - 1) * limit, currentPage * limit);
+  }, [sortedProperties, currentPage, limit]);
 
   const totalPages = useMemo(() => {
-    return propertiesResponse?.paginationResult?.numberOfPages || 1;
-  }, [propertiesResponse]);
+    return Math.ceil(sortedProperties.length / limit) || 1;
+  }, [sortedProperties.length, limit]);
 
-  const limit = useMemo(() => {
-    return propertiesResponse?.paginationResult?.limit || 10;
-  }, [propertiesResponse]);
+  const activeTempFilteredCount = tempFilteredCount;
 
   const [createProperty, { isLoading: isCreateLoading }] = useCreatePropertyMutation();
   const [deleteProperty,{isLoading: deleteLoading}] = useDeletePropertyMutation();
@@ -471,7 +394,7 @@ export default function PropertiesPage() {
       setIsDeleteOpen(false);
       setPropertyToDelete(null);
       setCurrentPage((prev) => {
-        const totalResults = propertiesResponse?.results || 0;
+        const totalResults = sortedProperties.length;
         const newTotal = Math.ceil((totalResults - 1) / limit);
         return Math.min(prev, Math.max(1, newTotal));
       });
@@ -526,8 +449,15 @@ export default function PropertiesPage() {
       options: [
         { label: "Chalet", value: "Chalet" },
         { label: "Villa", value: "Villa" },
+        { label: "Twin House", value: "Twin House" },
+        { label: "Town House", value: "Town House" },
+        { label: "Penthouse", value: "Penthouse" },
+        { label: "Duplex", value: "Duplex" },
         { label: "Apartment", value: "Apartment" },
-        { label: "Twin house", value: "Twin house" },
+        { label: "Standalone Villa", value: "Standalone Villa" },
+        { label: "Studio", value: "Studio" },
+        {label:"Ground Floor", value:"ground_floor"}
+       
       ],
       value: selectedPropertyType,
       onChange: (vals) => handleFilterChange("propertyType", vals),
@@ -583,12 +513,13 @@ export default function PropertiesPage() {
         applyFilters={applyFilters}
         resetFilters={resetFilters}
         tempFilteredCount={activeTempFilteredCount}
+        properties={propertiesResponse?.data || []}
       />
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
       <DataTable<IProperty>
         columns={propertiesColumns}
-        data={propertiesResponse?.data || []}
+        data={paginatedProperties}
         actions={tableActions}
         isLoading={isLoading}
         emptyMessage={
@@ -601,20 +532,20 @@ export default function PropertiesPage() {
       />
 
       {/* ── Pagination + count ───────────────────────────────────────────── */}
-      {(propertiesResponse?.results || 0) > 0 && (
+      {sortedProperties.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-[13px] text-text-darker font-poppins order-2 sm:order-1">
             Showing{" "}
             <span className="font-medium text-text-secondary">
               {Math.min(
                 (currentPage - 1) * limit + 1,
-                propertiesResponse?.results || 0,
+                sortedProperties.length,
               )}
-              –{Math.min(currentPage * limit, propertiesResponse?.results || 0)}
+              –{Math.min(currentPage * limit, sortedProperties.length)}
             </span>{" "}
             of{" "}
             <span className="font-medium text-text-secondary">
-              {propertiesResponse?.results}
+              {sortedProperties.length}
             </span>{" "}
             properties
           </p>

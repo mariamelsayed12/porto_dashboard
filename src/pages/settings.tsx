@@ -11,6 +11,7 @@ import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
 import { settingsSchema } from "../validation";
 import { axiosInstance } from "../config/axios.config";
 
+
 interface SettingsState {
   phoneCountry: CountryOption;
   phoneNumber: string;
@@ -22,6 +23,7 @@ interface SettingsState {
   facebookLink: string;
   instagramLink: string;
 }
+
 
 const parsePhoneNumber = (fullPhone: string) => {
   if (!fullPhone) return { country: countryOptions[0], number: "" };

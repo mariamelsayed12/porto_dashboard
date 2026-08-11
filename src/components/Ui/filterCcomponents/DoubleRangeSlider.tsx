@@ -120,8 +120,8 @@ export const DoubleRangeSlider = ({
 
       {/* Display values under the slider */}
       <div className="mt-2 flex justify-between text-[10px] font-semibold text-[#7D8D93]">
-        <span>{localMin === min && valueFrom === "" ? `0 ${unit}` : `${formatValue(localMin)} ${unit}`}</span>
-        <span>{localMax === max && valueTo === "" ? "Any" : `${formatValue(localMax)} ${unit}`}</span>
+        <span>{`${formatValue(localMin)} ${unit}`}</span>
+        <span>{`${formatValue(localMax)} ${unit}`}</span>
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import type { IProperty } from "../../app/services/crudproperties";
 
 export interface FilterState {
   propertyType: string;
@@ -30,6 +32,29 @@ export const initialFilterState: FilterState = {
   location: "",
 };
 
+export const isRentListing = (listingType?: string): boolean => {
+  if (!listingType) return false;
+  const clean = listingType.trim().toLowerCase();
+  return clean === "rent" || clean === "إيجار" || clean === "للإيجار";
+};
+
+export const getPriceForProperty = (u: IProperty): number => {
+  if (isRentListing(u.listingType)) {
+    return u.cashPrice || 0;
+  }
+  const model = u.paymentModel?.toLowerCase();
+  if (model === "cash") {
+    return u.cashPrice || 0;
+  }
+  if (model === "installment") {
+    return u.installmentPrice || 0;
+  }
+  if (model === "both" || !u.paymentModel) {
+    return (u.cashPrice || 0) + (u.installmentPrice || 0);
+  }
+  return u.installmentPrice || 0;
+};
+
 // Helper function to check if a unit matches a set of filters
 export const matchUnit = (
   unit: IProperty,
@@ -37,52 +62,30 @@ export const matchUnit = (
 ): boolean => {
   // 1. Property Type Filter
   if (filterState.propertyType) {
-    const unitType = (unit.propertyType || "").toLowerCase();
     const selectedTypes = filterState.propertyType.split(",").map(t => t.trim().toLowerCase());
-    const isChalet = (t: string) => t === "chalet" || t === "challet" || t === "chalets" || t === "challets";
+    const unitType = (unit.propertyType || "").toLowerCase();
 
-    let matchesType = false;
-    for (const targetType of selectedTypes) {
+    const matchesType = selectedTypes.some(targetType => {
+      const isChalet = (t: string) => t === "chalet" || t === "challet" || t === "chalets" || t === "challets";
       if (isChalet(targetType)) {
-        if (isChalet(unitType)) matchesType = true;
-      } else if (targetType === "villa" || targetType === "villas") {
-        if (unitType === "villa" || unitType === "standalone villa" || unitType === "water villa lagoon view") {
-          matchesType = true;
-        }
-      } else if (targetType === "twin house" || targetType === "twinhouse" || targetType === "townhouse" || targetType === "town house") {
-        if (
-          unitType === "twin house" ||
-          unitType === "townhouse" ||
-          unitType === "town house" ||
-          unitType === "twinhouse" ||
-          unitType === "townhouse corner"
-        ) {
-          matchesType = true;
-        }
-      } else if (targetType === "apartment") {
-        if (
-          unitType === "apartment" ||
-          unitType === "studio" ||
-          unitType === "penthouse" ||
-          unitType === "duplex" ||
-          unitType === "ground floor" ||
-          unitType === "studio apartment" ||
-          unitType === "modern apartment" ||
-          unitType === "penthouse with private pool" ||
-          unitType === "duplex garden unit"
-        ) {
-          matchesType = true;
-        }
-      } else {
-        if (unitType === targetType) matchesType = true;
+        return isChalet(unitType);
       }
-    }
+      if (targetType === "twin house" || targetType === "twinhouse" || targetType === "townhouse" || targetType === "town house") {
+        return (
+          unitType.includes("twin") ||
+          unitType.includes("town")
+        );
+      }
+      return unitType === targetType || unitType.includes(targetType);
+    });
+
     if (!matchesType) return false;
   }
 
   // 2. Bedrooms Filter
   if (filterState.bedrooms) {
     const bedValue = unit.bedrooms || 0;
+
     if (filterState.bedrooms === "5+") {
       if (bedValue < 5) return false;
     } else {
@@ -94,6 +97,7 @@ export const matchUnit = (
   // 3. Bathrooms Filter
   if (filterState.bathrooms) {
     const bathValue = unit.bathrooms || 0;
+
     if (filterState.bathrooms === "3+") {
       if (bathValue < 3) return false;
     } else {
@@ -105,70 +109,78 @@ export const matchUnit = (
   // 4. Area Range Filter
   const areaValue = unit.area || 0;
   if (filterState.areaFrom) {
-    if (areaValue < parseFloat(filterState.areaFrom)) return false;
+    if (areaValue < parseFloat(filterState.areaFrom))
+      return false;
   }
   if (filterState.areaTo) {
-    if (areaValue > parseFloat(filterState.areaTo)) return false;
+    if (areaValue > parseFloat(filterState.areaTo))
+      return false;
   }
 
   // 5. Price Range Filter
-  const getPrice = (u: any) => {
-    if (u.listingType?.toLowerCase() === "rent") {
-      return u.cashPrice || 0;
-    }
-    if (u.paymentModel?.toLowerCase() === "cash") {
-      return u.cashPrice || 0;
-    }
-    return u.installmentPrice || 0;
-  };
-  const priceValue = getPrice(unit);
+  const priceValue = getPriceForProperty(unit);
   if (filterState.priceFrom) {
-    if (priceValue < parseFloat(filterState.priceFrom)) return false;
+    if (priceValue < parseFloat(filterState.priceFrom))
+      return false;
   }
   if (filterState.priceTo) {
-    if (priceValue > parseFloat(filterState.priceTo)) return false;
+    if (priceValue > parseFloat(filterState.priceTo))
+      return false;
   }
 
   // 6. Payments Filter (Down Payment & Monthly Installment)
+  const unitDownPayment = unit.downPaymentAmount || 0;
+  const unitMonthlyInstallment = unit.paymentModel === "Cash" ? 0 : (unit.installmentValue || 0) / 3;
+
   if (filterState.downPayment) {
-    const downPaymentValue = unit.downPaymentAmount || 0;
-    if (downPaymentValue > parseFloat(filterState.downPayment)) return false;
+    if (unitDownPayment > parseFloat(filterState.downPayment)) return false;
   }
   if (filterState.monthlyInstallment) {
-    const monthlyInstallmentValue = unit.installmentValue || 0;
-    if (monthlyInstallmentValue > parseFloat(filterState.monthlyInstallment)) return false;
+    if (unitMonthlyInstallment > parseFloat(filterState.monthlyInstallment))
+      return false;
   }
 
   // 7. Delivery Date Filter
   if (filterState.deliveryDate) {
-    let deliveryYear = parseInt(unit.deliveryDate || "", 10) || null;
-    if (filterState.deliveryDate.toLowerCase() === "ready") {
-      if (deliveryYear && deliveryYear > 2026) return false;
+    if (!unit.deliveryDate) return false;
+    const cleanUnitDate = unit.deliveryDate.trim().toLowerCase();
+    const cleanFilterDate = filterState.deliveryDate.trim().toLowerCase();
+
+    const isReadyFilter = cleanFilterDate === "ready" || cleanFilterDate === "ready to move";
+    const isReadyUnit = cleanUnitDate === "ready" || cleanUnitDate === "ready to move";
+
+    if (isReadyFilter) {
+      if (!isReadyUnit) return false;
     } else {
-      const targetYear = parseInt(filterState.deliveryDate, 10);
-      if (deliveryYear !== targetYear) return false;
+      const isYearFilter = /^\b(19|20|21)\d{2}\b/.test(cleanFilterDate);
+      if (isYearFilter) {
+        const unitYear = cleanUnitDate.includes("-") ? cleanUnitDate.split("-")[0] : cleanUnitDate;
+        if (unitYear !== cleanFilterDate) return false;
+      } else {
+        if (cleanUnitDate !== cleanFilterDate) return false;
+      }
     }
   }
 
   // 8. Finishing Filter
   if (filterState.finishing) {
-    const unitFinishing = unit.finishingStatus || "";
-    if (unitFinishing.toLowerCase() !== filterState.finishing.toLowerCase()) return false;
+    if (unit.finishingStatus?.toLowerCase() !== filterState.finishing.toLowerCase())
+      return false;
   }
 
-  // 9. Location (Village) Filter
+  // 9. Location Filter
   if (filterState.location) {
     const normalize = (s: string) => s.toLowerCase().replace(/[\s-_]+/g, "");
     const selectedLocs = filterState.location.split(",").map(l => normalize(l.trim()));
-    if (!selectedLocs.includes(normalize(unit.village?.name || ""))) return false;
+    if (
+      !selectedLocs.includes(normalize(unit.village?.name || ""))
+    ) {
+      return false;
+    }
   }
 
   return true;
 };
-
-import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import type { IProperty } from "../../app/services/crudproperties";
 
 export const useUnitsFilter = (units: IProperty[]) => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -200,8 +212,18 @@ export const useUnitsFilter = (units: IProperty[]) => {
   // Sync state when URL params change (e.g. on navigation)
   useEffect(() => {
     const parsed = parseParams();
-    setFilters(parsed);
-    setTempFilters(parsed);
+    setFilters((prev) => {
+      const changed = Object.keys(parsed).some(
+        (key) => (parsed as any)[key] !== (prev as any)[key]
+      );
+      return changed ? parsed : prev;
+    });
+    setTempFilters((prev) => {
+      const changed = Object.keys(parsed).some(
+        (key) => (parsed as any)[key] !== (prev as any)[key]
+      );
+      return changed ? parsed : prev;
+    });
   }, [parseParams]);
 
   // Memoized filtered units based on committed filters
@@ -217,22 +239,71 @@ export const useUnitsFilter = (units: IProperty[]) => {
   // Apply the temporary filters to committed filters and URL
   const applyFilters = useCallback(() => {
     setFilters(tempFilters);
-    const params = new URLSearchParams();
-    if (tempFilters.propertyType) params.set("type", tempFilters.propertyType);
-    if (tempFilters.location) params.set("location", tempFilters.location);
-    if (tempFilters.bedrooms) params.set("bedrooms", tempFilters.bedrooms);
-    if (tempFilters.bathrooms) params.set("bathrooms", tempFilters.bathrooms);
-    if (tempFilters.priceFrom) params.set("priceFrom", tempFilters.priceFrom);
-    if (tempFilters.priceTo) params.set("priceTo", tempFilters.priceTo);
-    setSearchParams(params, { replace: true });
-  }, [tempFilters, setSearchParams]);
+    const params = new URLSearchParams(searchParams);
+    
+    const keys: (keyof FilterState)[] = [
+      "propertyType",
+      "location",
+      "bedrooms",
+      "bathrooms",
+      "areaFrom",
+      "areaTo",
+      "priceFrom",
+      "priceTo",
+      "downPayment",
+      "monthlyInstallment",
+      "deliveryDate",
+      "finishing",
+    ];
+
+    keys.forEach((key) => {
+      const val = tempFilters[key];
+      if (val) {
+        if (key === "propertyType") params.set("type", val);
+        else params.set(key, val);
+      } else {
+        if (key === "propertyType") params.delete("type");
+        else params.delete(key);
+      }
+    });
+
+    const newParamsStr = params.toString();
+    const currentParamsStr = searchParams.toString();
+    if (newParamsStr !== currentParamsStr) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [tempFilters, searchParams, setSearchParams]);
 
   // Reset both temporary and committed filters and URL
   const resetFilters = useCallback(() => {
     setFilters(initialFilterState);
     setTempFilters(initialFilterState);
-    setSearchParams({}, { replace: true });
-  }, [setSearchParams]);
+    
+    const params = new URLSearchParams(searchParams);
+    const keys: (keyof FilterState)[] = [
+      "propertyType",
+      "location",
+      "bedrooms",
+      "bathrooms",
+      "areaFrom",
+      "areaTo",
+      "priceFrom",
+      "priceTo",
+      "downPayment",
+      "monthlyInstallment",
+      "deliveryDate",
+      "finishing",
+    ];
+
+    keys.forEach((key) => {
+      if (key === "propertyType") params.delete("type");
+      else params.delete(key);
+    });
+
+    if (params.toString() !== searchParams.toString()) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 
   return {
     filters,
@@ -245,4 +316,3 @@ export const useUnitsFilter = (units: IProperty[]) => {
     tempFilteredCount,
   };
 };
-

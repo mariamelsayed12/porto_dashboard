@@ -3,6 +3,7 @@ import type { FilterState } from "../../../hooks/useUnitsFilter";
 import FilterContent from "./FilterContent";
 import {motion,AnimatePresence} from "framer-motion"
 import { X } from "lucide-react";
+import type { IProperty } from "../../../../app/services/crudproperties";
 
 interface FilterDrawerProps {
   /** Only relevant to displayMode="drawer". Controls whether the drawer is open. */
@@ -21,6 +22,7 @@ interface FilterDrawerProps {
   displayMode?: "drawer" | "static";
   /** Optional className for the static container (e.g. width/positioning on the page). */
   className?: string;
+  properties?: IProperty[];
 }
  
 const FilterDrawer = ({
@@ -33,6 +35,7 @@ const FilterDrawer = ({
   tempFilteredCount,
   displayMode = "drawer",
   className = "",
+  properties = [],
 }: FilterDrawerProps) => {
   const drawerRef = useRef<HTMLDivElement>(null);
  
@@ -97,6 +100,7 @@ const FilterDrawer = ({
           tempFilteredCount={tempFilteredCount}
           stickyFooter={false}
           displayMode={displayMode}
+          properties={properties}
         />
       </div>
     );
@@ -148,6 +152,7 @@ const FilterDrawer = ({
               tempFilteredCount={tempFilteredCount}
               stickyFooter
               displayMode={displayMode}
+              properties={properties}
             />
           </motion.div>
         </>

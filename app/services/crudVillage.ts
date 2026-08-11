@@ -48,7 +48,7 @@ export const VillageApiSlice = createApi({
       query: (arg) => {
         const lang = arg && typeof arg === "object" ? arg.lang : undefined;
         return {
-          url: "villages",
+          url: "villages?limit=300",
           headers: lang ? { "Accept-Language": lang } : undefined,
         };
       },

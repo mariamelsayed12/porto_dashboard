@@ -1,9 +1,12 @@
+import { useState, useMemo } from "react";
 import type { FilterState } from "../../../hooks/useUnitsFilter";
 import Button from "../Button";
 import Input from "../Input";
 import { DoubleRangeSlider } from "./DoubleRangeSlider";
-import { useGetVillageQuery, type IVillage } from "../../../../app/services/crudVillage";
-
+import { useGetVillageQuery } from "../../../../app/services/crudVillage";
+import { useGetPropertyQuery, type IProperty } from "../../../../app/services/crudproperties";
+import { PROPERTY_TYPES } from "../../../data";
+import { getPriceForProperty } from "../../../hooks/useUnitsFilter";
 
 interface FilterContentProps {
   tempFilters: FilterState;
@@ -14,6 +17,7 @@ interface FilterContentProps {
   /** Whether the footer buttons should be visually "sticky" (drawer) or in normal flow (static). */
   stickyFooter?: boolean;
   displayMode?: "drawer" | "static";
+  properties?: IProperty[];
 }
  
 const FilterContent = ({
@@ -24,21 +28,47 @@ const FilterContent = ({
   tempFilteredCount,
   stickyFooter = true,
   displayMode = "drawer",
+  properties = [],
 }: FilterContentProps) => {
-  const { data: villagesList } = useGetVillageQuery();
+  const { data: villagesList, isLoading: isLocationsLoading, isFetching: isLocationsFetching } = useGetVillageQuery();
+  const { isLoading: isPropertiesLoading, isFetching: isPropertiesFetching } = useGetPropertyQuery();
+
+  const isLocationsLoadingOrFetching = isLocationsLoading || isLocationsFetching;
+  const isDeliveryLoadingOrFetching = isPropertiesLoading || isPropertiesFetching;
+
+  const [visibleLocationsCount, setVisibleLocationsCount] = useState(6);
+  const [visiblePropertyTypesCount, setVisiblePropertyTypesCount] = useState(4);
 
   const handleTogglePropertyType = (type: string) => {
-    setTempFilters((prev) => ({
-      ...prev,
-      propertyType: prev.propertyType === type ? "" : type,
-    }));
+    setTempFilters((prev) => {
+      const currentTypes = prev.propertyType
+        ? prev.propertyType.split(",").map((t) => t.trim())
+        : [];
+      const exists = currentTypes.includes(type);
+      const updatedTypes = exists
+        ? currentTypes.filter((item) => item !== type)
+        : [...currentTypes, type];
+      return {
+        ...prev,
+        propertyType: updatedTypes.join(","),
+      };
+    });
   };
 
   const handleToggleLocation = (loc: string) => {
-    setTempFilters((prev) => ({
-      ...prev,
-      location: prev.location === loc ? "" : loc,
-    }));
+    setTempFilters((prev) => {
+      const currentLocations = prev.location
+        ? prev.location.split(",").map((l) => l.trim())
+        : [];
+      const exists = currentLocations.includes(loc);
+      const updatedLocations = exists
+        ? currentLocations.filter((item) => item !== loc)
+        : [...currentLocations, loc];
+      return {
+        ...prev,
+        location: updatedLocations.join(","),
+      };
+    });
   };
  
   const handleToggleBedrooms = (num: string) => {
@@ -67,6 +97,99 @@ const FilterContent = ({
       ...prev,
       finishing: prev.finishing === finish ? "" : finish,
     }));
+  };
+
+  // Dynamically calculate Area and Price bounds from active properties list
+  const { minArea, maxArea, minPrice, maxPrice } = useMemo(() => {
+    if (!properties || properties.length === 0) {
+      return { minArea: 0, maxArea: 1000, minPrice: 0, maxPrice: 100000000 };
+    }
+    const areas = properties
+      .map((u) => u.area)
+      .filter((a): a is number => typeof a === "number" && !isNaN(a));
+    const prices = properties
+      .map((u) => getPriceForProperty(u))
+      .filter((p): p is number => typeof p === "number" && !isNaN(p));
+
+    const minA = 0;
+    const maxA = areas.length ? Math.max(...areas) : 1000;
+    const minP = prices.length ? Math.min(...prices) : 0;
+    const maxP = prices.length ? Math.max(...prices) : 100000000;
+
+    return { minArea: minA, maxArea: maxA, minPrice: minP, maxPrice: maxP };
+  }, [properties]);
+
+  // Keep selected property types visible in See More/Less list
+  const visiblePropertyTypes = useMemo(() => {
+    const selectedTypes = tempFilters.propertyType
+      ? tempFilters.propertyType.split(",").map((t) => t.trim().toLowerCase())
+      : [];
+    return PROPERTY_TYPES.filter((type, index) => {
+      const isSelected = selectedTypes.includes(type.toLowerCase());
+      return index < visiblePropertyTypesCount || isSelected;
+    });
+  }, [visiblePropertyTypesCount, tempFilters.propertyType]);
+
+  // Keep selected locations visible in See More/Less list
+  const visibleDestinations = useMemo(() => {
+    if (!villagesList) return [];
+    const selectedNames = tempFilters.location
+      ? tempFilters.location.split(",").map((name) => name.trim().toLowerCase())
+      : [];
+    return villagesList.filter((dest, index) => {
+      const isSelected = selectedNames.includes(dest.name.toLowerCase());
+      return index < visibleLocationsCount || isSelected;
+    });
+  }, [villagesList, visibleLocationsCount, tempFilters.location]);
+
+  // Dynamically extract and sort delivery date options
+  const deliveryDateOptions = useMemo(() => {
+    if (!properties || properties.length === 0) {
+      return ["Ready", "2027", "2028", "2029", "2030", "2031", "2032"];
+    }
+    const dates = properties
+      .map((u) => u.deliveryDate)
+      .filter((date): date is string => typeof date === "string" && date.trim() !== "");
+
+    const mapped = dates.map((date) => {
+      const trimmed = date.trim();
+      const hasYear = /\b(19|20|21)\d{2}\b/.test(trimmed);
+      if (hasYear) {
+        return trimmed.includes("-") ? trimmed.split("-")[0] : trimmed;
+      }
+      return trimmed;
+    });
+
+    const uniqueDates = Array.from(new Set(mapped));
+
+    uniqueDates.sort((a, b) => {
+      const getYear = (s: string) => {
+        const match = /\b(19|20|21)\d{2}\b/.exec(s);
+        return match ? parseInt(match[0], 10) : null;
+      };
+      const yearA = getYear(a);
+      const yearB = getYear(b);
+      if (yearA !== null && yearB !== null) {
+        return yearA - yearB;
+      }
+      if (yearA !== null) return 1;
+      if (yearB !== null) return -1;
+      return a.localeCompare(b);
+    });
+
+    return uniqueDates;
+  }, [properties]);
+
+  const getDisplayLabel = (date: string) => {
+    const trimmed = date.trim();
+    const isYear = /^\b(19|20|21)\d{2}\b/.test(trimmed);
+    if (isYear) {
+      return trimmed;
+    }
+    if (trimmed.toLowerCase() === "ready" || trimmed.toLowerCase() === "ready to move") {
+      return "Ready to Move";
+    }
+    return trimmed;
   };
  
   return (
@@ -108,26 +231,43 @@ const FilterContent = ({
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {["Chalet", "Villa", "Apartment", "Twin house"].map((type) => {
-              const isSelected =
-                (tempFilters.propertyType || "").toLowerCase() ===
-                type.toLowerCase();
-              return (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => handleTogglePropertyType(type)}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold border transition-all ${
-                    isSelected
-                      ? "bg-[#E9F4F7] border-primary text-[#141414]"
-                      : "bg-white border-[#D9E1E4] text-[#58696F] hover:border-gray-300"
-                  }`}
-                >
-                  {type}
-                </button>
-              );
-            })}
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              {visiblePropertyTypes.map((type) => {
+                const isSelected = (tempFilters.propertyType || "")
+                  .toLowerCase()
+                  .split(",")
+                  .map((t) => t.trim())
+                  .includes(type.toLowerCase());
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => handleTogglePropertyType(type)}
+                    className={`rounded-full px-4 py-2 text-xs font-semibold border transition-all ${
+                      isSelected
+                        ? "bg-[#E9F4F7] border-primary text-[#141414]"
+                        : "bg-white border-[#D9E1E4] text-[#58696F] hover:border-gray-300"
+                    }`}
+                  >
+                    {type}
+                  </button>
+                );
+              })}
+            </div>
+            {PROPERTY_TYPES.length > 4 && (
+              <button
+                type="button"
+                onClick={() =>
+                  setVisiblePropertyTypesCount((prev) =>
+                    prev === PROPERTY_TYPES.length ? 4 : PROPERTY_TYPES.length
+                  )
+                }
+                className="text-xs font-semibold text-primary hover:underline mt-2 self-start cursor-pointer block"
+              >
+                {visiblePropertyTypesCount === PROPERTY_TYPES.length ? "See Less" : "See More"}
+              </button>
+            )}
           </div>
         </div>
  
@@ -136,7 +276,7 @@ const FilterContent = ({
         <div className="bg-white rounded-md border border-border p-5 shadow-[0_2px_8px_rgba(73,95,104,0.04)]">
           <div className="flex justify-between items-center mb-3">
             <h3 className="text-[15px] font-bold text-text-secondary">
-             Location
+              Location
             </h3>
             {displayMode === "static" && (
               <button
@@ -148,27 +288,55 @@ const FilterContent = ({
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {(villagesList || []).map(({ name }: IVillage) => {
-              const isSelected =
-                (tempFilters.location || "").toLowerCase() ===
-                name.toLowerCase();
-              return (
+          {isLocationsLoadingOrFetching ? (
+            <div className="flex flex-wrap gap-2 animate-pulse">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="h-8 bg-[#E8EFF1] rounded-full w-24 sm:w-28 border border-[#E8EFF1]"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap gap-2">
+                {visibleDestinations.map(({ name }) => {
+                  const isSelected = (tempFilters.location || "")
+                    .toLowerCase()
+                    .split(",")
+                    .map((l) => l.trim())
+                    .includes(name.toLowerCase());
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      onClick={() => handleToggleLocation(name)}
+                      className={`rounded-full px-4 py-2 text-xs font-semibold border transition-all ${
+                        isSelected
+                          ? "bg-[#E9F4F7] border-primary text-[#141414]"
+                          : "bg-white border-[#D9E1E4] text-[#58696F] hover:border-gray-300"
+                      }`}
+                    >
+                      {name}
+                    </button>
+                  );
+                })}
+              </div>
+              {(villagesList || []).length > 6 && (
                 <button
-                  key={name}
                   type="button"
-                  onClick={() => handleToggleLocation(name)}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold border transition-all ${
-                    isSelected
-                      ? "bg-[#E9F4F7] border-primary text-[#141414]"
-                      : "bg-white border-[#D9E1E4] text-[#58696F] hover:border-gray-300"
-                  }`}
+                  onClick={() =>
+                    setVisibleLocationsCount((prev) =>
+                      prev === (villagesList || []).length ? 6 : (villagesList || []).length
+                    )
+                  }
+                  className="text-xs font-semibold text-primary hover:underline mt-2 self-start cursor-pointer block"
                 >
-                  {name}
+                  {visibleLocationsCount === (villagesList || []).length ? "See Less" : "See More"}
                 </button>
-              );
-            })}
-          </div>
+              )}
+            </div>
+          )}
         </div>
 
 
@@ -278,7 +446,7 @@ const FilterContent = ({
                   }))
                 }
                 className="h-10 text-xs border-[#D9E1E4]"
-                placeholder="0"
+                placeholder={String(minArea)}
               />
             </div>
             <div>
@@ -295,23 +463,23 @@ const FilterContent = ({
                   }))
                 }
                 className="h-10 text-xs border-[#D9E1E4]"
-                placeholder="Any"
+                placeholder={String(maxArea)}
               />
             </div>
           </div>
  
           {/* Double Range Slider for Area */}
           <DoubleRangeSlider
-            min={0}
-            max={1000}
+            min={minArea}
+            max={maxArea}
             valueFrom={tempFilters.areaFrom}
             valueTo={tempFilters.areaTo}
             unit="m²"
             onChange={(from, to) =>
               setTempFilters((prev) => ({
                 ...prev,
-                areaFrom: from === 0 ? "" : String(from),
-                areaTo: to === 1000 ? "" : String(to),
+                areaFrom: from === minArea ? "" : String(from),
+                areaTo: to === maxArea ? "" : String(to),
               }))
             }
           />
@@ -349,7 +517,7 @@ const FilterContent = ({
                   }))
                 }
                 className="h-10 text-xs border-[#D9E1E4]"
-                placeholder="Min"
+                placeholder={String(minPrice)}
               />
             </div>
             <div>
@@ -366,15 +534,15 @@ const FilterContent = ({
                   }))
                 }
                 className="h-10 text-xs border-[#D9E1E4]"
-                placeholder="Max"
+                placeholder={String(maxPrice)}
               />
             </div>
           </div>
  
           {/* Double Range Slider for Price */}
           <DoubleRangeSlider
-            min={0}
-            max={100000000}
+            min={minPrice}
+            max={maxPrice}
             step={50000}
             valueFrom={tempFilters.priceFrom}
             valueTo={tempFilters.priceTo}
@@ -383,8 +551,8 @@ const FilterContent = ({
             onChange={(from, to) =>
               setTempFilters((prev) => ({
                 ...prev,
-                priceFrom: from === 0 ? "" : String(from),
-                priceTo: to === 100000000 ? "" : String(to),
+                priceFrom: from === minPrice ? "" : String(from),
+                priceTo: to === maxPrice ? "" : String(to),
               }))
             }
           />
@@ -461,9 +629,18 @@ const FilterContent = ({
               </button>
             )}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {["Ready", "2027", "2028", "2029", "2030", "2031", "2032"].map(
-              (date) => {
+          {isDeliveryLoadingOrFetching ? (
+            <div className="flex flex-wrap gap-2 animate-pulse">
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="h-8 bg-[#E8EFF1] rounded-full w-16 sm:w-20 border border-[#E8EFF1]"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {deliveryDateOptions.map((date) => {
                 const isSelected =
                   (tempFilters.deliveryDate || "").toLowerCase() ===
                   date.toLowerCase();
@@ -478,12 +655,12 @@ const FilterContent = ({
                         : "bg-white border-[#D9E1E4] text-[#58696F] hover:border-gray-300"
                     }`}
                   >
-                    {date}
+                    {getDisplayLabel(date)}
                   </button>
                 );
-              },
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </div>
  
         {/* Finishing Card */}
@@ -541,7 +718,7 @@ const FilterContent = ({
           <Button
             type="button"
             onClick={handleReset}
-            className="w-1/2 rounded-md border  text-gray-500 border-border bg-white text-primary font-bold hover:bg-gray-50 h-12 text-sm"
+            className="w-1/2 rounded-md border  border-border bg-white text-black font-bold hover:bg-gray-50 h-12 text-sm"
           >
             Reset All
           </Button>
@@ -558,5 +735,4 @@ const FilterContent = ({
   );
 };
 
-
-export default FilterContent
+export default FilterContent;
