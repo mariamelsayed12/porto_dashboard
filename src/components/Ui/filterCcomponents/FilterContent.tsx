@@ -413,6 +413,7 @@ const FilterContent = ({
             })}
           </div>
         </div>
+        
  
         {/* Area Card */}
         <div className="bg-white rounded-md border border-border p-5 shadow-[0_2px_8px_rgba(73,95,104,0.04)]">
@@ -718,7 +719,7 @@ const FilterContent = ({
           <Button
             type="button"
             onClick={handleReset}
-            className="w-1/2 rounded-md border  border-border bg-white text-black font-bold hover:bg-gray-50 h-12 text-sm"
+            className="w-1/2 rounded-md border border-border bg-white !text-black font-bold hover:bg-gray-50 h-12 text-sm"
           >
             Reset All
           </Button>
