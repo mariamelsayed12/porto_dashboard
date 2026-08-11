@@ -164,8 +164,7 @@ export default function Header({
                 leftIcon={<FiPlus className="size-[16px] sm:size-[20px]" />}
                 className="px-2.5 sm:px-4 h-[32px] sm:h-[36px] text-xs sm:text-sm rounded-lg sm:rounded-xl shrink-0"
               >
-                <span className="hidden xs:inline">Create Village</span>
-                <span className="xs:hidden">Create</span>
+                Create Village
               </Button>
             )}
 
@@ -177,8 +176,7 @@ export default function Header({
                 id="create-property-btn"
                 className="self-end xl:self-auto h-[32px] sm:h-10 px-3 sm:px-6 rounded-lg sm:rounded-[12px] text-xs sm:text-sm shrink-0"
               >
-                <span className="hidden xs:inline">Add Property</span>
-                <span className="xs:hidden">Add</span>
+                Create Property
               </Button>
             )}
           </>
