@@ -174,7 +174,7 @@ export default function Header({
                 leftIcon={<FiPlus className="size-[14px] sm:size-[16px]" />}
                 onClick={onCreateClick}
                 id="create-property-btn"
-                className="self-end xl:self-auto h-[32px] sm:h-10 px-3 sm:px-6 rounded-lg sm:rounded-[12px] text-xs sm:text-sm shrink-0"
+                className="h-[32px] sm:h-10 px-3 sm:px-6 rounded-lg sm:rounded-[12px] text-xs sm:text-sm shrink-0"
               >
                 Create Property
               </Button>
