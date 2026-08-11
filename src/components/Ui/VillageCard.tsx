@@ -36,7 +36,7 @@ export default function VillageCard({
         {/* Text block: Name row + Stats row */}
         <div className="flex flex-col gap-[12px] items-start w-full">
           {/* Name / Developer — same row */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center justify-between w-full gap-2">
+          <div className="flex flex-wrap items-center justify-between w-full gap-2">
             <p className="font-medium text-[17px] sm:text-[19px] text-[#141414] leading-snug truncate">
               {name}
             </p>
@@ -73,8 +73,8 @@ export default function VillageCard({
       </div>
 
       {/* Actions Row */}
-      <div className="flex flex-wrap sm:flex-nowrap gap-3 sm:gap-4 items-center w-full justify-between">
-        <div className="flex gap-[8px] items-center">
+      <div className="flex flex-wrap gap-3 items-center w-full justify-between">
+        <div className="flex gap-[8px] items-center shrink-0">
           {/* Delete button */}
           <Button
             variant={"icon"}
