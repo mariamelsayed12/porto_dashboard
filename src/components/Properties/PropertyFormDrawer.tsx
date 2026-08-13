@@ -29,6 +29,29 @@ const STATUS_OPTIONS_BY_LISTING_TYPE: Record<string, string[]> = {
   Rent: ["Available", "Not Available", "Available Soon"],
 };
 
+const formatDeliveryDateForInput = (dateStr: any): string => {
+  if (!dateStr) return "";
+  if (dateStr === "Ready to Move") return "Ready to Move";
+
+  if (typeof dateStr === "string" && dateStr.includes("T")) {
+    return dateStr.split("T")[0];
+  }
+
+  try {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+  } catch (e) {
+    console.error("Failed to parse date", e);
+  }
+
+  return dateStr;
+};
+
 export default function PropertyFormDrawer({
   isOpen,
   onClose,
@@ -211,7 +234,7 @@ export default function PropertyFormDrawer({
           coverImage: propertyEn.coverImage || "",
           images: propertyEn.images || [],
           isFeatured: propertyEn.isFeatured || "No",
-          deliveryDate: propertyEn.deliveryDate || "",
+          deliveryDate: formatDeliveryDateForInput(propertyEn.deliveryDate),
           availableUnits: propertyEn.availableUnits || 1,
           installmentPrice: propertyEn.installmentPrice || undefined,
           cashPrice: propertyEn.cashPrice || undefined,

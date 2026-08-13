@@ -251,6 +251,8 @@ export default function EditVillageDrawer({
         }
       }
 
+      
+
       // Compress gallery images
       const finalGallery: (File | string)[] = [];
       if (Array.isArray(data.galleryImages)) {
