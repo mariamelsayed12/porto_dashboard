@@ -11,6 +11,7 @@ import MultiSelectDropdown from "../Ui/MultiSelectDropdown";
 import LocationPicker from "../Ui/LocationPicker";
 import { ALLOWED_Village_AMENITIES } from "../../data";
 import { validationSchema } from "../../validation";
+import { compressImage } from "../../utils/imageCompression";
 
 interface CreateVillageDrawerProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export default function CreateVillageDrawer({
 }: CreateVillageDrawerProps) {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const { data: villagesEn } = useGetVillageQuery({ lang: "en" });
   const { data: villagesAr } = useGetVillageQuery({ lang: "ar" });
@@ -150,6 +152,38 @@ export default function CreateVillageDrawer({
 
   const onSubmit = async (data: any) => {
     try {
+      setIsCompressing(true);
+
+      // Compress cover image
+      let finalCover = data.coverImage;
+      if (data.coverImage instanceof File) {
+        try {
+          finalCover = await compressImage(data.coverImage);
+        } catch (compressErr) {
+          console.error("Failed to compress cover image:", compressErr);
+          showErrorToast("Failed to compress cover image. Submitting original.");
+        }
+      }
+
+      // Compress gallery images
+      const finalGallery: (File | string)[] = [];
+      if (Array.isArray(data.galleryImages)) {
+        for (const img of data.galleryImages) {
+          if (img instanceof File) {
+            try {
+              const comp = await compressImage(img);
+              finalGallery.push(comp);
+            } catch (compressErr) {
+              console.error("Failed to compress gallery image:", compressErr);
+              showErrorToast("Failed to compress a gallery image. Submitting original.");
+              finalGallery.push(img);
+            }
+          } else {
+            finalGallery.push(img);
+          }
+        }
+      }
+
       const formData = new FormData();
       formData.append("name[en]", data.name.en);
       formData.append("name[ar]", data.name.ar);
@@ -176,13 +210,15 @@ export default function CreateVillageDrawer({
         });
       }
 
-      if (data.coverImage instanceof File) {
-        formData.append("coverImage", data.coverImage);
+      if (finalCover instanceof File) {
+        formData.append("coverImage", finalCover);
       }
 
-      if (data.galleryImages) {
-        data.galleryImages.forEach((img: any) => {
+      if (finalGallery) {
+        finalGallery.forEach((img: any) => {
           if (img instanceof File) {
+            formData.append("galleryImages", img);
+          } else if (typeof img === "string") {
             formData.append("galleryImages", img);
           }
         });
@@ -193,6 +229,8 @@ export default function CreateVillageDrawer({
       onClose();
     } catch (err: any) {
       showErrorToast(err?.data?.message || "Failed to create village.");
+    } finally {
+      setIsCompressing(false);
     }
   };
 
@@ -501,7 +539,7 @@ export default function CreateVillageDrawer({
               <Button
                 type="button"
                 onClick={onClose}
-                disabled={isLoading}
+                disabled={isLoading || isCompressing}
                 variant="icon"
                 className="flex h-12 w-auto items-center justify-center p-2 rounded-xl text-[#1e8cab] text-base font-medium hover:bg-[#EDEFF2] transition-colors disabled:opacity-50"
               >
@@ -510,12 +548,12 @@ export default function CreateVillageDrawer({
               <Button
                 type="button"
                 onClick={handleSubmit(onSubmit)}
-                isLoading={isLoading}
-                disabled={isLoading}
+                isLoading={isLoading || isCompressing}
+                disabled={isLoading || isCompressing}
                 variant="modalPrimary"
                 className="h-12 rounded-xl px-6 bg-[#1e8cab] hover:bg-[#156d85]"
               >
-                Create
+                {isCompressing ? "Compressing..." : "Create"}
               </Button>
             </div>
           </motion.div>

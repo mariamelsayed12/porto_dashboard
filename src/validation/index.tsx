@@ -50,6 +50,12 @@ export const validationSchema = yup.object().shape({
         return ["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(value.type);
       }
       return false;
+    })
+    .test("fileSize", "Cover image is too large. Max 25MB before compression", (value) => {
+      if (value instanceof File) {
+        return value.size <= 25 * 1024 * 1024;
+      }
+      return true;
     }),
   galleryImages: yup
     .array()
@@ -61,6 +67,11 @@ export const validationSchema = yup.object().shape({
           return ["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(value.type);
         }
         return false;
+      }).test("fileSize", "Gallery image is too large. Max 25MB before compression", (value) => {
+        if (value instanceof File) {
+          return value.size <= 25 * 1024 * 1024;
+        }
+        return true;
       })
     )
     .max(5, "Maximum 5 gallery images allowed")
@@ -127,9 +138,9 @@ export const propertyValidationSchema = yup.object().shape({
       return ["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(value.type);
     }
     return false;
-  }).test("fileSize", "Cover image too large. Max 1.5MB", (value) => {
+  }).test("fileSize", "Cover image is too large. Max 25MB before compression", (value) => {
     if (value instanceof File) {
-      return value.size <= 1.5 * 1024 * 1024;
+      return value.size <= 25 * 1024 * 1024;
     }
     return true;
   }),
@@ -141,9 +152,9 @@ export const propertyValidationSchema = yup.object().shape({
         return ["image/jpeg", "image/png", "image/jpg", "image/webp"].includes(value.type);
       }
       return false;
-    }).test("fileSize", "Gallery image too large. Max 1MB", (value) => {
+    }).test("fileSize", "Gallery image is too large. Max 25MB before compression", (value) => {
       if (value instanceof File) {
-        return value.size <= 1 * 1024 * 1024;
+        return value.size <= 25 * 1024 * 1024;
       }
       return true;
     })

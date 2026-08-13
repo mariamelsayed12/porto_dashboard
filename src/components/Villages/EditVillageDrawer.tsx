@@ -17,6 +17,7 @@ import LocationPicker from "../Ui/LocationPicker";
 import { ALLOWED_Village_AMENITIES, translations } from "../../data";
 import { validationSchema } from "../../validation";
 import { PropertyFormDrawerSkeleton } from "../Properties/formSkeleton";
+import { compressImage } from "../../utils/imageCompression";
 
 interface EditVillageDrawerProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export default function EditVillageDrawer({
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const {
     data: englishVillage,
@@ -236,6 +238,38 @@ export default function EditVillageDrawer({
   const onSubmit = async (data: any) => {
     if (!village) return;
     try {
+      setIsCompressing(true);
+
+      // Compress cover image
+      let finalCover = data.coverImage;
+      if (data.coverImage instanceof File) {
+        try {
+          finalCover = await compressImage(data.coverImage);
+        } catch (compressErr) {
+          console.error("Failed to compress cover image:", compressErr);
+          showErrorToast(isArabic ? "فشل ضغط صورة الغلاف. سيتم إرسال النسخة الأصلية." : "Failed to compress cover image. Submitting original.");
+        }
+      }
+
+      // Compress gallery images
+      const finalGallery: (File | string)[] = [];
+      if (Array.isArray(data.galleryImages)) {
+        for (const img of data.galleryImages) {
+          if (img instanceof File) {
+            try {
+              const comp = await compressImage(img);
+              finalGallery.push(comp);
+            } catch (compressErr) {
+              console.error("Failed to compress gallery image:", compressErr);
+              showErrorToast(isArabic ? "فشل ضغط إحدى صور المعرض. سيتم إرسال النسخة الأصلية." : "Failed to compress a gallery image. Submitting original.");
+              finalGallery.push(img);
+            }
+          } else {
+            finalGallery.push(img);
+          }
+        }
+      }
+
       const formData = new FormData();
       formData.append("name[en]", data.name.en);
       formData.append("name[ar]", data.name.ar);
@@ -263,13 +297,13 @@ export default function EditVillageDrawer({
       }
 
       // If new coverImage file uploaded
-      if (data.coverImage instanceof File) {
-        formData.append("coverImage", data.coverImage);
+      if (finalCover instanceof File) {
+        formData.append("coverImage", finalCover);
       }
 
       // Add gallery images (files + existing kept urls)
-      if (data.galleryImages) {
-        data.galleryImages.forEach((img: any) => {
+      if (finalGallery) {
+        finalGallery.forEach((img: any) => {
           if (img instanceof File) {
             formData.append("galleryImages", img);
           } else if (typeof img === "string") {
@@ -288,6 +322,8 @@ export default function EditVillageDrawer({
         err?.data?.message ||
           (isArabic ? "فشل تعديل القرية" : "Failed to update village."),
       );
+    } finally {
+      setIsCompressing(false);
     }
   };
 
@@ -639,7 +675,7 @@ export default function EditVillageDrawer({
               <Button
                 type="button"
                 onClick={onClose}
-                disabled={isLoading}
+                disabled={isLoading || isCompressing}
                 variant="icon"
                 className="flex h-12 w-auto items-center justify-center p-2 rounded-xl text-[#1e8cab] text-base font-medium hover:bg-[#EDEFF2] transition-colors disabled:opacity-50"
               >
@@ -648,12 +684,14 @@ export default function EditVillageDrawer({
               <Button
                 type="button"
                 onClick={handleSubmit(onSubmit)}
-                isLoading={isLoading}
-                disabled={isLoading}
+                isLoading={isLoading || isCompressing}
+                disabled={isLoading || isCompressing}
                 variant="modalPrimary"
                 className="h-12 rounded-xl px-6 bg-[#1e8cab] hover:bg-[#156d85]"
               >
-                {t.saveChanges}
+                {isCompressing
+                  ? (isArabic ? "جاري الضغط..." : "Compressing...")
+                  : t.saveChanges}
               </Button>
             </div>
           </motion.div>

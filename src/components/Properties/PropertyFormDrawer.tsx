@@ -13,6 +13,7 @@ import { ALLOWED_PROPERTY_AMENITIES, PROPERTY_TYPES } from "../../data";
 import { propertyValidationSchema } from "../../validation";
 import { PropertyFormDrawerSkeleton } from "./formSkeleton";
 import InputErrorMessage from "../Ui/InputErrorMessage";
+import { compressImage } from "../../utils/imageCompression";
 
 interface PropertyFormDrawerProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export default function PropertyFormDrawer({
 }: PropertyFormDrawerProps) {
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
 
   // Fetch villages List to resolve name to ID
   const { data: villagesList } = useGetVillageQuery();
@@ -302,6 +304,38 @@ export default function PropertyFormDrawer({
   // Form Submit Handler
   const onSubmitHandler = async (data: any) => {
     try {
+      setIsCompressing(true);
+
+      // Compress cover image
+      let finalCover = data.coverImage;
+      if (data.coverImage instanceof File) {
+        try {
+          finalCover = await compressImage(data.coverImage);
+        } catch (compressErr) {
+          console.error("Failed to compress cover image:", compressErr);
+          showErrorToast("Failed to compress cover image. Submitting original.");
+        }
+      }
+
+      // Compress gallery images
+      const finalImages: (File | string)[] = [];
+      if (Array.isArray(data.images)) {
+        for (const img of data.images) {
+          if (img instanceof File) {
+            try {
+              const comp = await compressImage(img);
+              finalImages.push(comp);
+            } catch (compressErr) {
+              console.error("Failed to compress gallery image:", compressErr);
+              showErrorToast("Failed to compress a gallery image. Submitting original.");
+              finalImages.push(img);
+            }
+          } else {
+            finalImages.push(img);
+          }
+        }
+      }
+
       const formData = new FormData();
 
       // Nested bilingual inputs
@@ -323,12 +357,12 @@ export default function PropertyFormDrawer({
       formData.append("propertyType", data.propertyType.trim());
 
       // Files
-      if (data.coverImage instanceof File) {
-        formData.append("coverImage", data.coverImage);
+      if (finalCover instanceof File) {
+        formData.append("coverImage", finalCover);
       }
 
-      if (Array.isArray(data.images)) {
-        data.images.forEach((imgFile: any) => {
+      if (Array.isArray(finalImages)) {
+        finalImages.forEach((imgFile: any) => {
           if (imgFile instanceof File) {
             formData.append("images", imgFile);
           } else if (typeof imgFile === "string") {
@@ -428,6 +462,8 @@ export default function PropertyFormDrawer({
         errorMsg = err.message;
       }
       showErrorToast(errorMsg);
+    } finally {
+      setIsCompressing(false);
     }
   };
 
@@ -1074,7 +1110,7 @@ export default function PropertyFormDrawer({
                   <Button
                     type="button"
                     onClick={onClose}
-                    disabled={isLoading}
+                    disabled={isLoading || isCompressing}
                     variant="icon"
                     className="flex h-12 w-auto items-center justify-center p-2 rounded-xl text-[#1e8cab] text-base font-medium hover:bg-[#EDEFF2] transition-colors disabled:opacity-50 font-poppins"
                   >
@@ -1083,11 +1119,16 @@ export default function PropertyFormDrawer({
                   <Button
                     type="submit"
                     onClick={handleSubmit(onSubmitHandler)}
-                    isLoading={isLoading}
+                    isLoading={isLoading || isCompressing}
+                    disabled={isLoading || isCompressing}
                     variant="modalPrimary"
                     className="h-12 rounded-xl px-6 bg-[#1e8cab] hover:bg-[#156d85] font-poppins"
                   >
-                    {mode === "edit" ? "Save Changes" : "Create"}
+                    {isCompressing
+                      ? "Compressing..."
+                      : mode === "edit"
+                      ? "Save Changes"
+                      : "Create"}
                   </Button>
                 </div>
               </>
