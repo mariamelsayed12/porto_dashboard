@@ -560,25 +560,17 @@ export default function PropertiesPage() {
         </div>
       )}
 
-      {/* ── Create Drawer ────────────────────────────────────────────────── */}
+      {/* ── Property Form Drawer (Create & Edit Mode) ────────────────────── */}
       <PropertyFormDrawer
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
-        onSubmit={handleCreateSubmit}
-        isLoading={isCreateLoading}
-        mode="create"
-      />
-
-      {/* ── Edit Drawer ───────────────────────────────────────────────────── */}
-      <PropertyFormDrawer
-        isOpen={isEditOpen}
+        isOpen={isCreateOpen || isEditOpen}
         onClose={() => {
+          setIsCreateOpen(false);
           setIsEditOpen(false);
           setPropertyToEdit(null);
         }}
-        onSubmit={handleEditSubmit}
-        isLoading={isUpdateLoading}
-        mode="edit"
+        onSubmit={isEditOpen ? handleEditSubmit : handleCreateSubmit}
+        isLoading={isEditOpen ? isUpdateLoading : isCreateLoading}
+        mode={isEditOpen ? "edit" : "create"}
         propertyId={propertyToEdit?._id}
       />
 

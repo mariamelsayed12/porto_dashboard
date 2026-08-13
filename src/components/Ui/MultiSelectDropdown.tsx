@@ -160,10 +160,10 @@ export default function MultiSelectDropdown({
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          className={`absolute top-[calc(100%+4px)] z-50 overflow-y-auto bg-white border border-[#d4d5d8] shadow-lg ${
+          className={`absolute top-[calc(100%+4px)] z-50 overflow-hidden bg-white border border-[#d4d5d8] shadow-lg ${
             isFilterVariant
               ? "right-0 min-w-[240px] max-h-80 rounded-[12px] p-4 flex flex-col gap-2"
-              : "left-0 w-full max-h-60 rounded-lg py-1"
+              : "left-0 w-full rounded-lg py-1"
           }`}
         >
           {options.length === 0 ? (

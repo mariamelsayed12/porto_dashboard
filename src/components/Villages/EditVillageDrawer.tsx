@@ -34,9 +34,8 @@ export default function EditVillageDrawer({
   onUpdate,
   isLoading = false,
 }: EditVillageDrawerProps) {
-  const [formLanguage, setFormLanguage] = useState<"en" | "ar">("en");
-  const isArabic = formLanguage === "ar";
-  const t = translations[formLanguage];
+  const isArabic = false;
+  const t = translations.en;
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -136,7 +135,7 @@ export default function EditVillageDrawer({
         googleMapsUrl: englishVillage?.googleMapsUrl || arabicVillage?.googleMapsUrl || village.googleMapsUrl || "",
         latitude: englishVillage?.latitude ?? arabicVillage?.latitude ?? village.latitude ?? null,
         longitude: englishVillage?.longitude ?? arabicVillage?.longitude ?? village.longitude ?? null,
-        amenities: village.amenities || [],
+        amenities: englishVillage?.amenities || arabicVillage?.amenities || village.amenities || [],
       });
     }
   }, [isOpen, village, englishVillage, arabicVillage, reset]);
@@ -217,11 +216,7 @@ export default function EditVillageDrawer({
     const files = Array.from(e.target.files || []);
     const currentImages = galleryImages || [];
     if (currentImages.length + files.length > 15) {
-      showErrorToast(
-        formLanguage === "ar"
-          ? "الحد الأقصى لمعرض الصور هو 15 صور"
-          : "Maximum 15 gallery images allowed",
-      );
+      showErrorToast( t.maxGalleryImages );
       return;
     }
     setValue("galleryImages", [...currentImages, ...files], {
@@ -367,31 +362,6 @@ export default function EditVillageDrawer({
                 </h2>
               </div>
               <div className="flex items-center gap-4">
-                {/* Language switcher */}
-                <div className="flex items-center bg-[#EDEFF2] p-1 rounded-lg border border-[#C0C4C8]">
-                  <button
-                    type="button"
-                    onClick={() => setFormLanguage("en")}
-                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                      !isArabic
-                        ? "bg-[#1E8CAB] text-white shadow-xs"
-                        : "text-text-darker hover:text-text-secondary"
-                    }`}
-                  >
-                    English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormLanguage("ar")}
-                    className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                      isArabic
-                        ? "bg-[#1E8CAB] text-white shadow-xs"
-                        : "text-text-darker hover:text-text-secondary"
-                    }`}
-                  >
-                    العربية
-                  </button>
-                </div>
                 <button
                   type="button"
                   onClick={onClose}
@@ -423,52 +393,28 @@ export default function EditVillageDrawer({
                   </div>
                 )}
 
-                {/* Village Name - English & Arabic Side-by-Side */}
+                {/* Village Name */}
                 <div className="flex flex-col gap-4 border-b border-[#EDEFF2] pb-5">
-                  <span className="text-sm font-semibold text-text-secondary">
-                    {isArabic ? "اسم القرية" : "Village Name"}
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
-                      label={t.nameEn}
-                      placeholder="e.g. Porto Golf"
-                      required
-                      {...register("name.en")}
-                      error={errors.name?.en?.message}
-                    />
-                    <Input
-                      label={t.nameAr}
-                      placeholder="مثال: بورتو جولف"
-                      required
-                      dir="rtl"
-                      {...register("name.ar")}
-                      error={errors.name?.ar?.message}
-                    />
-                  </div>
+                  <Input
+                    label="Village Name"
+                    placeholder="e.g. Porto Golf"
+                    required
+                    {...register("name.en")}
+                    error={errors.name?.en?.message}
+                  />
+                  <input type="hidden" {...register("name.ar")} />
                 </div>
 
-                {/* Developer Name - English & Arabic Side-by-Side */}
+                {/* Developer */}
                 <div className="flex flex-col gap-4 border-b border-[#EDEFF2] pb-5">
-                  <span className="text-sm font-semibold text-text-secondary">
-                    {isArabic ? "اسم المطور" : "Developer"}
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Input
-                      label={t.developerEn}
-                      placeholder="e.g. Porto Developments"
-                      required
-                      {...register("developerName.en")}
-                      error={errors.developerName?.en?.message}
-                    />
-                    <Input
-                      label={t.developerAr}
-                      placeholder="مثال: عامر جروب"
-                      required
-                      dir="rtl"
-                      {...register("developerName.ar")}
-                      error={errors.developerName?.ar?.message}
-                    />
-                  </div>
+                  <Input
+                    label="Developer"
+                    placeholder="e.g. Porto Developments"
+                    required
+                    {...register("developerName.en")}
+                    error={errors.developerName?.en?.message}
+                  />
+                  <input type="hidden" {...register("developerName.ar")} />
                 </div>
 
                 {/* Price and Yield */}
