@@ -135,8 +135,8 @@ export default function CreateVillageDrawer({
   const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const currentImages = galleryImages || [];
-    if (currentImages.length + files.length > 5) {
-      showErrorToast("Maximum 5 gallery images allowed");
+    if (currentImages.length + files.length > 15) {
+      showErrorToast("Maximum 15 gallery images allowed");
       return;
     }
     setValue("galleryImages", [...currentImages, ...files], {
@@ -459,8 +459,8 @@ export default function CreateVillageDrawer({
                     </div>
                   ))}
 
-                  {/* Add Grid button if < 5 */}
-                  {galleryPreviewUrls.length < 5 && (
+                  {/* Add Grid button if < 15 */}
+                  {galleryPreviewUrls.length < 15 && (
                     <div
                       onClick={() => galleryInputRef.current?.click()}
                       className="border border-[#D4D5D8] border-dashed rounded-lg h-[100px] flex flex-col items-center justify-center cursor-pointer hover:border-[#1E8CAB] transition-all bg-white"

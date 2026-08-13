@@ -74,8 +74,8 @@ export const validationSchema = yup.object().shape({
         return true;
       })
     )
-    .max(5, "Maximum 5 gallery images allowed")
-    .optional(),
+    .min(4, "At least 4 images are required.")
+    .required("At least 4 images are required."),
   googleMapsUrl: yup
     .string()
     .trim()
@@ -104,8 +104,8 @@ export const validationSchema = yup.object().shape({
   amenities: yup
     .array()
     .of(yup.string().required())
-    .optional()
-    .default([]),
+    .min(4, "At least 4 amenities are required.")
+    .required("At least 4 amenities are required."),
 });
 
 export const propertyValidationSchema = yup.object().shape({
@@ -158,7 +158,7 @@ export const propertyValidationSchema = yup.object().shape({
       }
       return true;
     })
-  ).max(4, "Maximum 4 gallery images allowed").optional().default([]),
+  ).min(4, "At least 4 images are required.").required("At least 4 images are required."),
   isFeatured: yup.string().oneOf(["Yes", "No"]).optional().default("No"),
   deliveryDate: yup.string().optional().nullable(),
   availableUnits: yup.number().typeError("Must be an integer >= 0").integer("Must be an integer").min(0, "Cannot be negative").optional().default(1),
@@ -228,7 +228,7 @@ export const propertyValidationSchema = yup.object().shape({
       then: (schema) => schema.required("Required"),
       otherwise: (schema) => schema.nullable().optional(),
     }),
-  amenities: yup.array().of(yup.string().required()).optional().default([]),
+  amenities: yup.array().of(yup.string().required()).min(4, "At least 4 amenities are required.").required("At least 4 amenities are required."),
 });
 
 

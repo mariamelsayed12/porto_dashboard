@@ -299,7 +299,7 @@ export default function PropertyFormDrawer({
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const currentImages = watchImages || [];
-    const newImages = [...currentImages, ...files].slice(0, 4); // Limit to 4 images
+    const newImages = [...currentImages, ...files].slice(0, 15); // Limit to 15 images
     setValue("images", newImages, { shouldValidate: true });
   };
 
@@ -1068,11 +1068,11 @@ export default function PropertyFormDrawer({
                       {/* Gallery upload */}
                       <div className="flex flex-col gap-2 flex-1">
                         <label className="text-xs font-semibold text-[#141414]">
-                          Gallery Images ({watchImages.length}/4)
+                          Gallery Images ({watchImages.length})
                         </label>
                         <div className="grid grid-cols-2 gap-3 h-[166px] overflow-y-auto border border-[#d4d5d8] border-solid rounded-lg p-2 bg-white">
                           {/* Plus button */}
-                          {watchImages.length < 4 && (
+                          {watchImages.length < 15 && (
                             <div
                               onClick={() => galleryInputRef.current?.click()}
                               className="border border-[#d4d5d8] border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#1e8cab] hover:bg-[#E9F4F7]/10 transition-all h-[70px]"

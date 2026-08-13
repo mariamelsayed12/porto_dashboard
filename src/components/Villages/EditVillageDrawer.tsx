@@ -216,11 +216,11 @@ export default function EditVillageDrawer({
   const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const currentImages = galleryImages || [];
-    if (currentImages.length + files.length > 5) {
+    if (currentImages.length + files.length > 15) {
       showErrorToast(
         formLanguage === "ar"
-          ? "الحد الأقصى لمعرض الصور هو 5 صور"
-          : "Maximum 5 gallery images allowed",
+          ? "الحد الأقصى لمعرض الصور هو 15 صور"
+          : "Maximum 15 gallery images allowed",
       );
       return;
     }
@@ -597,8 +597,8 @@ export default function EditVillageDrawer({
                       </div>
                     ))}
 
-                    {/* Add Grid button if < 5 */}
-                    {galleryPreviewUrls.length < 5 && (
+                    {/* Add Grid button if < 15 */}
+                    {galleryPreviewUrls.length < 15 && (
                       <div
                         onClick={() => galleryInputRef.current?.click()}
                         className="border border-[#D4D5D8] border-dashed rounded-lg h-[100px] flex flex-col items-center justify-center cursor-pointer hover:border-[#1E8CAB] transition-all bg-white"
