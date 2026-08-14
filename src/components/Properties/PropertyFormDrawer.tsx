@@ -281,6 +281,44 @@ export default function PropertyFormDrawer({
     }
   }, [isOpen, mode, propertyEn, propertyAr, reset]);
 
+  // Reset form to default empty values when closed to prevent stale data on reopen
+  useEffect(() => {
+    if (!isOpen) {
+      reset({
+        name: { en: "", ar: "" },
+        description: { en: "", ar: "" },
+        village: "",
+        listingType: "Developer",
+        status: "Available",
+        paymentModel: "Installments",
+        area: undefined,
+        bedrooms: undefined,
+        bathrooms: undefined,
+        finishingStatus: "Finished",
+        orientation: "",
+        propertyType: "",
+        coverImage: undefined,
+        images: [],
+        isFeatured: "No",
+        deliveryDate: "",
+        availableUnits: 1,
+        installmentPrice: undefined,
+        cashPrice: undefined,
+        insurance: undefined,
+        downPaymentPercentage: undefined,
+        downPaymentAmount: undefined,
+        installmentPeriod: "",
+        installmentValue: undefined,
+        amenities: [],
+      } as any);
+      setCoverPreviewUrl(null);
+      setGalleryPreviewUrls([]);
+      setVillageSearch("");
+      setIsVillageOpen(false);
+    }
+  }, [isOpen, reset]);
+
+
   // Retrieve current village display name
   const currentVillageName = useMemo(() => {
     if (!watchVillage || !villagesList) return "";
@@ -299,8 +337,22 @@ export default function PropertyFormDrawer({
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const currentImages = watchImages || [];
-    const newImages = [...currentImages, ...files].slice(0, 15); // Limit to 15 images
-    setValue("images", newImages, { shouldValidate: true });
+    const maxAllowed = 4;
+    const remainingSlots = maxAllowed - currentImages.length;
+
+    if (files.length > remainingSlots) {
+      showErrorToast(`You can only select up to ${remainingSlots} more image(s). Excess images were ignored.`);
+      const allowedFiles = files.slice(0, remainingSlots);
+      if (allowedFiles.length > 0) {
+        setValue("images", [...currentImages, ...allowedFiles], {
+          shouldValidate: true,
+        });
+      }
+    } else {
+      setValue("images", [...currentImages, ...files], {
+        shouldValidate: true,
+      });
+    }
   };
 
   const handleRemoveCover = (e: React.MouseEvent) => {
@@ -407,7 +459,11 @@ export default function PropertyFormDrawer({
         formData.append("availableUnits", String(data.availableUnits));
       }
 
+      const isInstallment = data.listingType !== "Rent" && (data.paymentModel === "Installments" || data.paymentModel === "Both");
+      const isCashOrRent = data.listingType === "Rent" || data.paymentModel === "Cash" || data.paymentModel === "Both";
+
       if (
+        isInstallment &&
         data.installmentPrice !== undefined &&
         data.installmentPrice !== null &&
         data.installmentPrice !== ""
@@ -416,6 +472,7 @@ export default function PropertyFormDrawer({
       }
 
       if (
+        isCashOrRent &&
         data.cashPrice !== undefined &&
         data.cashPrice !== null &&
         data.cashPrice !== ""
@@ -424,6 +481,7 @@ export default function PropertyFormDrawer({
       }
 
       if (
+        data.listingType === "Rent" &&
         data.insurance !== undefined &&
         data.insurance !== null &&
         data.insurance !== ""
@@ -432,6 +490,7 @@ export default function PropertyFormDrawer({
       }
 
       if (
+        isInstallment &&
         data.downPaymentPercentage !== undefined &&
         data.downPaymentPercentage !== null &&
         data.downPaymentPercentage !== ""
@@ -440,6 +499,7 @@ export default function PropertyFormDrawer({
       }
 
       if (
+        isInstallment &&
         data.downPaymentAmount !== undefined &&
         data.downPaymentAmount !== null &&
         data.downPaymentAmount !== ""
@@ -447,11 +507,12 @@ export default function PropertyFormDrawer({
         formData.append("downPaymentAmount", String(data.downPaymentAmount));
       }
 
-      if (data.installmentPeriod) {
+      if (isInstallment && data.installmentPeriod) {
         formData.append("installmentPeriod", data.installmentPeriod.trim());
       }
 
       if (
+        isInstallment &&
         data.installmentValue !== undefined &&
         data.installmentValue !== null &&
         data.installmentValue !== ""
@@ -1068,11 +1129,11 @@ export default function PropertyFormDrawer({
                       {/* Gallery upload */}
                       <div className="flex flex-col gap-2 flex-1">
                         <label className="text-xs font-semibold text-[#141414]">
-                          Gallery Images ({watchImages.length})
+                          Gallery Images ({watchImages.length}/4)
                         </label>
                         <div className="grid grid-cols-2 gap-3 h-[166px] overflow-y-auto border border-[#d4d5d8] border-solid rounded-lg p-2 bg-white">
                           {/* Plus button */}
-                          {watchImages.length < 15 && (
+                          {watchImages.length < 4 && (
                             <div
                               onClick={() => galleryInputRef.current?.click()}
                               className="border border-[#d4d5d8] border-dashed rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-[#1e8cab] hover:bg-[#E9F4F7]/10 transition-all h-[70px]"
@@ -1147,9 +1208,7 @@ export default function PropertyFormDrawer({
                     variant="modalPrimary"
                     className="h-12 rounded-xl px-6 bg-[#1e8cab] hover:bg-[#156d85] font-poppins"
                   >
-                    {isCompressing
-                      ? "Compressing..."
-                      : mode === "edit"
+                    { mode === "edit"
                       ? "Save Changes"
                       : "Create"}
                   </Button>

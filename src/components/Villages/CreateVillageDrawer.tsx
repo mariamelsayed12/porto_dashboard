@@ -135,13 +135,22 @@ export default function CreateVillageDrawer({
   const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     const currentImages = galleryImages || [];
-    if (currentImages.length + files.length > 15) {
-      showErrorToast("Maximum 15 gallery images allowed");
-      return;
+    const maxAllowed = 4;
+    const remainingSlots = maxAllowed - currentImages.length;
+
+    if (files.length > remainingSlots) {
+      showErrorToast(`You can only select up to ${remainingSlots} more image(s). Excess images were ignored.`);
+      const allowedFiles = files.slice(0, remainingSlots);
+      if (allowedFiles.length > 0) {
+        setValue("galleryImages", [...currentImages, ...allowedFiles], {
+          shouldValidate: true,
+        });
+      }
+    } else {
+      setValue("galleryImages", [...currentImages, ...files], {
+        shouldValidate: true,
+      });
     }
-    setValue("galleryImages", [...currentImages, ...files], {
-      shouldValidate: true,
-    });
   };
 
   const removeGalleryImage = (index: number) => {
@@ -452,15 +461,15 @@ export default function CreateVillageDrawer({
                         type="button"
                         onClick={() => removeGalleryImage(idx)}
                         variant="icon"
-                        className="absolute inset-0 !bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity !w-full !h-full !rounded-none"
+                        className="absolute inset-0 !bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center !text-[#ef4444] transition-opacity !w-full !h-full !rounded-none"
                       >
-                        <FiTrash2 className="w-5 h-5" />
+                        <FiTrash2 className="w-6 h-6 text-[#ef4444] hover:text-red-600 transition-colors" />
                       </Button>
                     </div>
                   ))}
 
-                  {/* Add Grid button if < 15 */}
-                  {galleryPreviewUrls.length < 15 && (
+                  {/* Add Grid button if < 4 */}
+                  {galleryPreviewUrls.length < 4 && (
                     <div
                       onClick={() => galleryInputRef.current?.click()}
                       className="border border-[#D4D5D8] border-dashed rounded-lg h-[100px] flex flex-col items-center justify-center cursor-pointer hover:border-[#1E8CAB] transition-all bg-white"
@@ -553,7 +562,7 @@ export default function CreateVillageDrawer({
                 variant="modalPrimary"
                 className="h-12 rounded-xl px-6 bg-[#1e8cab] hover:bg-[#156d85]"
               >
-                {isCompressing ? "Compressing..." : "Create"}
+                {isLoading || isCompressing  ? "Creating..." : "Create"}
               </Button>
             </div>
           </motion.div>
