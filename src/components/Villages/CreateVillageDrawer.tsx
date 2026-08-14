@@ -130,7 +130,7 @@ export default function CreateVillageDrawer({
     if (file) {
       setValue("coverImage", file, { shouldValidate: true });
     }
-  };
+};
 
   const handleGalleryFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);

@@ -115,7 +115,7 @@ export default function LoginPage() {
                 <Input
                   type="email"
                   variant="login"
-                  placeholder="agent@email.com"
+                  placeholder="user@email.com"
                   error={errors.email?.message}
                   {...register("email")}
                 />
