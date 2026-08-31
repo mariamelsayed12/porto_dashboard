@@ -27,7 +27,7 @@ export default function PropertyGalleryCard({
         Property gallery
       </p>
 
-      <div className="flex flex-col gap-[24px] overflow-y-auto no-scrollbar scroll-smooth snap-y snap-mandatory w-full h-[353px]">
+      <div className="flex flex-col gap-[24px] overflow-y-auto custom-scrollbar scroll-smooth snap-y snap-mandatory w-full h-[353px] pe-2">
         {displayImages.map((src, idx) => (
           <div
             key={idx}
