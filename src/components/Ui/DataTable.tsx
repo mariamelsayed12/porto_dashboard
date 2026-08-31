@@ -36,7 +36,9 @@ export interface ActionDef<TRow = Record<string, unknown>> {
 
 // ─── DataTable Props ─────────────────────────────────────────────────────────
 
-export interface DataTableProps<TRow extends { id?: string | number; _id?: string }> {
+export interface DataTableProps<
+  TRow extends { id?: string | number; _id?: string },
+> {
   /** Column definitions */
   columns: ColumnDef<TRow>[];
   /** Row data array */
@@ -86,7 +88,9 @@ const alignClass = (align?: "left" | "center" | "right") => {
 
 // ─── DataTable Component ──────────────────────────────────────────────────────
 
-export default function DataTable<TRow extends { id?: string | number; _id?: string }>({
+export default function DataTable<
+  TRow extends { id?: string | number; _id?: string },
+>({
   columns,
   data,
   actions,
@@ -106,10 +110,7 @@ export default function DataTable<TRow extends { id?: string | number; _id?: str
     >
       {/* Horizontal scroll wrapper */}
       <div className="w-full overflow-x-auto">
-        <table
-          className="w-full border-collapse"
-          style={{ minWidth }}
-        >
+        <table className="w-full border-collapse" style={{ minWidth }}>
           {/* ── Head ─────────────────────────────────────────────────── */}
           <thead>
             <tr className="bg-light-primary border-b text-center border-border">
@@ -152,7 +153,9 @@ export default function DataTable<TRow extends { id?: string | number; _id?: str
                         key={col.key}
                         className={`py-4 px-4 font-poppins text-center font-normal text-[14px] text-text-secondary ${alignClass(col.align)}`}
                       >
-                        {col.render ? col.render(value, row) : (value as ReactNode)}
+                        {col.render
+                          ? col.render(value, row)
+                          : (value as ReactNode)}
                       </td>
                     );
                   })}
@@ -179,13 +182,13 @@ export default function DataTable<TRow extends { id?: string | number; _id?: str
                           );
                         })} */}
                         {actions && (
-                           <td className="px-4 py-3">
+                          <td className="px-4 py-3">
                             <ActionDropdown
                               row={row}
                               actions={actions}
                               preferUp={index >= data.length - 2}
                             />
-                           </td>
+                          </td>
                         )}
                       </div>
                     </td>
@@ -198,7 +201,9 @@ export default function DataTable<TRow extends { id?: string | number; _id?: str
               <tr>
                 <td colSpan={totalCols} className="py-16 px-4">
                   <div className="flex items-center justify-center">
-                    <EmptyState message={emptyMessage ?? "No data available."} />
+                    <EmptyState
+                      message={emptyMessage ?? "No data available."}
+                    />
                   </div>
                 </td>
               </tr>

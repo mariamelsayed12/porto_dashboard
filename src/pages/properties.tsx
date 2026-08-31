@@ -187,7 +187,16 @@ export default function PropertiesPage() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
 
   // Fetch properties data (all, up to limit 1000)
-  const { data: propertiesResponse, isLoading } = useGetPropertyQuery();
+  const {
+    data: propertiesResponse,
+    isLoading,
+    isFetching,
+    isError,
+    error,
+  } = useGetPropertyQuery();
+
+  const isTableLoading =
+    isLoading || isFetching || (!propertiesResponse && !isError);
 
   // ── Filter values from URL ─────────────────────────────────────────────────
   const selectedListing = useMemo(() => {
@@ -521,9 +530,13 @@ export default function PropertiesPage() {
         columns={propertiesColumns}
         data={paginatedProperties}
         actions={tableActions}
-        isLoading={isLoading}
+        isLoading={isTableLoading}
         emptyMessage={
-          searchQuery
+          isError
+            ? ((error as any)?.data?.message ||
+                (error as any)?.error ||
+                "Failed to load properties. Please try again.")
+            : searchQuery
             ? `No properties found for "${searchQuery}".`
             : "No properties listed yet. Click Add Property to get started."
         }
