@@ -1,10 +1,10 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { FiLogOut } from "react-icons/fi";
-import logoUrl from "../../assets/LogoDashboard2.svg";
 import { axiosInstance } from "../../config/axios.config";
 import { showErrorToast, showSuccessToast } from "../Ui/Toast";
 import Button from "../Ui/Button";
 import { useState } from "react";
+import Logo from "../Logo";
 
 
 // Inline SVGs for dynamic styling with tailwind
@@ -84,11 +84,7 @@ export default function Sidebar({ onClose }: SidebarProps) {
     <aside className="w-[94px] h-full bg-white border-r border-border flex flex-col justify-between">
       {/* Sidebar Header: Logo Area */}
       <div className="h-[72px] shrink-0 border-b border-border flex items-center justify-center">
-        <img
-          src={logoUrl}
-          className="h-10 w-[64px] object-contain hover:opacity-85 transition-opacity"
-          alt="Porto"
-        />
+        <Logo aria-label="Porto" className="h-[33px] w-[74px]" />
       </div>
 
       {/* Navigation Links */}

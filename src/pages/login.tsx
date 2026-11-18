@@ -4,10 +4,10 @@ import { yupResolver } from "@hookform/resolvers/yup";
 // import { useNavigate } from "react-router-dom";
 import Input from "../components/Ui/Input";
 import Button from "../components/Ui/Button";
-import logoUrl from "../assets/Logo.svg";
 import loginHeroUrl from "../assets/login.png";
 import { showSuccessToast, showErrorToast } from "../components/Ui/Toast";
 import { useState } from "react";
+import Logo from "../components/Logo";
 
 // Validation schema using Yup
 const loginSchema = yup.object().shape({
@@ -96,9 +96,7 @@ export default function LoginPage() {
             
             {/* Header: Logo and Title */}
             <div className="flex flex-col gap-6 items-center justify-center">
-              <div className="w-[56px] h-[56px] overflow-clip flex items-center justify-center">
-                <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
-              </div>
+              <Logo aria-label="Porto" className="h-[33px] w-[74px]" />
               <h1 className="font-poppins font-medium text-[23px] text-[#141414] tracking-normal leading-normal whitespace-nowrap">
                 Welcome back
               </h1>

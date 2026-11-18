@@ -6,9 +6,9 @@ import { FiChevronLeft } from "react-icons/fi";
 
 import Input from "../components/Ui/Input";
 import Button from "../components/Ui/Button";
-import logoUrl from "../assets/Logo.svg";
 import loginHeroUrl from "../assets/login.png";
 import { resetSchema } from "../validation";
+import Logo from "../components/Logo";
 
 // Validation schema using Yup
 
@@ -53,13 +53,7 @@ export default function ResetPasswordPage() {
           <div className="w-full max-w-[380px] flex flex-col gap-8 items-center mt-6 lg:mt-0">
             {/* Header: Logo and Title */}
             <div className="flex flex-col gap-4 items-center justify-center text-center">
-              <div className="w-[56px] h-[56px] overflow-clip flex items-center justify-center">
-                <img
-                  src={logoUrl}
-                  alt="Logo"
-                  className="w-full h-full object-contain"
-                />
-              </div>
+              <Logo aria-label="Porto" className="h-[33px] w-[74px]" />
               <div className="flex flex-col gap-2 items-center justify-center">
                 <h1 className="font-poppins font-medium text-[23px] text-[#141414] tracking-normal leading-normal whitespace-nowrap">
                   Reset Password
